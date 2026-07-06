@@ -1,0 +1,107 @@
+{
+  "nav": {
+    "home": "Home",
+    "learn": "Learn",
+    "plan": "Plan",
+    "journal": "Journal"
+  },
+  "home": {
+    "tagline": "Your pocket sommelier school",
+    "title": "Palate",
+    "subtitle": "Learn to taste, describe, and understand wine — one sip at a time. No experience needed.",
+    "progress": "{{done}} of {{total}} modules explored",
+    "quizBest": "Quiz best: {{score}}/4",
+    "planAction": "Plan a tasting",
+    "planActionSub": "Wines · Food · Guests",
+    "journalAction": "My journal",
+    "journalCount_one": "{{count}} entry",
+    "journalCount_other": "{{count}} entries",
+    "lessonsHeading": "Lessons"
+  },
+  "modules": {
+    "walkthrough": {
+      "label": "Tasting walkthrough",
+      "sub": "The 5-step ritual, plain language"
+    },
+    "nose": {
+      "label": "Train your nose",
+      "sub": "30-day programme, 5 min a day"
+    },
+    "wheel": {
+      "label": "Flavour wheel",
+      "sub": "Explore aromas interactively"
+    },
+    "bottle": {
+      "label": "First bottle guide",
+      "sub": "One wine, guided from start to finish"
+    },
+    "quiz": {
+      "label": "Quick quiz",
+      "sub": "Test what you know — 4 questions"
+    },
+    "startHere": "Start here",
+    "new": "New",
+    "done": "Done"
+  },
+  "learn": {
+    "eyebrow": "Education",
+    "title": "Learn",
+    "comingSoon": "This module is being poured… check back soon."
+  },
+  "planner": {
+    "eyebrow": "Your sommelier",
+    "title": "Plan a tasting",
+    "subtitle": "Give me any combination of details — I'll take care of the rest.",
+    "winesLabel": "Wines you have",
+    "winesPlaceholder": "e.g. a Sancerre, a Côtes du Rhône, and a Barolo",
+    "foodsLabel": "Food / menu",
+    "foodsPlaceholder": "e.g. cheese board, lamb",
+    "seasonLabel": "Season",
+    "seasonAny": "Any",
+    "seasonSpring": "Spring",
+    "seasonSummer": "Summer",
+    "seasonAutumn": "Autumn",
+    "seasonWinter": "Winter",
+    "guestsLabel": "Guests",
+    "guestsPlaceholder": "e.g. 6 beginners",
+    "notesLabel": "Any notes",
+    "notesPlaceholder": "e.g. one guest is vegan",
+    "generateButton": "Generate tasting plan",
+    "generatingButton": "Planning your tasting…",
+    "errorMessage": "Could not generate plan. Check your connection and try again.",
+    "printButton": "Print",
+    "pairsWith": "Pairs with",
+    "tastingPrompts": "Tasting prompts",
+    "foodStrategy": "Food strategy",
+    "hostingTips": "Hosting tips",
+    "demoNotice": "Demo mode: plans are matched from a small curated set, not generated live. Full AI-powered planning is coming soon."
+  },
+  "journal": {
+    "eyebrow": "Your cellar",
+    "title": "Journal",
+    "addWine": "Add wine",
+    "cancel": "Cancel",
+    "formTitle": "Log a wine",
+    "wineNameLabel": "Wine name",
+    "wineNamePlaceholder": "e.g. Château Margaux",
+    "regionLabel": "Region",
+    "regionPlaceholder": "e.g. Bordeaux",
+    "appearanceLabel": "Appearance",
+    "appearancePlaceholder": "Colour, clarity, depth…",
+    "noseLabel": "Nose",
+    "nosePlaceholder": "First impression, aromas…",
+    "palateLabel": "Palate",
+    "palatePlaceholder": "Acidity, tannin, body, flavour…",
+    "finishLabel": "Finish",
+    "finishPlaceholder": "Length, aftertaste…",
+    "scoreLabel": "Score /20",
+    "vintageLabel": "Vintage",
+    "saveButton": "Save to journal",
+    "emptyTitle": "No entries yet",
+    "emptySubtitle": "Taste a wine and log your notes here.",
+    "remove": "Remove"
+  },
+  "common": {
+    "languageSwitcher": "Language"
+  }
+}

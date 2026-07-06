@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* ── Forest Green + Burgundy palette ── */
+  --forest:        #264D3B;   /* primary — forest green */
+  --forest-dark:   #1A3528;   /* deep green for hover */
+  --forest-light:  #E4EDE0;   /* soft green tint */
+  --burgundy:      #7A2038;   /* secondary — burgundy red */
+  --burgundy-dark: #521526;   /* deep burgundy */
+  --burgundy-light:#F5EDE0;   /* warm cream tint */
+  --gold:          #B98A3D;   /* highlight / accent */
+  --gold-light:    #F5EDE0;   /* gold background tint */
+
+  /* ── Backgrounds ── */
+  --cream:         #F7F4EF;   /* warm parchment background */
+  --surface:       #ffffff;   /* card surfaces */
+
+  /* ── Text ── */
+  --ink:           #1E1E1E;   /* primary text */
+  --ink-soft:      #3A3530;   /* secondary text */
+  --muted:         #7A6E64;   /* tertiary / labels */
+
+  /* ── Borders ── */
+  --border:        #E2DDD6;   /* default border */
+  --border-soft:   #EDE8E2;   /* subtle border */
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/* Safe area for mobile notch/home bar */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-top    { padding-top:    env(safe-area-inset-top); }
+
+/* Print styles for tasting sheets */
+@media print {
+  nav, header, .print\:hidden { display: none !important; }
+  body { background: white; }
+}
