@@ -33,31 +33,27 @@ export default function Home() {
 
   const total = MODULES.length
   const done  = completedModules.length
-  const pct   = total > 0 ? (done / total) * 100 : 0
 
   // Tip of the day — stable per day, not random on every render
   const todayTip = TIPS[new Date().getDate() % TIPS.length]
 
   // Hero copy changes after first lesson
   const hasStarted = done > 0
-  const heroEyebrow  = '✦ Your pocket sommelier school'
-  const heroHeading  = hasStarted ? 'Welcome back.' : 'Learn to taste wine\nwith confidence.'
-  const heroBody     = hasStarted
-    ? 'Continue your wine journey — your next lesson is ready.'
-    : 'Practical lessons, interactive tools,\nand personal tasting notes.'
+  const heroEyebrow = '✦ Your pocket sommelier school'
+  const heroHeading = hasStarted ? 'Welcome back.' : 'Learn to taste wine with confidence.'
 
   // Journal subtitle
   const journalSub = journalEntries.length === 0
     ? 'Start recording your tastings'
     : `${journalEntries.length} tasting ${journalEntries.length === 1 ? 'note' : 'notes'}`
 
-  // Active lesson = first uncompleted
+  // "Active" is purely a visual cue for where to continue — it does not gate access.
   const activeIdx = MODULES.findIndex(m => !completedModules.includes(m.id))
 
   return (
     <div className="max-w-3xl mx-auto pb-8">
 
-      {/* ── Hero ───────────────────────────────────────────────── */}
+      {/* ── Hero — compact, matching Learn's proportions ───────── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[var(--forest)] to-[var(--forest-dark)] md:rounded-b-2xl md:mx-4">
 
         {/* Vineyard background image — very low opacity */}
@@ -70,60 +66,56 @@ export default function Home() {
         />
 
         {/* Hero content */}
-        <div className="relative z-10 px-5 pt-10 pb-7">
+        <div className="relative z-10 px-5 pt-8 pb-5 md:pt-12 md:pb-6">
 
           {/* Top row: logo + language switcher — mobile only */}
-          <div className="flex items-center justify-between mb-6 md:hidden">
-            <span className="font-['Cormorant_Garamond'] text-2xl text-white tracking-tight">Palate</span>
+          <div className="flex items-center justify-between mb-3 md:hidden">
+            <span className="font-['Cormorant_Garamond'] text-xl text-white tracking-tight">Palate</span>
             <LanguageSwitcher dark />
           </div>
 
           {/* Eyebrow */}
-          <p className="text-xs tracking-[0.14em] text-[var(--gold)] uppercase font-medium mb-3">
+          <p className="text-xs tracking-[0.1em] text-[var(--gold)] uppercase font-medium mb-2">
             {heroEyebrow}
           </p>
 
-          {/* Heading */}
-          <h1 className="font-['Cormorant_Garamond'] text-4xl md:text-5xl text-white leading-tight mb-3" style={{ whiteSpace: 'pre-line' }}>
+          {/* Heading — single line, italic, matching Learn's hero */}
+          <h1 className="font-['Cormorant_Garamond'] text-3xl md:text-5xl text-white italic leading-tight">
             {heroHeading}
           </h1>
-
-          {/* Body */}
-          <p className="text-white/60 text-sm leading-relaxed mb-6 max-w-xs font-light" style={{ whiteSpace: 'pre-line' }}>
-            {heroBody}
-          </p>
-
-          {/* CTA cards */}
-          <div className="grid grid-cols-2 gap-3">
-            <Link to="/planner"
-              className="flex items-center gap-3 bg-[var(--burgundy)] hover:bg-[var(--burgundy-dark)] transition-colors rounded-xl px-4 py-3.5 group">
-              <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
-                <i className="ti ti-wine text-white text-sm" aria-hidden="true"></i>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-white leading-tight">Plan a tasting</p>
-                <p className="text-xs text-white/55 mt-0.5">Wines • Food • Guests</p>
-              </div>
-              <i className="ti ti-chevron-right text-white/40 text-sm flex-shrink-0" aria-hidden="true"></i>
-            </Link>
-
-            <Link to="/journal"
-              className="flex items-center gap-3 bg-white/10 hover:bg-white/15 border border-white/15 transition-colors rounded-xl px-4 py-3.5">
-              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                <i className="ti ti-notebook text-white/70 text-sm" aria-hidden="true"></i>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-white leading-tight">My journal</p>
-                <p className="text-xs text-white/45 mt-0.5 truncate">{journalSub}</p>
-              </div>
-              <i className="ti ti-chevron-right text-white/30 text-sm flex-shrink-0" aria-hidden="true"></i>
-            </Link>
-          </div>
         </div>
       </div>
 
-      {/* ── Continue learning ───────────────────────────────────── */}
-      <div className="px-4 pt-6 pb-4">
+      <div className="px-4">
+
+        {/* ── CTA cards — moved below the hero, onto the cream background ── */}
+        <div className="grid grid-cols-2 gap-3 pt-5 mb-6">
+          <Link to="/planner"
+            className="flex items-center gap-3 bg-[var(--burgundy)] hover:bg-[var(--burgundy-dark)] transition-colors rounded-xl px-4 py-3 group">
+            <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
+              <i className="ti ti-wine text-white text-sm" aria-hidden="true"></i>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm text-white leading-tight">Plan a tasting</p>
+              <p className="text-xs text-white/55 mt-0.5">Wines • Food • Guests</p>
+            </div>
+            <i className="ti ti-chevron-right text-white/40 text-sm flex-shrink-0" aria-hidden="true"></i>
+          </Link>
+
+          <Link to="/journal"
+            className="flex items-center gap-3 bg-white border border-[var(--border)] hover:border-[var(--forest)] transition-colors rounded-xl px-4 py-3">
+            <div className="w-8 h-8 rounded-full bg-[var(--forest-light)] flex items-center justify-center flex-shrink-0">
+              <i className="ti ti-notebook text-[var(--forest)] text-sm" aria-hidden="true"></i>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm text-[var(--ink)] leading-tight">My journal</p>
+              <p className="text-xs text-[var(--muted)] mt-0.5 truncate">{journalSub}</p>
+            </div>
+            <i className="ti ti-chevron-right text-[var(--border)] text-sm flex-shrink-0" aria-hidden="true"></i>
+          </Link>
+        </div>
+
+        {/* ── Continue learning ───────────────────────────────── */}
         <div className="flex items-baseline justify-between mb-1">
           <h2 className="font-['Cormorant_Garamond'] text-2xl text-[var(--ink)]">Continue learning</h2>
           <Link to="/learn" className="text-xs text-[var(--muted)] hover:text-[var(--forest)] transition-colors flex items-center gap-1">
@@ -138,35 +130,32 @@ export default function Home() {
 
         {/* Progress bar — 5 segments */}
         <div className="flex gap-1 mb-5">
-          {MODULES.map((m, i) => (
+          {MODULES.map((m) => (
             <div key={m.id} className="flex-1 h-0.5 rounded-full transition-all duration-500"
               style={{ background: completedModules.includes(m.id) ? '#264D3B' : '#E2DDD6' }}
             />
           ))}
         </div>
 
-        {/* Lesson list */}
+        {/* Lesson list — every item is unlocked and tappable from the start */}
         <div className="space-y-2">
           {MODULES.map((m, idx) => {
             const isDone   = completedModules.includes(m.id)
-            const isActive = idx === activeIdx
-            const isLocked = !isDone && idx > activeIdx
+            const isActive = idx === activeIdx // visual "continue here" cue only — never gates access
 
             return (
               <div
                 key={m.id}
-                onClick={() => !isLocked && navigate(m.to)}
-                className={`flex items-center gap-4 rounded-xl px-4 py-3.5 transition-colors ${
+                onClick={() => navigate(m.to)}
+                className={`flex items-center gap-4 rounded-xl px-4 py-3.5 cursor-pointer transition-colors bg-white ${
                   isActive
-                    ? 'bg-white border border-[var(--forest)]/30 cursor-pointer hover:border-[var(--forest)]/60'
-                    : isDone
-                      ? 'bg-white border border-[var(--border)] cursor-pointer hover:border-[var(--forest)]'
-                      : 'bg-white border border-[var(--border)] opacity-60 cursor-default'
+                    ? 'border border-[var(--forest)]/30 hover:border-[var(--forest)]/60'
+                    : 'border border-[var(--border)] hover:border-[var(--forest)]'
                 }`}
               >
                 {/* Roman numeral */}
                 <span className={`font-['Cormorant_Garamond'] text-xl w-7 text-center leading-none flex-shrink-0 ${
-                  isDone ? 'text-[var(--forest)]' : isActive ? 'text-[var(--forest)]' : 'text-[var(--border)]'
+                  isDone || isActive ? 'text-[var(--forest)]' : 'text-[var(--border)]'
                 }`}>
                   {['I','II','III','IV','V'][idx]}
                 </span>
@@ -174,7 +163,7 @@ export default function Home() {
                 {/* Text */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className={`text-sm font-medium ${isDone || isActive ? 'text-[var(--ink)]' : 'text-[var(--muted)]'}`}>
+                    <p className={`text-sm font-medium ${isDone || isActive ? 'text-[var(--ink)]' : 'text-[var(--ink-soft)]'}`}>
                       {m.label}
                     </p>
                     {m.badge && !isDone && (
@@ -193,7 +182,7 @@ export default function Home() {
                     {m.duration}
                   </span>
 
-                  {/* State indicator */}
+                  {/* State indicator — no lock state; everything is reachable */}
                   {isDone ? (
                     <i className="ti ti-check text-[var(--forest)] text-sm" aria-hidden="true"></i>
                   ) : isActive ? (
@@ -201,7 +190,7 @@ export default function Home() {
                       Continue <i className="ti ti-arrow-right text-xs" aria-hidden="true"></i>
                     </span>
                   ) : (
-                    <i className="ti ti-lock text-[var(--border)] text-sm" aria-hidden="true"></i>
+                    <i className="ti ti-chevron-right text-[var(--border)] text-sm" aria-hidden="true"></i>
                   )}
                 </div>
               </div>
@@ -211,7 +200,7 @@ export default function Home() {
       </div>
 
       {/* ── Tip of the day ──────────────────────────────────────── */}
-      <div className="px-4 pb-4">
+      <div className="px-4 pt-4">
         <div
           onClick={() => navigate('/learn')}
           className="flex items-start gap-4 bg-[var(--gold-light)] border border-[var(--gold)]/20 rounded-xl px-4 py-4 cursor-pointer hover:border-[var(--gold)]/40 transition-colors group"
