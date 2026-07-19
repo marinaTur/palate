@@ -414,7 +414,7 @@ const WEEKS = [
 
 const COMPLETION_TEXT = {
   title: 'Your nose is already better.',
-  body: 'If you\'ve completed these exercises, you\'ve spent more time consciously smelling everyday ingredients than most wine drinkers ever do.\n\nThe next time you open a bottle, don\'t try to identify ten aromas. Find just one that reminds you of something you smelled this month.\n\nThat\'s how professional tasters improve — one memory at a time.',
+  body: 'Next time you open a bottle, don\'t try to identify ten aromas — find just one that reminds you of something you smelled this month. That\'s how professional tasters improve.',
 }
 
 // ── Sub-components ────────────────────────────────────────────────
@@ -567,14 +567,20 @@ function ExerciseCard({ ex, weekColor, isCompleted, onToggle }) {
 
 export default function Nose() {
   const navigate = useNavigate()
-  const { markModuleComplete, completedModules, exerciseProgress, toggleExercise, modulePosition, setModulePosition, seenIntroCards, markIntroCardSeen } = useAppStore()
+  const {
+    markModuleComplete, unmarkModuleComplete, completedModules,
+    exerciseProgress, toggleExercise, resetExerciseProgress,
+    modulePosition, setModulePosition, seenIntroCards, markIntroCardSeen,
+  } = useAppStore()
   const activeWeek = modulePosition['nose'] ?? 0
   const setActiveWeek = (updater) => {
     const current = modulePosition['nose'] ?? 0
     const next = typeof updater === 'function' ? updater(current) : updater
     setModulePosition('nose', next)
   }
-  const [finished, setFinished] = useState(completedModules.includes('nose'))
+  // Derived directly from the store — never a separate local flag that could
+  // fall out of sync with completedModules (same fix applied to Wheel/Walkthrough).
+  const finished = completedModules.includes('nose')
   const hasSeenFrequencyMemo = !!seenIntroCards['nose-frequency-memo']
   const [memoExpanded, setMemoExpanded] = useState(!hasSeenFrequencyMemo)
 
@@ -594,40 +600,15 @@ export default function Nose() {
 
   function completeModule() {
     markModuleComplete('nose')
-    setFinished(true)
   }
 
-  // ── Completion screen ──────────────────────────────────────────
-  if (finished) {
-    return (
-      <div className="max-w-2xl mx-auto pb-6">
-        <div className="bg-gradient-to-br from-[var(--forest)] to-[var(--forest-dark)] px-5 pt-10 pb-6 md:rounded-b-2xl md:mx-4 mb-6">
-          <button onClick={() => navigate('/learn')} className="flex items-center gap-2 text-white/60 hover:text-white text-sm mb-4 transition-colors">
-            <i className="ti ti-arrow-left" aria-hidden="true"></i> Back to lessons
-          </button>
-          <h1 className="font-['Cormorant_Garamond'] text-4xl text-white italic">Train your nose</h1>
-        </div>
-        <div className="px-4 text-center py-10">
-          <div className="w-20 h-20 rounded-full bg-[var(--forest-light)] flex items-center justify-center mx-auto mb-5">
-            <i className="ti ti-trophy text-[var(--forest)] text-3xl" aria-hidden="true"></i>
-          </div>
-          <h2 className="font-['Cormorant_Garamond'] text-3xl text-[var(--ink)] mb-4">{COMPLETION_TEXT.title}</h2>
-          <p className="text-[var(--muted)] text-sm mb-8 max-w-xs mx-auto leading-relaxed" style={{ whiteSpace: 'pre-line' }}>
-            {COMPLETION_TEXT.body}
-          </p>
-          <div className="space-y-3 max-w-xs mx-auto">
-            <button onClick={() => { setFinished(false); setActiveWeek(0) }}
-              className="w-full py-3 rounded-xl border border-[var(--border)] text-[var(--ink-soft)] text-sm font-medium hover:border-[var(--forest)] hover:text-[var(--forest)] transition-colors">
-              Review exercises
-            </button>
-            <button onClick={() => navigate('/learn')}
-              className="w-full py-3 rounded-xl bg-[var(--forest)] hover:bg-[var(--forest-dark)] text-white text-sm font-medium transition-colors">
-              Back to lessons
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+  // Resets the module to exactly its first-open state — same pattern as
+  // Wheel.jsx and Walkthrough.jsx's "Start over": un-completes the module,
+  // clears every exercise checkbox, and returns to Week 1.
+  function startOver() {
+    unmarkModuleComplete('nose')
+    resetExerciseProgress(allExerciseIds)
+    setActiveWeek(0)
   }
 
   const week = WEEKS[activeWeek]
@@ -656,6 +637,29 @@ export default function Nose() {
       </div>
 
       <div className="px-4">
+
+        {/* Inline completion notice — NOT a full-page takeover. Everything
+            below (frequency memo, week tabs, exercises) stays fully visible
+            and interactive. */}
+        {finished && (
+          <div className="bg-[var(--gold-light)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 mb-6 flex items-start gap-3">
+            <div className="w-9 h-9 rounded-full bg-[var(--gold)] flex items-center justify-center flex-shrink-0">
+              <i className="ti ti-check text-white text-base" aria-hidden="true"></i>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[var(--ink)] mb-1">{COMPLETION_TEXT.title}</p>
+              <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-3" style={{ whiteSpace: 'pre-line' }}>
+                {COMPLETION_TEXT.body}
+              </p>
+              <button
+                onClick={startOver}
+                className="text-xs font-medium text-[var(--gold)] border border-[var(--gold)]/40 rounded-full px-3 py-1.5 hover:bg-[var(--gold)] hover:text-white transition-colors"
+              >
+                Start over
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Frequency memo — expanded on first visit, compact thereafter */}
         <div className="bg-[var(--forest-light)] border border-[var(--forest)]/15 rounded-xl overflow-hidden mb-6">
@@ -765,13 +769,13 @@ export default function Nose() {
               style={{ background: week.color }}>
               {WEEKS[activeWeek + 1].num}: {WEEKS[activeWeek + 1].title} →
             </button>
-          ) : (
+          ) : !finished ? (
             <button
               onClick={completeModule}
               className="flex-1 py-3 rounded-xl text-white text-sm font-medium transition-colors bg-[var(--forest)] hover:bg-[var(--forest-dark)]">
               Complete module ✓
             </button>
-          )}
+          ) : null}
         </div>
 
       </div>
