@@ -33,32 +33,11 @@ const CATEGORIES = [
     origins: ['primary'],
     intro: 'The most common family in wine — and usually the easiest to spot.',
     subcategories: [
-      {
-        name: 'Citrus',
-        descriptors: ['Lemon', 'Grapefruit', 'Lime'],
-        wineConnection: 'Sauvignon Blanc · Riesling',
-      },
-      {
-        name: 'Stone fruit',
-        descriptors: ['Peach', 'Apricot', 'Nectarine'],
-        wineConnection: 'Viognier · Chardonnay',
-      },
-      {
-        name: 'Berry',
-        descriptors: ['Strawberry', 'Raspberry', 'Blackcurrant', 'Blackberry'],
-        wineConnection: 'Pinot Noir · Cabernet Sauvignon',
-      },
-      {
-        name: 'Tropical',
-        descriptors: ['Pineapple', 'Mango', 'Passionfruit'],
-        wineConnection: 'New Zealand Sauvignon Blanc',
-      },
-      {
-        name: 'Dried & cooked',
-        descriptors: ['Raisin', 'Fig', 'Prune', 'Baked apple'],
-        wineConnection: 'Amarone · aged Rioja · Port',
-        note: 'Same fresh-vs-dried shift you trained in Nose Training, Week 2.',
-      },
+      { name: 'Citrus', descriptors: ['Lemon', 'Grapefruit', 'Lime'], wineConnection: 'Sauvignon Blanc · Riesling' },
+      { name: 'Stone fruit', descriptors: ['Peach', 'Apricot', 'Nectarine'], wineConnection: 'Viognier · Chardonnay' },
+      { name: 'Berry', descriptors: ['Strawberry', 'Raspberry', 'Blackcurrant', 'Blackberry'], wineConnection: 'Pinot Noir · Cabernet Sauvignon' },
+      { name: 'Tropical', descriptors: ['Pineapple', 'Mango', 'Passionfruit'], wineConnection: 'New Zealand Sauvignon Blanc' },
+      { name: 'Dried & cooked', descriptors: ['Raisin', 'Fig', 'Prune', 'Baked apple'], wineConnection: 'Amarone · aged Rioja · Port', note: 'Same fresh-vs-dried shift you trained in Nose Training, Week 2.' },
     ],
   },
   {
@@ -68,16 +47,8 @@ const CATEGORIES = [
     origins: ['primary'],
     intro: 'Delicate and volatile — usually strongest on the very first sniff, before it fades.',
     subcategories: [
-      {
-        name: 'White flowers',
-        descriptors: ['Elderflower', 'Orange blossom'],
-        wineConnection: 'Riesling · Muscat',
-      },
-      {
-        name: 'Rose & violet',
-        descriptors: ['Rose petal', 'Violet'],
-        wineConnection: 'Gewürztraminer · Nebbiolo',
-      },
+      { name: 'White flowers', descriptors: ['Elderflower', 'Orange blossom'], wineConnection: 'Riesling · Muscat' },
+      { name: 'Rose & violet', descriptors: ['Rose petal', 'Violet'], wineConnection: 'Gewürztraminer · Nebbiolo' },
     ],
   },
   {
@@ -87,16 +58,8 @@ const CATEGORIES = [
     origins: ['primary'],
     intro: 'Fresh, sometimes sharp — comes directly from the grape and its leaves.',
     subcategories: [
-      {
-        name: 'Fresh herb',
-        descriptors: ['Mint', 'Basil', 'Thyme'],
-        wineConnection: 'Sauvignon Blanc',
-      },
-      {
-        name: 'Vegetal',
-        descriptors: ['Green bell pepper', 'Grass', 'Asparagus'],
-        wineConnection: 'Sauvignon Blanc · Cabernet Franc',
-      },
+      { name: 'Fresh herb', descriptors: ['Mint', 'Basil', 'Thyme'], wineConnection: 'Sauvignon Blanc' },
+      { name: 'Vegetal', descriptors: ['Green bell pepper', 'Grass', 'Asparagus'], wineConnection: 'Sauvignon Blanc · Cabernet Franc' },
     ],
   },
   {
@@ -106,17 +69,8 @@ const CATEGORIES = [
     origins: ['primary', 'secondary'],
     intro: 'Some spice comes from the grape itself, some from the oak barrel — this category spans both.',
     subcategories: [
-      {
-        name: 'Pepper',
-        descriptors: ['Black pepper', 'White pepper'],
-        wineConnection: 'Syrah / Shiraz · Grüner Veltliner',
-        note: 'This is rotundone — the same compound you trained with in Nose Training, Week 4.',
-      },
-      {
-        name: 'Baking spice',
-        descriptors: ['Cinnamon', 'Clove', 'Vanilla', 'Nutmeg'],
-        wineConnection: 'Oak-aged reds · Rioja',
-      },
+      { name: 'Pepper', descriptors: ['Black pepper', 'White pepper'], wineConnection: 'Syrah / Shiraz · Grüner Veltliner', note: 'This is rotundone — the same compound you trained with in Nose Training, Week 4.' },
+      { name: 'Baking spice', descriptors: ['Cinnamon', 'Clove', 'Vanilla', 'Nutmeg'], wineConnection: 'Oak-aged reds · Rioja' },
     ],
   },
   {
@@ -126,16 +80,8 @@ const CATEGORIES = [
     origins: ['tertiary'],
     intro: 'Often the sign of an aged wine, or a very specific terroir. Subtle, and easy to miss at first.',
     subcategories: [
-      {
-        name: 'Mineral',
-        descriptors: ['Wet stone', 'Flint', 'Chalk'],
-        wineConnection: 'Chablis · Sancerre',
-      },
-      {
-        name: 'Forest floor',
-        descriptors: ['Mushroom', 'Wet leaves', 'Truffle'],
-        wineConnection: 'Aged Pinot Noir · Burgundy',
-      },
+      { name: 'Mineral', descriptors: ['Wet stone', 'Flint', 'Chalk'], wineConnection: 'Chablis · Sancerre' },
+      { name: 'Forest floor', descriptors: ['Mushroom', 'Wet leaves', 'Truffle'], wineConnection: 'Aged Pinot Noir · Burgundy' },
     ],
   },
   {
@@ -145,20 +91,13 @@ const CATEGORIES = [
     origins: ['secondary'],
     intro: 'Not from the grape at all — this is entirely a winemaking decision, from time spent in barrel.',
     subcategories: [
-      {
-        name: 'Sweet oak',
-        descriptors: ['Vanilla', 'Coconut', 'Caramel'],
-        wineConnection: 'American oak · Chardonnay',
-        note: 'Same vanilla + cedar exercise from Nose Training, Week 4.',
-      },
-      {
-        name: 'Toasted oak',
-        descriptors: ['Toast', 'Smoke', 'Cedar'],
-        wineConnection: 'French oak · Cabernet',
-      },
+      { name: 'Sweet oak', descriptors: ['Vanilla', 'Coconut', 'Caramel'], wineConnection: 'American oak · Chardonnay', note: 'Same vanilla + cedar exercise from Nose Training, Week 4.' },
+      { name: 'Toasted oak', descriptors: ['Toast', 'Smoke', 'Cedar'], wineConnection: 'French oak · Cabernet' },
     ],
   },
 ]
+
+const WHEEL_KEYS = CATEGORIES.map(c => `wheel-${c.id}`)
 
 // ── Wheel geometry — 6 equal wedges ─────────────────────────────
 
@@ -184,31 +123,28 @@ function labelPosition(cx, cy, r, startAngle, endAngle) {
 function OriginBadge({ origin }) {
   const info = ORIGIN_INFO[origin]
   return (
-    <span
-      className="text-xs font-medium px-2 py-0.5 rounded-full"
-      style={{ background: info.bg, color: info.color }}
-    >
+    <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: info.bg, color: info.color }}>
       {info.label}
     </span>
   )
 }
 
-function SubcategoryCard({ sub, categoryColor, isExplored, onExplore }) {
-  const [open, setOpen] = useState(false)
-
+// Fully controlled now — no internal state — so it can never carry stale
+// "open" state across a category switch (fix for issue #1).
+function SubcategoryCard({ sub, categoryColor, isOpen, onToggle }) {
   return (
     <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden mb-2">
       <button
-        onClick={() => { setOpen(o => !o); if (!isExplored) onExplore() }}
+        onClick={onToggle}
         className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
       >
         <div className="flex items-center gap-2.5">
           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: categoryColor }} />
           <span className="text-sm font-medium text-[var(--ink)]">{sub.name}</span>
         </div>
-        <i className={`ti ${open ? 'ti-chevron-up' : 'ti-chevron-down'} text-sm text-[var(--muted)]`} aria-hidden="true"></i>
+        <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'} text-sm text-[var(--muted)]`} aria-hidden="true"></i>
       </button>
-      {open && (
+      {isOpen && (
         <div className="px-4 pb-4 border-t border-[var(--border-soft)] pt-3">
           <div className="flex flex-wrap gap-1.5 mb-3">
             {sub.descriptors.map((d, i) => (
@@ -234,9 +170,20 @@ function SubcategoryCard({ sub, categoryColor, isExplored, onExplore }) {
 
 export default function Wheel() {
   const navigate = useNavigate()
-  const { markModuleComplete, completedModules, exerciseProgress, toggleExercise } = useAppStore()
+  const {
+    markModuleComplete, unmarkModuleComplete, completedModules,
+    exerciseProgress, toggleExercise, resetExerciseProgress,
+  } = useAppStore()
+
   const [activeCategory, setActiveCategory] = useState(null)
-  const [finished, setFinished] = useState(completedModules.includes('wheel'))
+  // Which subcategory cards are open, for the CURRENTLY selected category only.
+  // Reset to empty every time a wedge is tapped — this is what guarantees
+  // the sub-list always opens closed (fix #1), regardless of prior state.
+  const [openSubs, setOpenSubs] = useState([])
+
+  // Derived directly from the store — never a separate local flag that could
+  // fall out of sync with completedModules.
+  const finished = completedModules.includes('wheel')
 
   const n = CATEGORIES.length
   const wedgeAngle = 360 / n
@@ -250,6 +197,11 @@ export default function Wheel() {
 
   function selectCategory(id) {
     setActiveCategory(prev => (prev === id ? null : id))
+    setOpenSubs([]) // always start the sub-list closed on any wheel tap
+  }
+
+  function toggleSub(index) {
+    setOpenSubs(prev => prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index])
   }
 
   function markSubExplored(catId) {
@@ -260,40 +212,15 @@ export default function Wheel() {
 
   function completeModule() {
     markModuleComplete('wheel')
-    setFinished(true)
   }
 
-  // ── Completion screen ──────────────────────────────────────────
-  if (finished) {
-    return (
-      <div className="max-w-2xl mx-auto pb-6">
-        <div className="bg-gradient-to-br from-[var(--forest)] to-[var(--forest-dark)] px-5 pt-10 pb-6 md:rounded-b-2xl md:mx-4 mb-6">
-          <button onClick={() => navigate('/learn')} className="flex items-center gap-2 text-white/60 hover:text-white text-sm mb-4 transition-colors">
-            <i className="ti ti-arrow-left" aria-hidden="true"></i> Back to lessons
-          </button>
-          <h1 className="font-['Cormorant_Garamond'] text-4xl text-white italic">Flavour wheel</h1>
-        </div>
-        <div className="px-4 text-center py-10">
-          <div className="w-20 h-20 rounded-full bg-[var(--forest-light)] flex items-center justify-center mx-auto mb-5">
-            <i className="ti ti-trophy text-[var(--forest)] text-3xl" aria-hidden="true"></i>
-          </div>
-          <h2 className="font-['Cormorant_Garamond'] text-3xl text-[var(--ink)] mb-3">You have a vocabulary now.</h2>
-          <p className="text-[var(--muted)] text-sm mb-8 max-w-xs mx-auto leading-relaxed">
-            Next time you taste, don't try to find every aroma. Just ask: is this Primary, Secondary, or Tertiary? That question alone will sharpen what you notice.
-          </p>
-          <div className="space-y-3 max-w-xs mx-auto">
-            <button onClick={() => { setFinished(false); setActiveCategory(null) }}
-              className="w-full py-3 rounded-xl border border-[var(--border)] text-[var(--ink-soft)] text-sm font-medium hover:border-[var(--forest)] hover:text-[var(--forest)] transition-colors">
-              Explore the wheel again
-            </button>
-            <button onClick={() => navigate('/learn')}
-              className="w-full py-3 rounded-xl bg-[var(--forest)] hover:bg-[var(--forest-dark)] text-white text-sm font-medium transition-colors">
-              Back to lessons
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+  // Fix #3 — resets the module to exactly its first-open state:
+  // no category selected, no categories marked explored, module un-completed.
+  function startOver() {
+    unmarkModuleComplete('wheel')
+    resetExerciseProgress(WHEEL_KEYS)
+    setActiveCategory(null)
+    setOpenSubs([])
   }
 
   const active = CATEGORIES.find(c => c.id === activeCategory)
@@ -311,6 +238,28 @@ export default function Wheel() {
       </div>
 
       <div className="px-4">
+
+        {/* Fix #2 — inline congratulations notice, NOT a full-page takeover.
+            Everything below stays visible and interactive. */}
+        {finished && (
+          <div className="bg-[var(--gold-light)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 mb-6 flex items-start gap-3">
+            <div className="w-9 h-9 rounded-full bg-[var(--gold)] flex items-center justify-center flex-shrink-0">
+              <i className="ti ti-check text-white text-base" aria-hidden="true"></i>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[var(--ink)] mb-1">You have a vocabulary now.</p>
+              <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-3">
+                Next time you taste, don't try to find every aroma. Just ask: is this Primary, Secondary, or Tertiary?
+              </p>
+              <button
+                onClick={startOver}
+                className="text-xs font-medium text-[var(--gold)] border border-[var(--gold)]/40 rounded-full px-3 py-1.5 hover:bg-[var(--gold)] hover:text-white transition-colors"
+              >
+                Start over
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Primary / Secondary / Tertiary framework */}
         <div className="grid grid-cols-3 gap-2 mb-6">
@@ -350,21 +299,11 @@ export default function Wheel() {
                     stroke="#F7F4EF"
                     strokeWidth="3"
                   />
-                  <text
-                    x={labelPos.x} y={labelPos.y}
-                    textAnchor="middle" dominantBaseline="middle"
-                    fontSize="13" fontWeight="500" fill="#fff"
-                    style={{ pointerEvents: 'none' }}
-                  >
+                  <text x={labelPos.x} y={labelPos.y} textAnchor="middle" dominantBaseline="middle" fontSize="13" fontWeight="500" fill="#fff" style={{ pointerEvents: 'none' }}>
                     {cat.name.split(' ')[0]}
                   </text>
                   {isExplored && (
-                    <text
-                      x={labelPos.x} y={labelPos.y + 16}
-                      textAnchor="middle" dominantBaseline="middle"
-                      fontSize="10" fill="#fff"
-                      style={{ pointerEvents: 'none' }}
-                    >
+                    <text x={labelPos.x} y={labelPos.y + 16} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill="#fff" style={{ pointerEvents: 'none' }}>
                       ✓
                     </text>
                   )}
@@ -394,8 +333,8 @@ export default function Wheel() {
                 key={i}
                 sub={sub}
                 categoryColor={active.color}
-                isExplored={!!exerciseProgress[`wheel-${active.id}`]}
-                onExplore={() => markSubExplored(active.id)}
+                isOpen={openSubs.includes(i)}
+                onToggle={() => { toggleSub(i); markSubExplored(active.id) }}
               />
             ))}
           </div>
@@ -403,8 +342,8 @@ export default function Wheel() {
           <p className="text-sm text-[var(--muted)] text-center mt-4 mb-2">Tap any wedge above to see its sub-categories, specific aromas, and where to find them in real wine.</p>
         )}
 
-        {/* Complete module */}
-        {allExplored && (
+        {/* Complete module — hidden once already finished, since the top notice takes over */}
+        {allExplored && !finished && (
           <button
             onClick={completeModule}
             className="w-full mt-6 py-3 rounded-xl text-white text-sm font-medium transition-colors bg-[var(--forest)] hover:bg-[var(--forest-dark)]"

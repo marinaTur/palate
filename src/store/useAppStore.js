@@ -9,6 +9,9 @@ export const useAppStore = create(
       markModuleComplete: (module) => set(s => ({
         completedModules: [...new Set([...s.completedModules, module])]
       })),
+      unmarkModuleComplete: (module) => set(s => ({
+        completedModules: s.completedModules.filter(m => m !== module)
+      })),
       setQuizHighScore: (score) => set(s => ({
         quizHighScore: Math.max(s.quizHighScore, score)
       })),
