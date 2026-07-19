@@ -4,6 +4,7 @@ import { useAppStore } from '../store/useAppStore'
 import { Badge } from '../components/ui'
 import Walkthrough from './learn/Walkthrough'
 import Nose from './learn/Nose'
+import Wheel from './learn/Wheel'
 
 function PageHeader({ title, sub, onBack }) {
   return (
@@ -87,7 +88,7 @@ export default function Learn() {
       <Route index element={<LearnIndex />} />
       <Route path="walkthrough" element={<Walkthrough />} />
       <Route path="nose"        element={<Nose />} />
-      <Route path="wheel"       element={<ComingSoon moduleId="wheel" />} />
+      <Route path="wheel"       element={<Wheel />} />
       <Route path="bottle"      element={<ComingSoon moduleId="bottle" />} />
       <Route path="quiz"        element={<ComingSoon moduleId="quiz" />} />
     </Routes>
