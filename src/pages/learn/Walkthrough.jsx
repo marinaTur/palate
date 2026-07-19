@@ -130,11 +130,12 @@ export default function Walkthrough() {
         <h1 className="font-['Cormorant_Garamond'] text-4xl text-white italic leading-tight">Tasting walkthrough</h1>
       </div>
 
-      {/* Inline completion notice — NOT a full-page takeover. Everything
-          below (progress bar, steps, nav) stays fully visible and interactive. */}
-      {finished && (
-        <div className="px-4 mb-4">
-          <div className="bg-[var(--gold-light)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 flex items-start gap-3">
+      <div className="px-4">
+
+        {/* Inline completion notice — NOT a full-page takeover. Everything
+            below (progress bar, steps, nav) stays fully visible and interactive. */}
+        {finished && (
+          <div className="bg-[var(--gold-light)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 mb-4 flex items-start gap-3">
             <div className="w-9 h-9 rounded-full bg-[var(--gold)] flex items-center justify-center flex-shrink-0">
               <i className="ti ti-check text-white text-base" aria-hidden="true"></i>
             </div>
@@ -151,45 +152,52 @@ export default function Walkthrough() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── Progress bar — directly below hero ── */}
-      <div className="px-4 pt-4 pb-3 bg-white border-b border-[var(--border)] mb-4">
-        {/* Coloured track */}
-        <div className="flex gap-1 mb-3">
-          {STEPS.map((_, i) => (
-            <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300"
-              style={{ background: i < currentStep ? '#264D3B' : i === currentStep ? '#B98A3D' : '#E2DDD6' }}
-            />
-          ))}
+        {/* ── Progress bar — now a consistent card, matching every other
+             block on this page in size, rounding, and inset margin. ── */}
+        <div className="bg-white border border-[var(--border)] rounded-xl px-4 pt-4 pb-3 mb-4">
+          {/* Coloured track — once finished, every segment shows green
+              regardless of which step is currently being viewed. Only
+              "Start over" (which un-completes the module) reverts this. */}
+          <div className="flex gap-1 mb-3">
+            {STEPS.map((_, i) => {
+              const isDone = finished || i < currentStep
+              return (
+                <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300"
+                  style={{ background: isDone ? '#264D3B' : i === currentStep ? '#B98A3D' : '#E2DDD6' }}
+                />
+              )
+            })}
+          </div>
+          {/* Step circles + labels */}
+          <div className="flex">
+            {STEPS.map((s, i) => {
+              const isDone = finished || i < currentStep
+              return (
+                <button key={s.id}
+                  onClick={() => { setCurrentStep(i); setExpanded(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                  className="flex-1 flex flex-col items-center gap-1">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
+                    isDone ? 'bg-[var(--forest)]' : i === currentStep ? 'bg-[var(--gold)]' : 'bg-[var(--border)]'
+                  }`}>
+                    {isDone
+                      ? <i className="ti ti-check text-white" style={{ fontSize: 10 }} aria-hidden="true"></i>
+                      : <span className="font-['Cormorant_Garamond'] text-white leading-none" style={{ fontSize: 11 }}>
+                          {['I','II','III','IV','V'][i]}
+                        </span>
+                    }
+                  </div>
+                  <span style={{ fontSize: 9, letterSpacing: '0.04em',
+                    color: isDone ? '#264D3B' : i === currentStep ? '#B98A3D' : '#7A6E64' }}>
+                    {s.phase}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </div>
-        {/* Step circles + labels */}
-        <div className="flex">
-          {STEPS.map((s, i) => (
-            <button key={s.id}
-              onClick={() => { setCurrentStep(i); setExpanded(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-              className="flex-1 flex flex-col items-center gap-1">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                i < currentStep ? 'bg-[var(--forest)]' : i === currentStep ? 'bg-[var(--gold)]' : 'bg-[var(--border)]'
-              }`}>
-                {i < currentStep
-                  ? <i className="ti ti-check text-white" style={{ fontSize: 10 }} aria-hidden="true"></i>
-                  : <span className="font-['Cormorant_Garamond'] text-white leading-none" style={{ fontSize: 11 }}>
-                      {['I','II','III','IV','V'][i]}
-                    </span>
-                }
-              </div>
-              <span style={{ fontSize: 9, letterSpacing: '0.04em',
-                color: i === currentStep ? '#B98A3D' : i < currentStep ? '#264D3B' : '#7A6E64' }}>
-                {s.phase}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
 
-      <div className="px-4">
         {/* Step counter */}
         <p className="text-xs tracking-[0.09em] text-[var(--muted)] uppercase mb-4">
           Step {currentStep + 1} of {STEPS.length}
