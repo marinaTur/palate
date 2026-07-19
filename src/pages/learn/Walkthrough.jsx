@@ -79,11 +79,14 @@ const STEPS = [
 
 export default function Walkthrough() {
   const navigate = useNavigate()
-  const { markModuleComplete, completedModules } = useAppStore()
+  const { markModuleComplete, unmarkModuleComplete, completedModules } = useAppStore()
 
   const [currentStep, setCurrentStep] = useState(0)
   const [expanded, setExpanded] = useState(false)
-  const [finished, setFinished] = useState(completedModules.includes('walkthrough'))
+
+  // Derived directly from the store — never a separate local flag that could
+  // fall out of sync with completedModules (same fix applied to Wheel.jsx).
+  const finished = completedModules.includes('walkthrough')
 
   const step = STEPS[currentStep]
   const isLast = currentStep === STEPS.length - 1
@@ -92,7 +95,6 @@ export default function Walkthrough() {
   function next() {
     if (isLast) {
       markModuleComplete('walkthrough')
-      setFinished(true)
     } else {
       setCurrentStep(s => s + 1)
       setExpanded(false)
@@ -108,44 +110,15 @@ export default function Walkthrough() {
     }
   }
 
-  // ── Completion screen ──────────────────────────────────────────
-  if (finished) {
-    return (
-      <div className="max-w-2xl mx-auto pb-6">
-        <div className="bg-gradient-to-br from-[var(--forest)] to-[var(--forest-dark)] px-5 pt-10 pb-6 md:rounded-b-2xl md:mx-4 mb-6">
-          <button onClick={() => navigate('/learn')} className="flex items-center gap-2 text-white/60 hover:text-white text-sm mb-4 transition-colors">
-            <i className="ti ti-arrow-left" aria-hidden="true"></i> Back to lessons
-          </button>
-          <h1 className="font-['Cormorant_Garamond'] text-4xl text-white italic">Tasting walkthrough</h1>
-        </div>
-        <div className="px-4 text-center py-10">
-          <div className="w-20 h-20 rounded-full bg-[var(--forest-light)] flex items-center justify-center mx-auto mb-5">
-            <i className="ti ti-trophy text-[var(--forest)] text-3xl" aria-hidden="true"></i>
-          </div>
-          <h2 className="font-['Cormorant_Garamond'] text-3xl text-[var(--ink)] mb-3">Module complete</h2>
-          <p className="text-[var(--muted)] text-sm mb-8 max-w-xs mx-auto leading-relaxed">
-            You now know the full 5-step tasting ritual. The best way to deepen it is to open a bottle and do it for real.
-          </p>
-          <div className="space-y-3 max-w-xs mx-auto">
-            <button onClick={() => { setFinished(false); setCurrentStep(0); setExpanded(false) }}
-              className="w-full py-3 rounded-xl border border-[var(--border)] text-[var(--ink-soft)] text-sm font-medium hover:border-[var(--forest)] hover:text-[var(--forest)] transition-colors">
-              Go through it again
-            </button>
-            <button onClick={() => navigate('/learn')}
-              className="w-full py-3 rounded-xl bg-[var(--forest)] hover:bg-[var(--forest-dark)] text-white text-sm font-medium transition-colors">
-              Back to lessons
-            </button>
-            <button onClick={() => navigate('/planner')}
-              className="w-full py-3 rounded-xl bg-[var(--burgundy)] hover:bg-[var(--burgundy-dark)] text-white text-sm font-medium transition-colors">
-              Plan a tasting ✦
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+  // Resets the module to exactly its first-open state — same pattern as
+  // Wheel.jsx's "Start over": un-completes the module and returns to step 1.
+  function startOver() {
+    unmarkModuleComplete('walkthrough')
+    setCurrentStep(0)
+    setExpanded(false)
   }
 
-  // ── Main walkthrough ────────────────────────────────────────────
+  // ── Main walkthrough — always rendered, never swapped for a separate page ──
   return (
     <div className="max-w-2xl mx-auto pb-6">
       {/* Hero */}
@@ -156,6 +129,30 @@ export default function Walkthrough() {
         <p className="text-xs tracking-[0.1em] text-white/45 uppercase mb-2">The 5-step ritual</p>
         <h1 className="font-['Cormorant_Garamond'] text-4xl text-white italic leading-tight">Tasting walkthrough</h1>
       </div>
+
+      {/* Inline completion notice — NOT a full-page takeover. Everything
+          below (progress bar, steps, nav) stays fully visible and interactive. */}
+      {finished && (
+        <div className="px-4 mb-4">
+          <div className="bg-[var(--gold-light)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 flex items-start gap-3">
+            <div className="w-9 h-9 rounded-full bg-[var(--gold)] flex items-center justify-center flex-shrink-0">
+              <i className="ti ti-check text-white text-base" aria-hidden="true"></i>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[var(--ink)] mb-1">Module complete.</p>
+              <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-3">
+                You know the full 5-step ritual. The best way to deepen it now is to open a bottle and do it for real.
+              </p>
+              <button
+                onClick={startOver}
+                className="text-xs font-medium text-[var(--gold)] border border-[var(--gold)]/40 rounded-full px-3 py-1.5 hover:bg-[var(--gold)] hover:text-white transition-colors"
+              >
+                Start over
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Progress bar — directly below hero ── */}
       <div className="px-4 pt-4 pb-3 bg-white border-b border-[var(--border)] mb-4">
