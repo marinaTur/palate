@@ -1,17 +1,19 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useState } from 'react'
 import { useAppStore } from '../store/useAppStore'
-import { Badge } from '../components/ui'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
 import vineyardImg from '../assets/vineyard.jpg'
 
 // ── Data ────────────────────────────────────────────────────────
-const MODULES = [
-  { id: 'walkthrough', to: '/learn/walkthrough', label: 'Tasting walkthrough', sub: 'The 5-step ritual, plain language.', duration: '5 min' },
-  { id: 'nose',        to: '/learn/nose',         label: 'Train your nose',      sub: '30-day programme, 5 min a day.',   duration: '30 days' },
-  { id: 'wheel',       to: '/learn/wheel',        label: 'Flavour wheel',        sub: 'Explore aromas interactively.',     duration: '5 min' },
-  { id: 'bottle',      to: '/learn/bottle',       label: 'First bottle guide',   sub: 'One wine, guided from start to finish.', duration: '8 min', badge: 'New' },
-  { id: 'quiz',        to: '/learn/quiz',         label: 'Quick quiz',           sub: 'Test what you know — 4 questions.', duration: '4 min' },
+// Quiz is intentionally excluded from this list — it's treated as its own
+// standalone feature (more "entertainment" than curriculum), not one of
+// the sequential lessons. See its own dashboard plate below instead.
+const LESSON_MODULES = [
+  { id: 'walkthrough', to: '/learn/walkthrough' },
+  { id: 'nose',        to: '/learn/nose' },
+  { id: 'wheel',        to: '/learn/wheel' },
+  { id: 'bottle',       to: '/learn/bottle' },
 ]
 
 const TIPS = [
@@ -29,16 +31,18 @@ const TIPS = [
 export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { completedModules, journalEntries } = useAppStore()
+  const { completedModules, journalEntries, quizHighScore } = useAppStore()
 
-  const total = MODULES.length
-  const done  = completedModules.length
+  const [shareCopied, setShareCopied] = useState(false)
+
+  const lessonsTotal = LESSON_MODULES.length
+  const lessonsDone  = LESSON_MODULES.filter(m => completedModules.includes(m.id)).length
 
   // Tip of the day — stable per day, not random on every render
   const todayTip = TIPS[new Date().getDate() % TIPS.length]
 
   // Hero copy changes after first lesson
-  const hasStarted = done > 0
+  const hasStarted = lessonsDone > 0
   const heroEyebrow = '✦ Your pocket sommelier school'
   const heroHeading = hasStarted ? 'Welcome back.' : 'Learn to taste wine with confidence.'
 
@@ -47,8 +51,28 @@ export default function Home() {
     ? 'Start recording your tastings'
     : `${journalEntries.length} tasting ${journalEntries.length === 1 ? 'note' : 'notes'}`
 
-  // "Active" is purely a visual cue for where to continue — it does not gate access.
-  const activeIdx = MODULES.findIndex(m => !completedModules.includes(m.id))
+  // Quiz subtitle — shows a real score once the Quiz module has been played,
+  // reusing the existing quizHighScore field already in the store.
+  const quizSub = quizHighScore > 0 ? `Best score: ${quizHighScore}/4` : 'Test what you know'
+
+  async function handleShare() {
+    const shareData = {
+      title: 'Palate — Your Pocket Sommelier School',
+      text: 'Learn to taste wine with confidence — practical lessons, interactive tools, and personal tasting notes.',
+      url: window.location.origin,
+    }
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (err) {
+        // User cancelled the native share sheet — nothing to do.
+      }
+    } else if (navigator.clipboard) {
+      await navigator.clipboard.writeText(shareData.url)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    }
+  }
 
   return (
     <div className="max-w-3xl mx-auto pb-8">
@@ -68,10 +92,19 @@ export default function Home() {
         {/* Hero content */}
         <div className="relative z-10 px-5 pt-8 pb-5 md:pt-12 md:pb-6">
 
-          {/* Top row: logo + language switcher — mobile only */}
+          {/* Top row: logo + share + language switcher — mobile only */}
           <div className="flex items-center justify-between mb-3 md:hidden">
             <span className="font-['Cormorant_Garamond'] text-xl text-white tracking-tight">Palate</span>
-            <LanguageSwitcher dark />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleShare}
+                aria-label="Share Palate"
+                className="w-7 h-7 rounded-full bg-white/12 hover:bg-white/20 flex items-center justify-center transition-colors flex-shrink-0"
+              >
+                <i className={`ti ${shareCopied ? 'ti-check' : 'ti-share-2'} text-white text-sm`} aria-hidden="true"></i>
+              </button>
+              <LanguageSwitcher dark />
+            </div>
           </div>
 
           {/* Eyebrow */}
@@ -88,119 +121,60 @@ export default function Home() {
 
       <div className="px-4">
 
-        {/* ── CTA cards — moved below the hero, onto the cream background ── */}
+        {/* ── Dashboard — four equal-weight plates ────────────── */}
         <div className="grid grid-cols-2 gap-3 pt-5 mb-6">
+
+          {/* Plan a tasting */}
           <Link to="/planner"
-            className="flex items-center gap-3 bg-[var(--burgundy)] hover:bg-[var(--burgundy-dark)] transition-colors rounded-xl px-4 py-3 group">
-            <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
+            className="flex flex-col bg-[var(--burgundy)] hover:bg-[var(--burgundy-dark)] transition-colors rounded-xl px-4 py-3.5 min-h-[104px]">
+            <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center mb-2">
               <i className="ti ti-wine text-white text-sm" aria-hidden="true"></i>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm text-white leading-tight">Plan a tasting</p>
-              <p className="text-xs text-white/55 mt-0.5">Wines • Food • Guests</p>
-            </div>
-            <i className="ti ti-chevron-right text-white/40 text-sm flex-shrink-0" aria-hidden="true"></i>
+            <p className="font-medium text-sm text-white leading-tight">Plan a tasting</p>
+            <p className="text-xs text-white/55 mt-0.5">Wines · Food · Guests</p>
           </Link>
 
+          {/* My journal */}
           <Link to="/journal"
-            className="flex items-center gap-3 bg-white border border-[var(--border)] hover:border-[var(--forest)] transition-colors rounded-xl px-4 py-3">
-            <div className="w-8 h-8 rounded-full bg-[var(--forest-light)] flex items-center justify-center flex-shrink-0">
+            className="flex flex-col bg-white border border-[var(--border)] hover:border-[var(--forest)] transition-colors rounded-xl px-4 py-3.5 min-h-[104px]">
+            <div className="w-8 h-8 rounded-lg bg-[var(--forest-light)] flex items-center justify-center mb-2">
               <i className="ti ti-notebook text-[var(--forest)] text-sm" aria-hidden="true"></i>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm text-[var(--ink)] leading-tight">My journal</p>
-              <p className="text-xs text-[var(--muted)] mt-0.5 truncate">{journalSub}</p>
+            <p className="font-medium text-sm text-[var(--ink)] leading-tight">My journal</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5 truncate">{journalSub}</p>
+          </Link>
+
+          {/* Lessons — consolidated summary tile, replaces the old full list */}
+          <Link to="/learn"
+            className="flex flex-col bg-white border border-[var(--forest)]/25 hover:border-[var(--forest)]/60 transition-colors rounded-xl px-4 py-3.5 min-h-[104px]">
+            <div className="w-8 h-8 rounded-lg bg-[var(--forest-light)] flex items-center justify-center mb-2">
+              <i className="ti ti-book text-[var(--forest)] text-sm" aria-hidden="true"></i>
             </div>
-            <i className="ti ti-chevron-right text-[var(--border)] text-sm flex-shrink-0" aria-hidden="true"></i>
+            <p className="font-medium text-sm text-[var(--ink)] leading-tight">Lessons</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5">{lessonsDone} of {lessonsTotal} complete</p>
+            <div className="flex gap-1 mt-auto pt-2">
+              {LESSON_MODULES.map(m => (
+                <div key={m.id} className="flex-1 h-0.5 rounded-full transition-all duration-300"
+                  style={{ background: completedModules.includes(m.id) ? '#264D3B' : '#E2DDD6' }} />
+              ))}
+            </div>
           </Link>
-        </div>
 
-        {/* ── Continue learning ───────────────────────────────── */}
-        <div className="flex items-baseline justify-between mb-1">
-          <h2 className="font-['Cormorant_Garamond'] text-2xl text-[var(--ink)]">Continue learning</h2>
-          <Link to="/learn" className="text-xs text-[var(--muted)] hover:text-[var(--forest)] transition-colors flex items-center gap-1">
-            View all <i className="ti ti-chevron-right text-xs" aria-hidden="true"></i>
+          {/* Quiz — separated out as its own standalone destination */}
+          <Link to="/learn/quiz"
+            className="flex flex-col bg-white border border-[var(--gold)]/35 hover:border-[var(--gold)]/70 transition-colors rounded-xl px-4 py-3.5 min-h-[104px]">
+            <div className="w-8 h-8 rounded-lg bg-[var(--gold-light)] flex items-center justify-center mb-2">
+              <i className="ti ti-trophy text-[var(--gold)] text-sm" aria-hidden="true"></i>
+            </div>
+            <p className="font-medium text-sm text-[var(--ink)] leading-tight">Quiz</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5">{quizSub}</p>
           </Link>
-        </div>
 
-        {/* Progress text */}
-        <p className="text-xs text-[var(--muted)] mb-2">
-          {done} of {total} {done === 1 ? 'lesson' : 'lessons'} complete
-        </p>
-
-        {/* Progress bar — 5 segments */}
-        <div className="flex gap-1 mb-5">
-          {MODULES.map((m) => (
-            <div key={m.id} className="flex-1 h-0.5 rounded-full transition-all duration-500"
-              style={{ background: completedModules.includes(m.id) ? '#264D3B' : '#E2DDD6' }}
-            />
-          ))}
-        </div>
-
-        {/* Lesson list — every item is unlocked and tappable from the start */}
-        <div className="space-y-2">
-          {MODULES.map((m, idx) => {
-            const isDone   = completedModules.includes(m.id)
-            const isActive = idx === activeIdx // visual "continue here" cue only — never gates access
-
-            return (
-              <div
-                key={m.id}
-                onClick={() => navigate(m.to)}
-                className={`flex items-center gap-4 rounded-xl px-4 py-3.5 cursor-pointer transition-colors bg-white ${
-                  isActive
-                    ? 'border border-[var(--forest)]/30 hover:border-[var(--forest)]/60'
-                    : 'border border-[var(--border)] hover:border-[var(--forest)]'
-                }`}
-              >
-                {/* Roman numeral */}
-                <span className={`font-['Cormorant_Garamond'] text-xl w-7 text-center leading-none flex-shrink-0 ${
-                  isDone || isActive ? 'text-[var(--forest)]' : 'text-[var(--border)]'
-                }`}>
-                  {['I','II','III','IV','V'][idx]}
-                </span>
-
-                {/* Text */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className={`text-sm font-medium ${isDone || isActive ? 'text-[var(--ink)]' : 'text-[var(--ink-soft)]'}`}>
-                      {m.label}
-                    </p>
-                    {m.badge && !isDone && (
-                      <span className="text-xs bg-[var(--burgundy)] text-white px-1.5 py-0.5 rounded-md font-medium" style={{ fontSize: 10 }}>
-                        {m.badge}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-[var(--muted)] mt-0.5 truncate">{m.sub}</p>
-                </div>
-
-                {/* Right side */}
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  {/* Duration */}
-                  <span className="text-xs text-[var(--muted)] bg-[var(--border-soft)] px-2 py-0.5 rounded-full">
-                    {m.duration}
-                  </span>
-
-                  {/* State indicator — no lock state; everything is reachable */}
-                  {isDone ? (
-                    <i className="ti ti-check text-[var(--forest)] text-sm" aria-hidden="true"></i>
-                  ) : isActive ? (
-                    <span className="text-xs font-medium text-[var(--forest)] flex items-center gap-1">
-                      Continue <i className="ti ti-arrow-right text-xs" aria-hidden="true"></i>
-                    </span>
-                  ) : (
-                    <i className="ti ti-chevron-right text-[var(--border)] text-sm" aria-hidden="true"></i>
-                  )}
-                </div>
-              </div>
-            )
-          })}
         </div>
       </div>
 
       {/* ── Tip of the day ──────────────────────────────────────── */}
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-1">
         <div
           onClick={() => navigate('/learn')}
           className="flex items-start gap-4 bg-[var(--gold-light)] border border-[var(--gold)]/20 rounded-xl px-4 py-4 cursor-pointer hover:border-[var(--gold)]/40 transition-colors group"
