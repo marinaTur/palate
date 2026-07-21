@@ -5,6 +5,7 @@ import { Badge } from '../components/ui'
 import Walkthrough from './learn/Walkthrough'
 import Nose from './learn/Nose'
 import Wheel from './learn/Wheel'
+import Quiz from './learn/Quiz'
 
 function PageHeader({ title, sub, onBack }) {
   return (
@@ -93,7 +94,7 @@ export default function Learn() {
       <Route path="nose"        element={<Nose />} />
       <Route path="wheel"       element={<Wheel />} />
       <Route path="bottle"      element={<ComingSoon moduleId="bottle" />} />
-      <Route path="quiz"        element={<ComingSoon moduleId="quiz" />} />
+      <Route path="quiz"        element={<Quiz />} />
     </Routes>
   )
 }
