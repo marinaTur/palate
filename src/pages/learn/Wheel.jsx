@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../store/useAppStore'
 
@@ -99,23 +99,42 @@ const CATEGORIES = [
 
 const WHEEL_KEYS = CATEGORIES.map(c => `wheel-${c.id}`)
 
-// ── Wheel geometry — 6 equal wedges ─────────────────────────────
+// ── Wheel geometry — two concentric rings ───────────────────────
+// Inner ring = 6 families (equal wedges). Outer ring = each family's
+// own aromas, subdividing that family's angular span proportionally —
+// so a family with 5 aromas gets thinner outer slices than one with 2.
+// This mirrors the real, printed wine aroma wheels this module is
+// modeled on (inner tier = broad family, outer tier = specific aroma).
 
 function polarToCartesian(cx, cy, r, angleDeg) {
   const a = ((angleDeg - 90) * Math.PI) / 180
   return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }
 }
 
-function wedgePath(cx, cy, r, startAngle, endAngle) {
-  const start = polarToCartesian(cx, cy, r, endAngle)
-  const end = polarToCartesian(cx, cy, r, startAngle)
-  const largeArc = endAngle - startAngle <= 180 ? 0 : 1
-  return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y} Z`
+// Annular (donut-slice) wedge, from rInner to rOuter, startAngle to endAngle.
+function annularWedgePath(cx, cy, rInner, rOuter, startAngle, endAngle) {
+  const p1 = polarToCartesian(cx, cy, rOuter, startAngle)
+  const p2 = polarToCartesian(cx, cy, rOuter, endAngle)
+  const p3 = polarToCartesian(cx, cy, rInner, endAngle)
+  const p4 = polarToCartesian(cx, cy, rInner, startAngle)
+  const largeArc = endAngle - startAngle > 180 ? 1 : 0
+  return `M ${p1.x} ${p1.y} A ${rOuter} ${rOuter} 0 ${largeArc} 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${rInner} ${rInner} 0 ${largeArc} 0 ${p4.x} ${p4.y} Z`
 }
 
 function labelPosition(cx, cy, r, startAngle, endAngle) {
   const mid = (startAngle + endAngle) / 2
-  return polarToCartesian(cx, cy, r * 0.68, mid)
+  return polarToCartesian(cx, cy, r, mid)
+}
+
+// Lightens a hex color toward white by `amt` (0–1) — used for the outer
+// ring so each aroma reads as "belonging to" its family's color.
+function lightenColor(hex, amt) {
+  const n = parseInt(hex.slice(1), 16)
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
+  r = Math.round(r + (255 - r) * amt)
+  g = Math.round(g + (255 - g) * amt)
+  b = Math.round(b + (255 - b) * amt)
+  return `rgb(${r}, ${g}, ${b})`
 }
 
 // ── Sub-components ───────────────────────────────────────────────
@@ -129,8 +148,8 @@ function OriginBadge({ origin }) {
   )
 }
 
-// Fully controlled now — no internal state — so it can never carry stale
-// "open" state across a category switch (fix for issue #1).
+// Controlled by the parent (isOpen/onToggle as props, no internal state) so
+// the parent's openSubs array stays the single source of truth.
 function SubcategoryCard({ sub, categoryColor, isOpen, onToggle }) {
   return (
     <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden mb-2">
@@ -176,28 +195,37 @@ export default function Wheel() {
   } = useAppStore()
 
   const [activeCategory, setActiveCategory] = useState(null)
-  // Which subcategory cards are open, for the CURRENTLY selected category only.
-  // Reset to empty every time a wedge is tapped — this is what guarantees
-  // the sub-list always opens closed (fix #1), regardless of prior state.
   const [openSubs, setOpenSubs] = useState([])
+  const detailRef = useRef(null)
 
-  // Derived directly from the store — never a separate local flag that could
-  // fall out of sync with completedModules.
   const finished = completedModules.includes('wheel')
 
   const n = CATEGORIES.length
   const wedgeAngle = 360 / n
-  const size = 300
+  const size = 320
   const cx = size / 2
   const cy = size / 2
-  const r = size / 2 - 4
+  const rInner0 = 50
+  const rInner1 = 112
+  const rOuter0 = 116
+  const rOuter1 = 154
 
   const exploredCount = CATEGORIES.filter(c => exerciseProgress[`wheel-${c.id}`]).length
   const allExplored = exploredCount === CATEGORIES.length
 
   function selectCategory(id) {
     setActiveCategory(prev => (prev === id ? null : id))
-    setOpenSubs([]) // always start the sub-list closed on any wheel tap
+    setOpenSubs([])
+  }
+
+  function selectOuterWedge(catId, subIndex) {
+    const alreadyFocused = activeCategory === catId && openSubs.length === 1 && openSubs[0] === subIndex
+    setActiveCategory(catId)
+    setOpenSubs(alreadyFocused ? [] : [subIndex])
+    if (!alreadyFocused) markSubExplored(catId)
+    requestAnimationFrame(() => {
+      detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
   }
 
   function toggleSub(index) {
@@ -214,8 +242,9 @@ export default function Wheel() {
     markModuleComplete('wheel')
   }
 
-  // Fix #3 — resets the module to exactly its first-open state:
-  // no category selected, no categories marked explored, module un-completed.
+  // Resets to exactly first-open state: no category selected, no categories
+  // marked explored, module un-completed. Same "Start over" behavior/name as
+  // Walkthrough and Nose.
   function startOver() {
     unmarkModuleComplete('wheel')
     resetExerciseProgress(WHEEL_KEYS)
@@ -224,11 +253,11 @@ export default function Wheel() {
   }
 
   const active = CATEGORIES.find(c => c.id === activeCategory)
+  const focusedSub = active && openSubs.length === 1 ? active.subcategories[openSubs[0]] : null
 
   return (
     <div className="max-w-2xl mx-auto pb-8">
 
-      {/* Hero — compact, matching Home/Learn proportions */}
       <div className="bg-gradient-to-br from-[var(--forest)] to-[var(--forest-dark)] px-5 pt-8 pb-5 md:rounded-b-2xl md:mx-4 mb-6">
         <button onClick={() => navigate('/learn')} className="flex items-center gap-2 text-white/60 hover:text-white text-sm mb-3 transition-colors">
           <i className="ti ti-arrow-left" aria-hidden="true"></i> Back to lessons
@@ -239,8 +268,8 @@ export default function Wheel() {
 
       <div className="px-4">
 
-        {/* Fix #2 — inline congratulations notice, NOT a full-page takeover.
-            Everything below stays visible and interactive. */}
+        {/* Inline notice, not a full-page takeover — matches Walkthrough and
+            Nose. Everything below stays visible and interactive. */}
         {finished && (
           <div className="bg-[var(--gold-light)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 mb-6 flex items-start gap-3">
             <div className="w-9 h-9 rounded-full bg-[var(--gold)] flex items-center justify-center flex-shrink-0">
@@ -261,7 +290,6 @@ export default function Wheel() {
           </div>
         )}
 
-        {/* Primary / Secondary / Tertiary framework */}
         <div className="grid grid-cols-3 gap-2 mb-6">
           {Object.entries(ORIGIN_INFO).map(([key, info]) => (
             <div key={key} className="rounded-xl px-3 py-3" style={{ background: info.bg }}>
@@ -271,7 +299,6 @@ export default function Wheel() {
           ))}
         </div>
 
-        {/* Progress */}
         <p className="text-xs text-[var(--muted)] mb-2">{exploredCount} of {CATEGORIES.length} categories explored</p>
         <div className="flex gap-1 mb-6">
           {CATEGORIES.map(c => (
@@ -280,69 +307,94 @@ export default function Wheel() {
           ))}
         </div>
 
-        {/* The wheel */}
         <div className="flex justify-center mb-2">
-          <svg viewBox={`0 0 ${size} ${size}`} width="260" height="260" role="img" aria-label="Interactive flavour wheel with six categories">
-            <title>Flavour wheel — tap a category to explore</title>
+          <svg viewBox={`0 0 ${size} ${size}`} width="290" height="290" role="img" aria-label="Interactive two-ring flavour wheel: inner ring is aroma families, outer ring is specific aromas within each family">
+            <title>Flavour wheel — tap the inner ring for a family, or the outer ring to jump straight to one specific aroma</title>
             {CATEGORIES.map((cat, i) => {
               const startAngle = i * wedgeAngle
               const endAngle = (i + 1) * wedgeAngle
               const isActive = activeCategory === cat.id
               const isExplored = !!exerciseProgress[`wheel-${cat.id}`]
-              const labelPos = labelPosition(cx, cy, r, startAngle, endAngle)
+              const innerLabelPos = labelPosition(cx, cy, (rInner0 + rInner1) / 2, startAngle, endAngle)
+              const subAngle = (endAngle - startAngle) / cat.subcategories.length
               return (
-                <g key={cat.id} onClick={() => selectCategory(cat.id)} style={{ cursor: 'pointer' }}>
+                <g key={cat.id}>
                   <path
-                    d={wedgePath(cx, cy, r, startAngle, endAngle)}
+                    className="wheel-wedge"
+                    onClick={() => selectCategory(cat.id)}
+                    d={annularWedgePath(cx, cy, rInner0, rInner1, startAngle, endAngle)}
                     fill={cat.color}
-                    opacity={isActive ? 1 : isExplored ? 0.85 : 0.65}
-                    stroke="#F7F4EF"
-                    strokeWidth="3"
+                    opacity={isActive ? 1 : isExplored ? 0.9 : 0.65}
+                    stroke={isActive ? 'var(--gold)' : '#F7F4EF'}
+                    strokeWidth={isActive ? 3 : 2}
+                    style={{ cursor: 'pointer', transition: 'opacity 0.25s ease, stroke-width 0.25s ease' }}
                   />
-                  <text x={labelPos.x} y={labelPos.y} textAnchor="middle" dominantBaseline="middle" fontSize="13" fontWeight="500" fill="#fff" style={{ pointerEvents: 'none' }}>
+                  <text x={innerLabelPos.x} y={innerLabelPos.y} textAnchor="middle" dominantBaseline="middle" fontSize="12" fontWeight="500" fill="#fff" style={{ pointerEvents: 'none' }}>
                     {cat.name.split(' ')[0]}
                   </text>
                   {isExplored && (
-                    <text x={labelPos.x} y={labelPos.y + 16} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill="#fff" style={{ pointerEvents: 'none' }}>
+                    <text x={innerLabelPos.x} y={innerLabelPos.y + 14} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#fff" style={{ pointerEvents: 'none' }}>
                       ✓
                     </text>
                   )}
+                  {cat.subcategories.map((sub, j) => {
+                    const s0 = startAngle + j * subAngle
+                    const s1 = startAngle + (j + 1) * subAngle
+                    const isSubFocused = isActive && openSubs.length === 1 && openSubs[0] === j
+                    return (
+                      <path
+                        key={j}
+                        className="wheel-wedge"
+                        onClick={() => selectOuterWedge(cat.id, j)}
+                        d={annularWedgePath(cx, cy, rOuter0, rOuter1, s0, s1)}
+                        fill={lightenColor(cat.color, 0.45)}
+                        opacity={isSubFocused ? 1 : isActive ? 0.85 : activeCategory ? 0.3 : 0.75}
+                        stroke={isSubFocused ? 'var(--gold)' : '#F7F4EF'}
+                        strokeWidth={isSubFocused ? 2.5 : 1.5}
+                        style={{ cursor: 'pointer', transition: 'opacity 0.25s ease, stroke-width 0.25s ease' }}
+                      />
+                    )
+                  })}
                 </g>
               )
             })}
-            <circle cx={cx} cy={cy} r={size * 0.16} fill="#F7F4EF" stroke="var(--border)" strokeWidth="1" />
-            <text x={cx} y={cy - 4} textAnchor="middle" fontSize="11" fontWeight="500" fill="var(--ink)">Tap a</text>
-            <text x={cx} y={cy + 10} textAnchor="middle" fontSize="11" fontWeight="500" fill="var(--ink)">category</text>
+            <circle cx={cx} cy={cy} r={rInner0 - 6} fill="#F7F4EF" stroke="var(--border)" strokeWidth="1" />
+            <text x={cx} y={cy - 6} textAnchor="middle" fontSize="12" fontWeight="500" fill="var(--ink)">
+              {active ? active.name.split(' ')[0] : 'Tap a'}
+            </text>
+            <text x={cx} y={cy + 10} textAnchor="middle" fontSize="12" fontWeight="500" fill="var(--ink)">
+              {active ? (focusedSub ? focusedSub.name : `${active.subcategories.length} aromas`) : 'slice'}
+            </text>
           </svg>
         </div>
 
-        {/* Selected category detail */}
-        {active ? (
-          <div className="mt-4">
-            <div className="flex items-center gap-2.5 mb-2">
-              <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: active.color }} />
-              <h2 className="font-['Cormorant_Garamond'] text-2xl text-[var(--ink)]">{active.name}</h2>
-              <div className="flex gap-1 ml-auto">
-                {active.origins.map(o => <OriginBadge key={o} origin={o} />)}
+        <div ref={detailRef}>
+          {active ? (
+            <div className="mt-4">
+              <div className="flex items-center gap-2.5 mb-2">
+                <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: active.color }} />
+                <h2 className="font-['Cormorant_Garamond'] text-2xl text-[var(--ink)]">{active.name}</h2>
+                <div className="flex gap-1 ml-auto">
+                  {active.origins.map(o => <OriginBadge key={o} origin={o} />)}
+                </div>
               </div>
+              <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-4">{active.intro}</p>
+
+              {active.subcategories.map((sub, i) => (
+                <SubcategoryCard
+                  key={i}
+                  sub={sub}
+                  categoryColor={active.color}
+                  isOpen={openSubs.includes(i)}
+                  onToggle={() => { toggleSub(i); markSubExplored(active.id) }}
+                />
+              ))}
             </div>
-            <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-4">{active.intro}</p>
+          ) : (
+            <p className="text-sm text-[var(--muted)] text-center mt-4 mb-2">Tap the inner ring for a family, or the outer ring to jump straight to one specific aroma and where to find it in real wine.</p>
+          )}
+        </div>
 
-            {active.subcategories.map((sub, i) => (
-              <SubcategoryCard
-                key={i}
-                sub={sub}
-                categoryColor={active.color}
-                isOpen={openSubs.includes(i)}
-                onToggle={() => { toggleSub(i); markSubExplored(active.id) }}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-[var(--muted)] text-center mt-4 mb-2">Tap any wedge above to see its sub-categories, specific aromas, and where to find them in real wine.</p>
-        )}
-
-        {/* Complete module — hidden once already finished, since the top notice takes over */}
         {allExplored && !finished && (
           <button
             onClick={completeModule}

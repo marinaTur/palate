@@ -56,3 +56,8 @@ h1, h2, h3 {
   nav, header, .print\:hidden { display: none !important; }
   body { background: white; }
 }
+
+/* Flavour wheel hover feedback (desktop). Needs !important: wedge opacity is
+   set inline via SVG attributes for per-wedge state, which a plain class
+   rule can't override on its own. */
+.wheel-wedge:hover { opacity: 1 !important; }
