@@ -128,9 +128,9 @@ export default function Home() {
           <Link to="/planner"
             className="flex flex-col bg-[var(--burgundy)] hover:bg-[var(--burgundy-dark)] transition-colors rounded-xl px-4 py-3.5 min-h-[104px]">
             <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center mb-2">
-              <i className="ti ti-wine text-white text-sm" aria-hidden="true"></i>
+              <i className="ti ti-glass text-white text-sm" aria-hidden="true"></i>
             </div>
-            <p className="font-medium text-sm text-white leading-tight">Plan a tasting</p>
+            <p className="font-medium text-sm text-white leading-tight">Plan your tasting</p>
             <p className="text-xs text-white/55 mt-0.5">Wines · Food · Guests</p>
           </Link>
 
