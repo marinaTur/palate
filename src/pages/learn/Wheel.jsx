@@ -341,18 +341,32 @@ export default function Wheel() {
                     const s0 = startAngle + j * subAngle
                     const s1 = startAngle + (j + 1) * subAngle
                     const isSubFocused = isActive && openSubs.length === 1 && openSubs[0] === j
+                    const subLabelPos = labelPosition(cx, cy, (rOuter0 + rOuter1) / 2, s0, s1)
                     return (
-                      <path
-                        key={j}
-                        className="wheel-wedge"
-                        onClick={() => selectOuterWedge(cat.id, j)}
-                        d={annularWedgePath(cx, cy, rOuter0, rOuter1, s0, s1)}
-                        fill={lightenColor(cat.color, 0.45)}
-                        opacity={isSubFocused ? 1 : isActive ? 0.85 : activeCategory ? 0.3 : 0.75}
-                        stroke={isSubFocused ? 'var(--gold)' : '#F7F4EF'}
-                        strokeWidth={isSubFocused ? 2.5 : 1.5}
-                        style={{ cursor: 'pointer', transition: 'opacity 0.25s ease, stroke-width 0.25s ease' }}
-                      />
+                      <g key={j}>
+                        <path
+                          className="wheel-wedge"
+                          onClick={() => selectOuterWedge(cat.id, j)}
+                          d={annularWedgePath(cx, cy, rOuter0, rOuter1, s0, s1)}
+                          fill={lightenColor(cat.color, 0.45)}
+                          opacity={isSubFocused ? 1 : isActive ? 0.85 : activeCategory ? 0.3 : 0.75}
+                          stroke={isSubFocused ? 'var(--gold)' : '#F7F4EF'}
+                          strokeWidth={isSubFocused ? 2.5 : 1.5}
+                          style={{ cursor: 'pointer', transition: 'opacity 0.25s ease, stroke-width 0.25s ease' }}
+                        />
+                        <text
+                          x={subLabelPos.x}
+                          y={subLabelPos.y}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fontSize="8"
+                          fontWeight="500"
+                          fill={cat.color}
+                          style={{ pointerEvents: 'none' }}
+                        >
+                          {sub.name.split(' ')[0]}
+                        </text>
+                      </g>
                     )
                   })}
                 </g>

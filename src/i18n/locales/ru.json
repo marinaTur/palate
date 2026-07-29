@@ -35,6 +35,10 @@
       "label": "First bottle guide",
       "sub": "One wine, guided from start to finish"
     },
+    "regions": {
+      "label": "Regions",
+      "sub": "Old World, New World, at a glance"
+    },
     "quiz": {
       "label": "Quick quiz",
       "sub": "Test what you know — 4 questions"
