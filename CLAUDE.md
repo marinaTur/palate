@@ -106,11 +106,14 @@ remembered unless it's written here.
   Planner content uses a different mechanism entirely (`lang` param passed to Claude directly via
   `services/ai.js`) — don't conflate the two translation systems.
 - Learn sub-modules live as standalone files in `src/pages/learn/`: `Walkthrough.jsx`, `Nose.jsx`,
-  `Wheel.jsx`, `Quiz.jsx`, `Regions.jsx` are all built now — `Bottle.jsx` is the only one left as a
-  placeholder. Not inlined in `Learn.jsx`.
+  `Wheel.jsx`, `Quiz.jsx`, `Regions.jsx`, `Bottle.jsx` are all built now — **no placeholder Learn
+  modules remain.** Not inlined in `Learn.jsx`.
 - Region/grape reference content lives in `src/data/regions.js` — same `src/data/` convention as
   `samplePlans.js`, structured data only, no component logic. See "Regions module" section below
   for the selection system and conventions specific to this data.
+- First Bottle Guide's wine-type content lives in `src/data/bottleGuide.js`, same `src/data/`
+  convention — structured data only, no component logic. See "First Bottle Guide" section below
+  for its selection principle and metric-units convention.
 - Module id used identically (lowercase, no hyphens) across `src/constants/modules.js`, router
   paths, and i18n `modules.*` keys. **`src/constants/modules.js` (`LEARN_MODULES`) is now the single
   source of truth** — `Home.jsx`'s lesson tile and `Learn.jsx`'s directory list + nested `<Routes>`
@@ -152,6 +155,57 @@ alternate systems considered) lives in a standalone planning document that is **
 - **Classification decoder is a distinct content type, not a region** — reference material (what
   AOC/DOC/DOCG/DO actually mean), gold-accented like the app's existing "tip" styling rather than
   the white region cards, and deliberately excluded from the 26-region explore/progress count.
+
+## First Bottle Guide — content, structure & conventions
+Built as the last remaining Learn module, completing the original 5-module curriculum. Content
+in `src/data/bottleGuide.js` (`WINE_TYPES`), sourced from sommelier-consensus beginner picks, WSET,
+and production-method sources (see research trail in this session's chat history if ever needed —
+no separate external doc exists for this module, unlike Regions).
+- **Four wine types, not one bottle**: red, white, sparkling, and fortified — deliberately not
+  "recommend one wine" as the module's placeholder-era name might suggest. The pedagogical point is
+  comparison across all four structural axes (tannin vs. acid, still vs. mousse/dosage, and
+  fortified's oxidative character + higher ABV), matching the app's "comparison over identification"
+  principle. Don't reduce this back to a single-bottle recommendation.
+- **Each type picks the single most beginner-forgiving example, not the most famous/expensive one**:
+  Pinot Noir (lowest common tannin), Pinot Grigio/off-dry Riesling (minimal oak/skin contact),
+  Prosecco/Cava (Charmat method — fresher, cheaper, gentler than Champagne's autolytic complexity),
+  dry Fino/Amontillado Sherry (lower-ABV end of fortified, ~15–17% vs. Port's up to 22%, and sold in
+  normal wine bottles rather than liqueur-store-only). This mirrors Regions' "accessible over
+  prestigious" reasoning — don't swap in a more "impressive" example without discussion.
+- **All measurements are metric — °C for temperature, ml for pour size — throughout this module**,
+  by explicit instruction, unlike some of the app's other sourced material which originated in °F.
+  Any future edits to `bottleGuide.js` should stay metric; don't reintroduce Fahrenheit.
+- **Glass-switcher interaction, not accordion cards, not a swipe-through story.** Four glass icons
+  (tinted per type) act as a segmented control: tapping one immediately shows that type's full
+  detail panel below — no second "open to see" tap, no separate flight-building step. Tapping a
+  different glass swaps the panel in place. This is the *second* iteration of this module's
+  interaction — the first build used a "build your flight" picker (pick multiple types, each
+  rendering as an accordion card) — replaced after Marina's explicit feedback that the extra
+  open-to-see tap felt like unnecessary hamburger-menu-style stacking, not native/app-like. Don't
+  reintroduce a picker-then-accordion two-step without revisiting that feedback.
+- **No "Complete module" button.** Removed deliberately — with the accordion/flight-picking gone,
+  tapping a button after already exploring all 4 types had no meaningful action left to perform.
+  The module now **auto-completes** (`markModuleComplete('bottle')` fires automatically) the moment
+  all 4 types have been tapped at least once, keeping it counted in Home's lesson tally and keeping
+  "Start over" meaningful, without a pointless extra tap. If a future module ever considers adding a
+  "Complete" button, ask first whether the action is actually meaningful or just ceremonial.
+- **Tasting order (sparkling/white → red → fortified last)** is real, sourced data (the `order`
+  field in `bottleGuide.js`) but is informational only now — no code sorts by it. The glass row's
+  fixed left-to-right layout already matches this order, which is why no separate sorting logic
+  exists; don't add one back without a reason beyond "restore the old flight-ordering behavior."
+- **Opens directly on the first type's detail card (Sparkling), not an empty "tap a glass"
+  placeholder.** `activeId` defaults to `WINE_TYPES[0].id` rather than `null` — action before
+  theory, no wasted first tap. The first card is marked explored on mount via a `useEffect` (not
+  only on tap), matching `seenIntroCards`' "seen on mount, not just on dismiss" convention used
+  elsewhere. The hint line above the glasses adapts to progress ("Tap the other glasses to see how
+  each one is different" → "You've seen all four — tap any glass to revisit it").
+- **Food-pairing hints tag a `mode` (complement or contrast)** — the one shared principle every
+  hint is an example of (matching intensity/flavour vs. using opposing qualities to balance each
+  other), stated once conceptually rather than as four disconnected facts. Reuse this
+  complement/contrast framing for any future pairing content elsewhere in the app.
+- **Serving-temp and pour-size callouts are new factual content this app didn't have anywhere
+  before** (e.g. fortified's smaller 60–90ml pour, sparkling's 6–8°C) — genuinely useful, sourced,
+  not filler.
 
 ## UX principles (apply to every current and future learning module)
 - Action before theory — exercises open with "do this," not "here's why."
@@ -235,6 +289,12 @@ wedges carry short name labels (first word only, same truncation convention as t
   `src/constants/modules.js` (`LEARN_MODULES`); this had already caused a real bug (`regions` was
   missing from Home.jsx's lesson tile, undercounting "X of Y complete"). See the Architecture
   conventions note above for how to add a module now.
+- ~~First Bottle Guide was the last remaining "Coming soon" placeholder Learn module~~ — **built.**
+  Covers red/white/sparkling/fortified via a "build your flight" glass picker; see the First Bottle
+  Guide section above for the full content/UX rationale. **No placeholder Learn modules remain —
+  the original 5-module curriculum (Walkthrough, Nose, Wheel, Bottle, Regions) is now fully built.**
+  Not yet click-tested live in browser by Marina — same verification step Regions needed, still
+  pending here.
 
 **Still open:**
 - `src/App.css` is unused Vite-scaffold leftover, not imported anywhere — safe to delete.
@@ -245,12 +305,11 @@ wedges carry short name labels (first word only, same truncation convention as t
   visibly disabled with a "Coming soon" tag, `matchSamplePlan`/`generate()` kept fully wired but
   unreachable — re-enabling it later (or swapping in live AI) doesn't require rebuilding it.
 - Russian locale (`ru.json`) is structurally complete but 100% untranslated placeholder English.
-- `Walkthrough.jsx`, `Nose.jsx`, `Wheel.jsx`, `Quiz.jsx`, and `Regions.jsx` all bypass i18n entirely
-  (hardcoded English strings, not `t()` calls) — translating `ru.json` alone won't localize these
-  five pages. `Regions.jsx` follows this deliberately, matching its four siblings; the region/grape
-  content itself in `regions.js` is English-only demo-style content, same reasoning as
-  `samplePlans.js` — not an oversight to "fix" by adding i18n.
-- First Bottle Guide is the only remaining "Coming soon" placeholder Learn module.
+- `Walkthrough.jsx`, `Nose.jsx`, `Wheel.jsx`, `Quiz.jsx`, `Regions.jsx`, and `Bottle.jsx` all bypass
+  i18n entirely (hardcoded English strings, not `t()` calls) — translating `ru.json` alone won't
+  localize these six pages. `Bottle.jsx` follows this deliberately, matching its siblings; the
+  wine-type content in `bottleGuide.js` is English-only demo-style content, same reasoning as
+  `samplePlans.js`/`regions.js` — not an oversight to "fix" by adding i18n.
 - `--gold-light` and `--burgundy-light` in `index.css` share the identical hex `#F5EDE0` — never
   intentionally decided, needs a pass.
 - `Difficulty` and "Mark done"/"Start over" button styling still live duplicated inside individual

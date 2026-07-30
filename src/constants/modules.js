@@ -6,6 +6,6 @@ export const LEARN_MODULES = [
   { id: 'walkthrough', badge: 'startHere' },
   { id: 'nose' },
   { id: 'wheel' },
-  { id: 'bottle', badge: 'new', comingSoon: true },
+  { id: 'bottle', badge: 'new' },
   { id: 'regions' },
 ]

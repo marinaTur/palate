@@ -8,6 +8,7 @@ import Nose from './learn/Nose'
 import Wheel from './learn/Wheel'
 import Quiz from './learn/Quiz'
 import Regions from './learn/Regions'
+import Bottle from './learn/Bottle'
 
 // Maps a module id to its real component — only needed for modules that
 // aren't `comingSoon` (those render <ComingSoon> generically instead).
@@ -16,6 +17,7 @@ const MODULE_COMPONENTS = {
   nose: Nose,
   wheel: Wheel,
   regions: Regions,
+  bottle: Bottle,
 }
 
 function PageHeader({ title, sub, onBack }) {
