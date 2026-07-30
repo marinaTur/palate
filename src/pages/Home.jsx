@@ -3,18 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
+import { LEARN_MODULES } from '../constants/modules'
 import vineyardImg from '../assets/vineyard.jpg'
 
 // ── Data ────────────────────────────────────────────────────────
 // Quiz is intentionally excluded from this list — it's treated as its own
 // standalone feature (more "entertainment" than curriculum), not one of
 // the sequential lessons. See its own dashboard plate below instead.
-const LESSON_MODULES = [
-  { id: 'walkthrough', to: '/learn/walkthrough' },
-  { id: 'nose',        to: '/learn/nose' },
-  { id: 'wheel',        to: '/learn/wheel' },
-  { id: 'bottle',       to: '/learn/bottle' },
-]
+const LESSON_MODULES = LEARN_MODULES.map(m => ({ id: m.id, to: `/learn/${m.id}` }))
 
 const TIPS = [
   'Take a first sniff before swirling — the most delicate aromas disappear the moment you swirl.',

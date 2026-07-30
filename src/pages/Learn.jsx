@@ -2,11 +2,21 @@ import { Routes, Route, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store/useAppStore'
 import { Badge } from '../components/ui'
+import { LEARN_MODULES } from '../constants/modules'
 import Walkthrough from './learn/Walkthrough'
 import Nose from './learn/Nose'
 import Wheel from './learn/Wheel'
 import Quiz from './learn/Quiz'
 import Regions from './learn/Regions'
+
+// Maps a module id to its real component — only needed for modules that
+// aren't `comingSoon` (those render <ComingSoon> generically instead).
+const MODULE_COMPONENTS = {
+  walkthrough: Walkthrough,
+  nose: Nose,
+  wheel: Wheel,
+  regions: Regions,
+}
 
 function PageHeader({ title, sub, onBack }) {
   return (
@@ -43,8 +53,6 @@ function ComingSoon({ moduleId }) {
 // Quiz is deliberately excluded here — it's no longer part of the "Lessons"
 // directory, reachable instead via its own dashboard plate on Home.
 // The /learn/quiz route below still exists and still works.
-const MODULE_IDS = ['walkthrough', 'nose', 'wheel', 'bottle', 'regions']
-const MODULE_BADGE = { walkthrough: 'startHere', bottle: 'new' }
 
 function LearnIndex() {
   const { t } = useTranslation()
@@ -56,9 +64,8 @@ function LearnIndex() {
         <h1 className="font-['Cormorant_Garamond'] text-5xl text-white italic leading-none">{t('learn.title')}</h1>
       </div>
       <div className="px-4 space-y-2">
-        {MODULE_IDS.map((id, idx) => {
+        {LEARN_MODULES.map(({ id, badge: badgeKey }, idx) => {
           const done = completedModules.includes(id)
-          const badgeKey = MODULE_BADGE[id]
           return (
             <Link key={id} to={id}
               className="flex items-center gap-4 bg-white border border-[var(--border)] rounded-xl px-4 py-4 hover:border-[var(--forest)] transition-colors group">
@@ -91,12 +98,12 @@ export default function Learn() {
   return (
     <Routes>
       <Route index element={<LearnIndex />} />
-      <Route path="walkthrough" element={<Walkthrough />} />
-      <Route path="nose"        element={<Nose />} />
-      <Route path="wheel"       element={<Wheel />} />
-      <Route path="bottle"      element={<ComingSoon moduleId="bottle" />} />
-      <Route path="regions"     element={<Regions />} />
-      <Route path="quiz"        element={<Quiz />} />
+      {LEARN_MODULES.map(({ id, comingSoon }) => {
+        if (comingSoon) return <Route key={id} path={id} element={<ComingSoon moduleId={id} />} />
+        const Component = MODULE_COMPONENTS[id]
+        return <Route key={id} path={id} element={<Component />} />
+      })}
+      <Route path="quiz" element={<Quiz />} />
     </Routes>
   )
 }

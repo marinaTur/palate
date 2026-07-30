@@ -4,8 +4,13 @@ Wine tasting education app (not a recommendation/buying engine, not a cocktail a
 "Your pocket sommelier school." Audience: curious casual wine drinkers who want to build
 confidence; avoid both absolute beginners who need basic alcohol education and advanced
 enthusiasts seeking professional-level depth.
-Full rationale, history, and open questions live in PROJECT_MEMORY.md — read it before
-product/design/architecture decisions. This file is the quick operational reference.
+**Read PROJECT_MEMORY.md now, in full, before doing anything else this session** — including
+before responding to a request that looks purely mechanical (a typo fix can still collide with a
+documented decision, e.g. §17's "don't change without discussion" list). This file is the quick
+operational reference; PROJECT_MEMORY.md is the full rationale, history, rejected alternatives, and
+open questions, and §23 there is the authoritative current state if the two ever conflict.
+(PROJECT_MEMORY.md is currently ~440 lines / one Read call, once per session — flag to Marina if it
+roughly doubles in length, since at that point the unconditional-read tradeoff should be revisited.)
 
 ## Stack
 React 19 + Vite 8 · React Router 7 · Zustand 5 (+persist) · Tailwind 4 · i18next/react-i18next ·
@@ -33,6 +38,26 @@ After changes:
 - Explain what changed.
 - Explain how to test it.
 - Mention possible side effects.
+
+## Memory discipline — never defer this
+The goal: important knowledge survives both within a session and across sessions. The two docs
+(this file + PROJECT_MEMORY.md) are the only mechanism for cross-session memory — nothing is
+remembered unless it's written here.
+- Any new decision, rejected alternative, convention, or non-obvious bug/fix worth remembering
+  gets written into PROJECT_MEMORY.md (or this file, if operational) **in the same turn it
+  happens** — not deferred to a later cleanup pass. A doc update is part of "done," not a
+  follow-up task.
+- Before ending work on any non-trivial change, confirm both docs still match the current code
+  state. If they don't, fix that before considering the change finished.
+- Never delete superseded sections in PROJECT_MEMORY.md — append a note that supersedes them
+  instead (see §23's own header for the pattern). History of what was tried and rejected is itself
+  important knowledge; deleting it is a memory loss, not cleanup.
+- If a session was long/feature-heavy and docs were *not* updated as-you-go (it happens), the very
+  next action is a dedicated catch-up pass checked against actual current code — never written
+  from memory of what "should" have changed.
+- When two sections conflict, the most recently added one wins (PROJECT_MEMORY.md §23 exists
+  specifically as this kind of override marker) — but conflicts should be rare if the rule above is
+  followed.
 
 ## Git workflow
 - Before significant changes, ensure the current state is committed or clearly explain uncommitted changes.
@@ -86,9 +111,14 @@ After changes:
 - Region/grape reference content lives in `src/data/regions.js` — same `src/data/` convention as
   `samplePlans.js`, structured data only, no component logic. See "Regions module" section below
   for the selection system and conventions specific to this data.
-- Module id used identically (lowercase, no hyphens) across `MODULE_IDS`, router paths, and i18n
-  `modules.*` keys — currently no single source of truth enforces this; keep them manually in sync.
-  (Quiz is the intentional exception to this alignment — see above.)
+- Module id used identically (lowercase, no hyphens) across `src/constants/modules.js`, router
+  paths, and i18n `modules.*` keys. **`src/constants/modules.js` (`LEARN_MODULES`) is now the single
+  source of truth** — `Home.jsx`'s lesson tile and `Learn.jsx`'s directory list + nested `<Routes>`
+  all derive from it; don't hand-add a module id back into either file separately. To add a new
+  Learn module: add one entry to `LEARN_MODULES`, register its component in `Learn.jsx`'s
+  `MODULE_COMPONENTS` map, and add its `modules.<id>.label/.sub` keys to both i18n files — that's
+  the whole checklist. (Quiz is the intentional exception to this alignment — see above; it isn't
+  in `LEARN_MODULES` and its route is still hand-written in `Learn.jsx`.)
 - CSS custom properties in `index.css` `:root`, referenced via Tailwind arbitrary values
   (`text-[var(--forest)]`), not Tailwind theme config extension.
 - Share functionality (Home's share button) uses `navigator.share()` where available, falling back
@@ -196,6 +226,15 @@ wedges carry short name labels (first word only, same truncation convention as t
   or reviewing any `ti-*` class, grep it against the actual compiled CSS in
   `node_modules/@tabler/icons-webfont/dist/tabler-icons.css` before trusting it renders — guessing
   a plausible-sounding Tabler name is exactly how this bug happened the first time.**
+- ~~Regions module never click-tested live in browser~~ — **confirmed the code logic was correct,
+  then Marina click-tested live and confirmed it passes.** All 26 regions explorable, "Compare to"
+  navigation (verified Bordeaux ↔ Napa, a genuinely reciprocal pairing) works, Complete module /
+  Start over both behave correctly, Classification Decoder opens as its own card. No longer an open
+  item — Regions is fully shipped and verified, not just build/lint-clean.
+- ~~Module id/route/i18n-key alignment had no single source of truth~~ — **fixed.** Added
+  `src/constants/modules.js` (`LEARN_MODULES`); this had already caused a real bug (`regions` was
+  missing from Home.jsx's lesson tile, undercounting "X of Y complete"). See the Architecture
+  conventions note above for how to add a module now.
 
 **Still open:**
 - `src/App.css` is unused Vite-scaffold leftover, not imported anywhere — safe to delete.
@@ -214,8 +253,6 @@ wedges carry short name labels (first word only, same truncation convention as t
 - First Bottle Guide is the only remaining "Coming soon" placeholder Learn module.
 - `--gold-light` and `--burgundy-light` in `index.css` share the identical hex `#F5EDE0` — never
   intentionally decided, needs a pass.
-- Module id/route/i18n-key alignment (`MODULE_IDS`, router paths, `modules.*` keys) has no single
-  source of truth across the three places it's duplicated — manual sync only.
 - `Difficulty` and "Mark done"/"Start over" button styling still live duplicated inside individual
   module files rather than as shared `src/components/ui/` components, despite the pattern now
   being proven across three modules.
