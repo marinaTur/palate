@@ -81,8 +81,11 @@ After changes:
   Planner content uses a different mechanism entirely (`lang` param passed to Claude directly via
   `services/ai.js`) — don't conflate the two translation systems.
 - Learn sub-modules live as standalone files in `src/pages/learn/`: `Walkthrough.jsx`, `Nose.jsx`,
-  `Wheel.jsx`, `Quiz.jsx` are all built now — `Bottle.jsx` is the only one left as a placeholder.
-  Not inlined in `Learn.jsx`.
+  `Wheel.jsx`, `Quiz.jsx`, `Regions.jsx` are all built now — `Bottle.jsx` is the only one left as a
+  placeholder. Not inlined in `Learn.jsx`.
+- Region/grape reference content lives in `src/data/regions.js` — same `src/data/` convention as
+  `samplePlans.js`, structured data only, no component logic. See "Regions module" section below
+  for the selection system and conventions specific to this data.
 - Module id used identically (lowercase, no hyphens) across `MODULE_IDS`, router paths, and i18n
   `modules.*` keys — currently no single source of truth enforces this; keep them manually in sync.
   (Quiz is the intentional exception to this alignment — see above.)
@@ -91,6 +94,34 @@ After changes:
 - Share functionality (Home's share button) uses `navigator.share()` where available, falling back
   to clipboard copy with a brief confirmation elsewhere. This is the established pattern for any
   future share feature — reuse it, don't invent a new mechanism.
+
+## Regions module — selection system & conventions
+Built as the 5th Learn module (numeral V). Full research/verification trail (sources per fact,
+alternate systems considered) lives in a standalone planning document that is **not in this repo**
+— ask Marina for it if deeper source-checking is ever needed; don't assume the facts in
+`regions.js` are unsourced just because the citations aren't inline in code.
+- **Selection system: Grape-First.** Regions were chosen by starting from grapes that matter (verified
+  against OIV's official variety-distribution data and Kym Anderson's academic dataset), then
+  attaching each grape to its home region — not the reverse. Three other systems (Market Reality,
+  Category Coverage, plain curation) were explicitly considered and rejected; don't re-litigate this
+  choice without a real reason, but the reasoning is fully documented in the external planning doc.
+- **26 regions, 19 Old World + 7 New World** — this grew organically from an original curated ~10,
+  each addition driven by a specific gap (a missed grape, a broken "Compare to" pairing, a direct
+  request like "we missed Prosecco/Chile/Riesling"), not scope creep for its own sake. Don't assume
+  this number is "the curated set" in the original small sense — it's a considered, larger scope.
+- **Tiers (1/2/3) are a suggested order, never a gate.** Every region is tappable at any time,
+  consistent with the "no judgment, no locking" principle already established for Wheel/Nose. Do
+  not add locking/gating logic to "match" the tier concept — that would contradict why it exists.
+- **"Compare to" is only used where genuinely earned** (same grape confirmed via DNA/history, or a
+  direct historical/myth-bust connection) — roughly half the regions stand alone by design. Resist
+  the urge to force a pairing onto every region "for completeness"; a weak invented comparison was
+  explicitly rejected in favor of leaving some regions standalone.
+- **Sources are internal-only, not shown in the app UI** — explicit decision, matching how Nose
+  Training already handles its WSET/CMS backing (stated confidently on-screen, cited nowhere
+  visible). Don't add a "Sources" footer or citations to the Regions UI without re-confirming this.
+- **Classification decoder is a distinct content type, not a region** — reference material (what
+  AOC/DOC/DOCG/DO actually mean), gold-accented like the app's existing "tip" styling rather than
+  the white region cards, and deliberately excluded from the 26-region explore/progress count.
 
 ## UX principles (apply to every current and future learning module)
 - Action before theory — exercises open with "do this," not "here's why."
@@ -115,6 +146,27 @@ After changes:
   on mount (not just on dismiss) via `seenIntroCards`.
 - Any multi-step module's current position must persist across refresh via `modulePosition`,
   keyed by module id — not local component state.
+- **Demo/curated-content pickers use one-tap-to-result**, not a fill-a-form-then-submit flow.
+  Established by Planner's scenario picker: tapping a curated option shows its result immediately
+  (no separate "Generate" click), with the tapped option visually marked (border + checkmark, not
+  just a color change). Reuse this for any future "pick from a curated set" feature.
+- **A feature that exists in code but isn't available yet is shown, not hidden** — visibly disabled
+  (muted colors, `disabled` attributes, `pointer-events-none`) with a "Coming soon" tag, rather than
+  removed from the UI or deleted from the code. Planner's custom free-text form follows this after
+  the scenario picker replaced it as the primary path — the old `matchSamplePlan`/`generate()` logic
+  is kept fully wired, just inactive, so re-enabling later is a small diff, not a rebuild.
+- **Cross-referencing between pieces of content is a real tap, not just a text mention.** Regions'
+  "Compare to" and any future equivalent should actually navigate/scroll to the referenced item when
+  tapped, established via Regions jumping between Old World/New World and scrolling to the target.
+
+## Wheel — now a two-ring design, not a single pie
+Rebuilt from a flat 6-wedge pie into a two-ring wheel: inner ring is the 6 aroma families (same
+colors as before, unchanged), outer ring is all 15 subcategories, each outer wedge sized
+proportionally to how many aromas its parent family has (Fruit's 5 vs. everyone else's 2, visible
+at a glance). Tapping the outer ring jumps straight to that specific aroma's detail — tapping the
+inner ring still opens the family for browsing multiple aromas, unchanged from before. The center
+hub shows dynamic text reflecting whatever's currently selected, rather than a static label. Outer
+wedges carry short name labels (first word only, same truncation convention as the inner ring).
 
 ## Known issues / gaps (verified against code)
 
@@ -136,15 +188,29 @@ After changes:
   rasterized. Generated simple, genuinely on-brand placeholder PNGs instead (forest-green
   background, gold wine-glass silhouette) at both required sizes — a real, working icon rather
   than a broken reference, though still a simple placeholder worth a proper design pass eventually.
+- ~~Home's "Plan a tasting" tile icon was invisible~~ — **confirmed true, then fixed.** The tile used
+  `ti-wine`, which does not exist anywhere in Tabler's icon set — confirmed by grepping the actual
+  compiled `tabler-icons.css`, not by assumption. This is the exact same *class* of bug as the
+  app-wide icon issue above (an icon class referenced that was never real), just a single isolated
+  instance that slipped in later. Fixed to `ti-glass` (verified real). **General lesson: when adding
+  or reviewing any `ti-*` class, grep it against the actual compiled CSS in
+  `node_modules/@tabler/icons-webfont/dist/tabler-icons.css` before trusting it renders — guessing
+  a plausible-sounding Tabler name is exactly how this bug happened the first time.**
 
 **Still open:**
 - `src/App.css` is unused Vite-scaffold leftover, not imported anywhere — safe to delete.
-- Anthropic API billing not yet set up — Planner is currently in demo mode
-  (`src/data/samplePlans.js` + keyword matcher) until resolved. This is the single most
-  consequential pending item.
+- Anthropic API billing not yet set up — Planner is currently in demo mode until resolved. This is
+  the single most consequential pending item. **The demo-mode mechanism changed this session**: the
+  primary path is now a one-tap scenario picker (5 curated plans, instant result, no form) rather
+  than the original free-text-plus-keyword-matcher flow. The old form still exists in the code,
+  visibly disabled with a "Coming soon" tag, `matchSamplePlan`/`generate()` kept fully wired but
+  unreachable — re-enabling it later (or swapping in live AI) doesn't require rebuilding it.
 - Russian locale (`ru.json`) is structurally complete but 100% untranslated placeholder English.
-- `Walkthrough.jsx`, `Nose.jsx`, `Wheel.jsx`, and `Quiz.jsx` all bypass i18n entirely (hardcoded
-  English strings, not `t()` calls) — translating `ru.json` alone won't localize these four pages.
+- `Walkthrough.jsx`, `Nose.jsx`, `Wheel.jsx`, `Quiz.jsx`, and `Regions.jsx` all bypass i18n entirely
+  (hardcoded English strings, not `t()` calls) — translating `ru.json` alone won't localize these
+  five pages. `Regions.jsx` follows this deliberately, matching its four siblings; the region/grape
+  content itself in `regions.js` is English-only demo-style content, same reasoning as
+  `samplePlans.js` — not an oversight to "fix" by adding i18n.
 - First Bottle Guide is the only remaining "Coming soon" placeholder Learn module.
 - `--gold-light` and `--burgundy-light` in `index.css` share the identical hex `#F5EDE0` — never
   intentionally decided, needs a pass.
