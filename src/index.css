@@ -3,15 +3,32 @@
 @import "tailwindcss";
 
 :root {
-  /* ── Forest Green + Burgundy palette ── */
-  --forest:        #264D3B;   /* primary — forest green */
-  --forest-dark:   #1A3528;   /* deep green for hover */
-  --forest-light:  #E4EDE0;   /* soft green tint */
-  --burgundy:      #7A2038;   /* secondary — burgundy red */
-  --burgundy-dark: #521526;   /* deep burgundy */
-  --burgundy-light:#F5EDE0;   /* warm cream tint */
-  --gold:          #B98A3D;   /* highlight / accent */
-  --gold-light:    #F5EDE0;   /* gold background tint */
+  /* ── Forest Green + Burgundy palette v1.1 — see colour_palette_v1.1 .md ── */
+  --forest:        #264D3B;   /* primary — forest green (unchanged) */
+  --forest-deep:   #153025;   /* primary shade — hero gradient end only */
+  --forest-mid:    #3E6B54;   /* primary tint (mid) — borders, dividers, disabled */
+  --forest-tint:   #EAF0EC;   /* primary surface — card/section fills, selected rows */
+  --burgundy:      #A02F49;   /* CTA / action, lifted for contrast against forest */
+  --burgundy-deep: #7A2038;   /* CTA shade (old primary hue) — pressed/hover, emphasis text */
+  --burgundy-tint: #F7E9EC;   /* CTA surface — replaces old --burgundy-light collision */
+  --gold:          #B98A3D;   /* decorative fill ONLY — never text, see --gold-text */
+  --gold-text:     #8A6420;   /* text-safe gold — labels, cited-authority lines */
+  --gold-tint:     #F5EDE0;   /* decorative surface — replaces old --gold-light */
+
+  /* Aliases — v1.1's own drop-in omitted these three names, but 34 existing
+     call sites across 14 files still reference them. Pointing them at the
+     new tokens keeps this genuinely "values only," as the brief intended,
+     instead of silently breaking those call sites or forcing a much larger
+     rename. Don't remove without updating every call site first. */
+  --forest-dark:   var(--forest-deep);
+  --forest-light:  var(--forest-tint);
+  --burgundy-dark: var(--burgundy-deep);
+
+  /* ── Semantic (new — no true red/green anywhere, by design) ── */
+  --attention:      #B4552A;  /* problem/failure — errors, demo-mode notice */
+  --attention-tint: #FBEDE4;  /* problem surface */
+  --milestone:      #8A6420;  /* achievement/done — completion notices, reuses gold-text */
+  --focus:          #3E6B54;  /* visible keyboard focus ring (a11y) */
 
   /* ── Backgrounds ── */
   --cream:         #F7F4EF;   /* warm parchment background */

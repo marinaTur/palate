@@ -441,7 +441,7 @@ function Difficulty({ count }) {
 
 function EncouragementCard({ card }) {
   return (
-    <div className="bg-[var(--gold-light)] border border-[var(--gold)]/20 rounded-xl px-4 py-3.5 flex items-start gap-3 my-4">
+    <div className="bg-[var(--gold-tint)] border border-[var(--gold)]/20 rounded-xl px-4 py-3.5 flex items-start gap-3 my-4">
       <span className="text-xl flex-shrink-0">{card.icon}</span>
       <div>
         <p className="text-sm font-medium text-[var(--ink)] mb-1">{card.title}</p>
@@ -642,7 +642,7 @@ export default function Nose() {
             below (frequency memo, week tabs, exercises) stays fully visible
             and interactive. */}
         {finished && (
-          <div className="bg-[var(--gold-light)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 mb-6 flex items-start gap-3">
+          <div className="bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 mb-6 flex items-start gap-3">
             <div className="w-9 h-9 rounded-full bg-[var(--gold)] flex items-center justify-center flex-shrink-0">
               <i className="ti ti-check text-white text-base" aria-hidden="true"></i>
             </div>
@@ -715,7 +715,7 @@ export default function Nose() {
 
         {/* Week 4 intro banner */}
         {week.introBanner && (
-          <div className="bg-[var(--gold-light)] border border-[var(--gold)]/20 rounded-xl px-4 py-4 mb-4">
+          <div className="bg-[var(--gold-tint)] border border-[var(--gold)]/20 rounded-xl px-4 py-4 mb-4">
             <p className="text-sm font-medium text-[var(--ink)] mb-1.5">✦ {week.introBanner.title}</p>
             <p className="text-sm text-[var(--ink-soft)] leading-relaxed">{week.introBanner.text}</p>
           </div>

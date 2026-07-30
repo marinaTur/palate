@@ -271,7 +271,7 @@ export default function Wheel() {
         {/* Inline notice, not a full-page takeover — matches Walkthrough and
             Nose. Everything below stays visible and interactive. */}
         {finished && (
-          <div className="bg-[var(--gold-light)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 mb-6 flex items-start gap-3">
+          <div className="bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 mb-6 flex items-start gap-3">
             <div className="w-9 h-9 rounded-full bg-[var(--gold)] flex items-center justify-center flex-shrink-0">
               <i className="ti ti-check text-white text-base" aria-hidden="true"></i>
             </div>

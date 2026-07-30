@@ -7,10 +7,10 @@ import { WINE_TYPES, BOTTLE_KEYS } from '../../data/bottleGuide'
 // Icon + accent per wine type — verified against the installed
 // @tabler/icons-webfont build before use (see CLAUDE.md's icon-audit lesson).
 const TYPE_META = {
-  sparkling: { icon: 'ti-glass-champagne', accent: '--gold',     bg: '--gold-light' },
+  sparkling: { icon: 'ti-glass-champagne', accent: '--gold',     bg: '--gold-tint' },
   white:     { icon: 'ti-glass',           accent: '--forest',   bg: '--forest-light' },
-  red:       { icon: 'ti-glass-full',      accent: '--burgundy', bg: '--burgundy-light' },
-  fortified: { icon: 'ti-grape',           accent: '--burgundy-dark', bg: '--burgundy-light' },
+  red:       { icon: 'ti-glass-full',      accent: '--burgundy', bg: '--burgundy-tint' },
+  fortified: { icon: 'ti-grape',           accent: '--burgundy-dark', bg: '--burgundy-tint' },
 }
 
 // ── Glass switcher — tap an icon, its detail panel appears below
@@ -81,7 +81,7 @@ function WineDetail({ wine }) {
         </div>
       </div>
 
-      <div className="bg-[var(--gold-light)] border border-[var(--gold)]/25 rounded-lg px-3 py-2.5">
+      <div className="bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-lg px-3 py-2.5">
         <p className="text-xs">
           <span className="font-medium text-[var(--gold)]">Pairs with </span>
           <span className="text-[var(--ink-soft)]">{wine.pairing.food}</span>
@@ -159,7 +159,7 @@ export default function Bottle() {
         {/* Inline notice, not a full-page takeover — matches every other
             module with a completion state. */}
         {finished && (
-          <div className="bg-[var(--gold-light)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 mb-6 flex items-start gap-3">
+          <div className="bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 mb-6 flex items-start gap-3">
             <div className="w-9 h-9 rounded-full bg-[var(--gold)] flex items-center justify-center flex-shrink-0">
               <i className="ti ti-check text-white text-base" aria-hidden="true"></i>
             </div>

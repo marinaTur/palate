@@ -267,7 +267,7 @@ export default function Quiz() {
         {/* ── START ────────────────────────────────────────────── */}
         {phase === 'start' && (
           <div className="text-center py-6">
-            <div className="w-16 h-16 rounded-full bg-[var(--gold-light)] flex items-center justify-center mx-auto mb-5">
+            <div className="w-16 h-16 rounded-full bg-[var(--gold-tint)] flex items-center justify-center mx-auto mb-5">
               <i className="ti ti-trophy text-[var(--gold)] text-2xl" aria-hidden="true"></i>
             </div>
             <h2 className="font-['Cormorant_Garamond'] text-2xl text-[var(--ink)] mb-2">5 random questions, every round</h2>
@@ -352,7 +352,7 @@ export default function Quiz() {
         {/* ── RESULTS ──────────────────────────────────────────── */}
         {phase === 'results' && (
           <div className="text-center py-6">
-            <div className="w-20 h-20 rounded-full bg-[var(--gold-light)] flex items-center justify-center mx-auto mb-5">
+            <div className="w-20 h-20 rounded-full bg-[var(--gold-tint)] flex items-center justify-center mx-auto mb-5">
               <span className="font-['Cormorant_Garamond'] text-3xl text-[var(--gold)]">{score}/{ROUND_SIZE}</span>
             </div>
             <h2 className="font-['Cormorant_Garamond'] text-2xl text-[var(--ink)] mb-2">

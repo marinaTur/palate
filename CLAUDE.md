@@ -65,15 +65,33 @@ remembered unless it's written here.
 - Do not rewrite Git history unless explicitly requested.
 
 ## Design system — do not change without discussion
-- Palette: Forest `#264D3B` (primary), Burgundy `#7A2038` (secondary/CTA), Gold `#B98A3D` (tertiary),
-  Cream `#F7F4EF` (background). Arrived at after multiple rejected rounds (see PROJECT_MEMORY.md §5).
+- **Palette v1.1 (current):** Forest `#264D3B` (primary, unchanged), Burgundy `#A02F49` (CTA —
+  lifted from the old `#7A2038` for better contrast against forest; old hue kept as
+  `--burgundy-deep` for hover/pressed states), Gold `#B98A3D` (**decorative fills only, never
+  text** — use `--gold-text` `#8A6420` for any gold-colored text), Cream `#F7F4EF` (background,
+  unchanged). Full rationale, the brief it came from, and two real gaps found while applying it in
+  PROJECT_MEMORY.md §5 ("Palette v1.1"). Arrived at after multiple rejected rounds before this
+  version too — don't casually "improve" further without going through the same process.
+- New semantic tokens exist for feedback states, deliberately avoiding true red/green:
+  `--attention`/`--attention-tint` (errors/failures), `--milestone` (completion — reuses
+  `--gold-text`), `--focus` (keyboard focus ring). Currently defined but not yet wired into real
+  error/completion UI — a separate follow-up task, not assumed done just because the tokens exist.
 - Typography: Cormorant Garamond (display/headings, often italic) + Inter (body). Established
   pairing; do not change without discussion.
 - Structural differentiation from Vivino matters as much as color: full-width gradient hero cards,
   Roman numerals for module ordering, burgundy as accent not dominant background. Don't drift back
   toward a white-card/red-accent look.
-- Known unresolved bug: `--gold-light` and `--burgundy-light` share the identical hex `#F5EDE0` —
-  never intentionally decided, needs a pass.
+- `--forest-dark`, `--forest-light`, `--burgundy-dark` are **aliases** pointing at v1.1's
+  `--forest-deep`/`--forest-tint`/`--burgundy-deep` — kept so the 34 existing call sites using
+  these names didn't need a rename. Don't remove the aliases without updating every call site first.
+- ~~Known unresolved bug: `--gold-light` and `--burgundy-light` share the identical hex~~ —
+  **RESOLVED.** Renamed to `--gold-tint`/`--burgundy-tint` with distinct values as part of v1.1.
+- **New known issue, found while applying v1.1:** 19 hardcoded hex literals (not `var(--token)`)
+  remain across `Walkthrough.jsx`, `Wheel.jsx`, `Nose.jsx`, `Quiz.jsx`, `Home.jsx` — mostly inline
+  SVG `stroke`/`fill` props and conditional style objects. These did **not** get updated by the
+  v1.1 rollout and still reference old hex values. Fixing them needs judgment (which token each
+  literal should map to, since some may be intentionally distinct data-viz colors, not brand
+  tokens) — deliberately deferred as its own backlog item, not folded into the mechanical rollout.
 
 ## Architecture conventions
 - One Zustand store (`useAppStore.js`), not split stores. Generic primitives —
@@ -310,8 +328,9 @@ wedges carry short name labels (first word only, same truncation convention as t
   localize these six pages. `Bottle.jsx` follows this deliberately, matching its siblings; the
   wine-type content in `bottleGuide.js` is English-only demo-style content, same reasoning as
   `samplePlans.js`/`regions.js` — not an oversight to "fix" by adding i18n.
-- `--gold-light` and `--burgundy-light` in `index.css` share the identical hex `#F5EDE0` — never
-  intentionally decided, needs a pass.
+- 19 hardcoded hex literals across `Walkthrough.jsx`, `Wheel.jsx`, `Nose.jsx`, `Quiz.jsx`,
+  `Home.jsx` don't use `var(--token)` and were NOT updated by the Palette v1.1 rollout — see
+  Design system section above and the backlog for the judgment-call brief on fixing these.
 - `Difficulty` and "Mark done"/"Start over" button styling still live duplicated inside individual
   module files rather than as shared `src/components/ui/` components, despite the pattern now
   being proven across three modules.

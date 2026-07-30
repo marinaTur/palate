@@ -81,7 +81,7 @@ export default function Planner() {
 
       <div className="px-4">
         {/* Demo notice */}
-        <div className="bg-[var(--gold-light)] border border-[var(--gold)]/20 rounded-lg px-4 py-2.5 mb-4 flex items-start gap-2 print:hidden">
+        <div className="bg-[var(--gold-tint)] border border-[var(--gold)]/20 rounded-lg px-4 py-2.5 mb-4 flex items-start gap-2 print:hidden">
           <span className="text-[var(--gold)] text-sm mt-0.5">✦</span>
           <p className="text-xs text-[var(--ink-soft)] leading-relaxed">{t('planner.demoNotice')}</p>
         </div>
@@ -179,7 +179,7 @@ export default function Planner() {
 
               {/* Food plan */}
               {plan.foodPlan && (
-                <div className="bg-[var(--gold-light)] border border-[var(--gold)]/25 rounded-xl p-5">
+                <div className="bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-xl p-5">
                   <p className="text-xs font-medium text-[var(--gold)] uppercase tracking-wide mb-2">{t('planner.foodStrategy')}</p>
                   <p className="text-sm text-[var(--ink-soft)]">{plan.foodPlan}</p>
                 </div>

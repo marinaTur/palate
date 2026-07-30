@@ -135,7 +135,7 @@ export default function Walkthrough() {
         {/* Inline completion notice — NOT a full-page takeover. Everything
             below (progress bar, steps, nav) stays fully visible and interactive. */}
         {finished && (
-          <div className="bg-[var(--gold-light)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 mb-4 flex items-start gap-3">
+          <div className="bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-xl px-4 py-4 mb-4 flex items-start gap-3">
             <div className="w-9 h-9 rounded-full bg-[var(--gold)] flex items-center justify-center flex-shrink-0">
               <i className="ti ti-check text-white text-base" aria-hidden="true"></i>
             </div>
@@ -245,7 +245,7 @@ export default function Walkthrough() {
         </div>
 
         {/* Gold tip */}
-        <div className="bg-[var(--gold-light)] border border-[var(--gold)]/20 rounded-xl px-4 py-3.5 mb-6 flex items-start gap-3">
+        <div className="bg-[var(--gold-tint)] border border-[var(--gold)]/20 rounded-xl px-4 py-3.5 mb-6 flex items-start gap-3">
           <span className="text-[var(--gold)] text-base mt-0.5 flex-shrink-0">✦</span>
           <p className="text-sm text-[var(--ink-soft)] leading-relaxed">{step.tip}</p>
         </div>

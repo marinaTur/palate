@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
 import { LEARN_MODULES } from '../constants/modules'
-import vineyardImg from '../assets/vineyard.jpg'
 
 // ── Data ────────────────────────────────────────────────────────
 // Quiz is intentionally excluded from this list — it's treated as its own
@@ -75,15 +74,6 @@ export default function Home() {
 
       {/* ── Hero — compact, matching Learn's proportions ───────── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[var(--forest)] to-[var(--forest-dark)] md:rounded-b-2xl md:mx-4">
-
-        {/* Vineyard background image — very low opacity */}
-        <img
-          src={vineyardImg}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none"
-          style={{ opacity: 0.07, mixBlendMode: 'luminosity' }}
-        />
 
         {/* Hero content */}
         <div className="relative z-10 px-5 pt-8 pb-5 md:pt-12 md:pb-6">
@@ -159,7 +149,7 @@ export default function Home() {
           {/* Quiz — separated out as its own standalone destination */}
           <Link to="/learn/quiz"
             className="flex flex-col bg-white border border-[var(--gold)]/35 hover:border-[var(--gold)]/70 transition-colors rounded-xl px-4 py-3.5 min-h-[104px]">
-            <div className="w-8 h-8 rounded-lg bg-[var(--gold-light)] flex items-center justify-center mb-2">
+            <div className="w-8 h-8 rounded-lg bg-[var(--gold-tint)] flex items-center justify-center mb-2">
               <i className="ti ti-trophy text-[var(--gold)] text-sm" aria-hidden="true"></i>
             </div>
             <p className="font-medium text-sm text-[var(--ink)] leading-tight">Quiz</p>
@@ -173,7 +163,7 @@ export default function Home() {
       <div className="px-4 pt-1">
         <div
           onClick={() => navigate('/learn')}
-          className="flex items-start gap-4 bg-[var(--gold-light)] border border-[var(--gold)]/20 rounded-xl px-4 py-4 cursor-pointer hover:border-[var(--gold)]/40 transition-colors group"
+          className="flex items-start gap-4 bg-[var(--gold-tint)] border border-[var(--gold)]/20 rounded-xl px-4 py-4 cursor-pointer hover:border-[var(--gold)]/40 transition-colors group"
         >
           <div className="w-9 h-9 rounded-full bg-[var(--gold)] flex items-center justify-center flex-shrink-0 mt-0.5">
             <i className="ti ti-bulb text-white text-base" aria-hidden="true"></i>
