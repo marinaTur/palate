@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store/useAppStore'
 import { SAMPLE_PLANS_EN, matchSamplePlan } from '../data/samplePlans'
@@ -23,13 +23,24 @@ export default function Planner() {
   const { t, i18n } = useTranslation()
   const { lastPlan, setLastPlan } = useAppStore()
   const [inputs, setInputs] = useState({ wines: '', foods: '', season: '', guests: '', notes: '' })
-  const [plan, setPlan]     = useState(lastPlan)
+  // Auto-selects the first demo scenario on a genuine first visit (no
+  // lastPlan saved yet) — action before theory, and avoids an empty
+  // "pick a scenario above" state that's easy to miss scrolling past on
+  // mobile. Returning visitors still see whatever they last had open.
+  const [plan, setPlan]     = useState(lastPlan || SAMPLE_PLANS_EN[0].plan)
   const [loading, setLoading] = useState(false)
   const [error, setError]   = useState(null)
   const resultRef = useRef(null)
 
   const set = (k, v) => setInputs(p => ({ ...p, [k]: v }))
   const hasAnyInput = Object.values(inputs).some(v => v.trim())
+
+  // Persists the auto-selected first scenario so a refresh doesn't lose it —
+  // only fires on a genuine first visit, when lastPlan was never set.
+  useEffect(() => {
+    if (!lastPlan) setLastPlan(SAMPLE_PLANS_EN[0].plan)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Which demo scenario (if any) matches the plan currently on screen.
   // Derived from `plan` itself rather than tracked as separate state, so it
@@ -79,57 +90,82 @@ export default function Planner() {
         <p className="text-white/55 text-sm font-light">{t('planner.subtitle')}</p>
       </div>
 
-      <div className="px-4">
+      <div className="px-4 planner-chip-clearance">
         {/* Demo notice */}
         <div className="bg-[var(--gold-tint)] border border-[var(--gold)]/20 rounded-lg px-4 py-2.5 mb-4 flex items-start gap-2 print:hidden">
           <span className="text-[var(--gold)] text-sm mt-0.5">✦</span>
           <p className="text-xs text-[var(--ink-soft)] leading-relaxed">{t('planner.demoNotice')}</p>
         </div>
 
-        {/* Demo scenario picker — tap a card, see its full plan instantly */}
-        <div className="mb-6 print:hidden">
+        {/* Demo scenario picker (desktop only — mobile's counterpart is the
+            fixed chip bar below, docked above the global bottom nav per
+            MOBILE_LAYOUT_CONVENTION.md). Same single-row, horizontal-scroll
+            chip shape as mobile's, just inline in the page flow rather than
+            fixed — there's no bottom nav on desktop to dock above, so it
+            stays part of the normal scrollable content. Tap a chip, see its
+            full plan instantly. */}
+        <div className="hidden md:block mb-6 print:hidden">
           <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-3">{t('planner.scenariosLabel')}</p>
-          <div className="grid grid-cols-2 gap-2.5">
-            {SAMPLE_PLANS_EN.map((sample, i) => {
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {SAMPLE_PLANS_EN.map(sample => {
               const meta = SCENARIO_META[sample.id] || {}
               const isActive = activeScenarioId === sample.id
-              // If the list has an odd count, let the last card span both
-              // columns instead of leaving an awkward gap.
-              const spansFull = i === SAMPLE_PLANS_EN.length - 1 && SAMPLE_PLANS_EN.length % 2 !== 0
               return (
                 <button
                   key={sample.id}
                   type="button"
                   onClick={() => selectScenario(sample)}
                   aria-pressed={isActive}
-                  className={`relative text-left bg-white rounded-xl p-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--forest)] focus-visible:ring-offset-2 ${
-                    isActive
-                      ? 'border-2 border-[var(--burgundy)]'
-                      : 'border border-[var(--border)] hover:border-[var(--forest)]/40'
-                  } ${spansFull ? 'col-span-2 flex items-center gap-3' : ''}`}
+                  className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)]
+                    ${isActive ? 'bg-[var(--burgundy)] text-white' : 'bg-[var(--forest-tint)] text-[var(--muted)] hover:text-[var(--ink)]'}`}
                 >
-                  {isActive && (
-                    <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[var(--burgundy)] border-2 border-[var(--cream)] flex items-center justify-center">
-                      <i className="ti ti-check text-white text-[10px]" aria-hidden="true"></i>
-                    </span>
-                  )}
-                  <div className={`w-7 h-7 rounded-lg bg-[var(--forest-light)] flex items-center justify-center flex-shrink-0 ${spansFull ? '' : 'mb-2'}`}>
-                    <i className={`ti ${meta.icon || 'ti-glass'} text-[var(--forest)] text-sm`} aria-hidden="true"></i>
-                  </div>
-                  <div className={spansFull ? 'flex-1 min-w-0' : ''}>
-                    <p className="text-[13px] font-medium text-[var(--ink)] leading-snug">{sample.plan.title}</p>
-                    <div className="mt-1.5"><Badge variant="default">{meta.tag}</Badge></div>
-                  </div>
+                  <i className={`ti ${meta.icon || 'ti-glass'} text-sm`} aria-hidden="true"></i>
+                  {sample.plan.title}
                 </button>
               )
             })}
           </div>
         </div>
 
-        {/* Plan output — shows the moment a scenario is tapped above */}
+        {/* Mobile scenario chip bar — MOBILE_LAYOUT_CONVENTION.md's
+            validated pattern. Docked above the global bottom nav via
+            var(--nav-h) (set in Layout.jsx), never a second independent
+            fixed bottom-0 element. md:hidden to match the nav's own
+            breakpoint — desktop keeps the grid picker above instead, since
+            there's no bottom nav there to dock above. */}
+        <div
+          className="md:hidden fixed left-0 right-0 z-40 bg-white border-t border-[var(--border)] print:hidden"
+          style={{ bottom: 'var(--nav-h, 64px)' }}
+        >
+          <div role="tablist" aria-label={t('planner.scenariosLabel')} className="flex gap-1.5 px-3 py-2 overflow-x-auto">
+            {SAMPLE_PLANS_EN.map(sample => {
+              const meta = SCENARIO_META[sample.id] || {}
+              const isActive = activeScenarioId === sample.id
+              return (
+                <button
+                  key={sample.id}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => selectScenario(sample)}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)]
+                    active:scale-[0.97]
+                    ${isActive ? 'bg-[var(--burgundy)] text-white' : 'bg-[var(--forest-tint)] text-[var(--muted)]'}`}
+                >
+                  <i className={`ti ${meta.icon || 'ti-glass'} text-sm`} aria-hidden="true"></i>
+                  {sample.plan.title}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Plan output — shows the moment a scenario is tapped above.
+            Keyed by activeScenarioId so it fades in on scenario change. */}
         <div ref={resultRef}>
           {plan ? (
-            <div className="space-y-4 mb-8">
+            <div key={activeScenarioId} className="space-y-4 mb-8 planner-fade-in">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-2xl text-[var(--ink)]">{plan.title}</h2>

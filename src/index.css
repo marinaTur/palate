@@ -68,6 +68,24 @@ h1, h2, h3 {
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 .safe-top    { padding-top:    env(safe-area-inset-top); }
 
+/* Clears Planner's mobile scenario chip bar (fixed, docked above the global
+   nav via --nav-h) so the last real content is never hidden behind it.
+   Applied to Planner's whole scrollable content wrapper (not just the plan
+   output) so the padding lands once, at the true end of the page — putting
+   it on a container that closes partway through the page would push a gap
+   in the middle instead. The chip row's own height (padding + pill height)
+   is a known, stable ~56px — unlike --nav-h this doesn't need dynamic
+   measurement, since the chip bar's content never wraps or changes. No-op
+   on desktop, where the chip bar doesn't render (see
+   MOBILE_LAYOUT_CONVENTION.md §6). */
+@media (max-width: 767px) {
+  .planner-chip-clearance { padding-bottom: calc(var(--nav-h, 64px) + 56px); }
+}
+
+/* Brief polish on scenario change — not a loading state, kept short. */
+@keyframes planner-fade { from { opacity: 0; } to { opacity: 1; } }
+.planner-fade-in { animation: planner-fade 0.15s ease; }
+
 /* Print styles for tasting sheets */
 @media print {
   nav, header, .print\:hidden { display: none !important; }

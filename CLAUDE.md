@@ -94,6 +94,14 @@ remembered unless it's written here.
   tokens) — deliberately deferred as its own backlog item, not folded into the mechanical rollout.
 
 ## Architecture conventions
+- **`--nav-h` CSS custom property** (set in `Layout.jsx`, via `ResizeObserver` on the mobile bottom
+  nav's real rendered element) exposes the nav's actual height, including its safe-area-inset
+  padding. Any future bottom-docked element should read `var(--nav-h, <fallback>)` to position
+  itself just above the nav rather than guessing a pixel value or re-measuring independently — this
+  is the reusable pattern behind Planner's mobile scenario chip bar (see
+  `MOBILE_LAYOUT_CONVENTION.md`). Because the nav is `md:hidden`, `--nav-h` naturally resolves to
+  `0px` on desktop (a `display: none` element's `offsetHeight` is 0) — no extra breakpoint logic
+  needed to handle that case.
 - One Zustand store (`useAppStore.js`), not split stores. Generic primitives —
   `exerciseProgress`, `modulePosition`, `seenIntroCards` — are reused by every step-based module
   (Walkthrough, Nose, Wheel all use them now; apply to Bottle guide too when built). `Quiz` is a
@@ -260,6 +268,24 @@ no separate external doc exists for this module, unlike Regions).
 - **Cross-referencing between pieces of content is a real tap, not just a text mention.** Regions'
   "Compare to" and any future equivalent should actually navigate/scroll to the referenced item when
   tapped, established via Regions jumping between Old World/New World and scrolling to the target.
+- **Mobile-first, without exception — no desktop-specific layouts** (sidebars, multi-column detail
+  panes, hover-driven interactions) for any new section. Desktop keeps working via the existing
+  centered, capped-width container, not its own layout treatment. Full reasoning, including two
+  rejected wrong turns (a top tab bar, then a full desktop sidebar) that this rule exists to
+  prevent repeating, in `MOBILE_LAYOUT_CONVENTION.md`.
+- **"Wide screen" means a big phone, not a wide monitor** — large-screen smartphones (iPhone Pro
+  Max/Galaxy Ultra class, ~6.5"+), not laptops. The concern there is reach, not space. Confirm this
+  interpretation explicitly if a future request is ambiguous about "wide screen."
+- **Any new bottom-anchored control docks above the global bottom nav, never competes with it.**
+  Read the nav's real rendered height via `var(--nav-h)` (see Architecture conventions above)
+  rather than guessing a pixel value. Never introduce a second independent `fixed bottom-0`
+  element, and never hide/replace the global nav from a section-level component.
+- **The validated pattern for choosing from a small (3–5) curated set on mobile: a horizontal
+  single-select chip row, docked above the global nav, one-tap-to-result** — not a bottom sheet
+  (extra open-tap, documented back-navigation confusion) or a top tab bar (hardest-to-reach zone).
+  Planner's mobile scenario picker is the reference implementation — reuse this shape for any
+  future section needing the same kind of choice. Full pattern detail and research basis in
+  `MOBILE_LAYOUT_CONVENTION.md`.
 
 ## Wheel — now a two-ring design, not a single pie
 Rebuilt from a flat 6-wedge pie into a two-ring wheel: inner ring is the 6 aroma families (same
