@@ -107,20 +107,53 @@ export default function Home() {
 
       <div className="px-4">
 
-        {/* ── Dashboard — four equal-weight plates ────────────── */}
+        {/* ── Dashboard — bento layout: Lessons leads, Plan/Journal pair up,
+             Quiz stays lightweight and full-width. All four tiles share the
+             same white background / tinted border / colored icon-chip
+             family — hierarchy comes from size and position only, not from
+             a differently-colored fill (refined after live-device testing
+             showed a solid burgundy tile next to three light ones read as
+             inconsistent rather than intentional). See mobile_ux_research_2026.md
+             for the layout research this is based on. ──────────────────── */}
         <div className="grid grid-cols-2 gap-3 pt-5 mb-6">
 
-          {/* Plan a tasting */}
-          <Link to="/planner"
-            className="flex flex-col bg-[var(--burgundy)] hover:bg-[var(--burgundy-dark)] transition-colors rounded-xl px-4 py-3.5 min-h-[104px]">
-            <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center mb-2">
-              <i className="ti ti-glass text-white text-sm" aria-hidden="true"></i>
+          {/* Lessons — the actual curriculum, so it leads: full width, more
+              room. Same white-bg/tinted-border/colored-icon treatment as
+              Journal and Quiz below, for a consistent tile family — only
+              size and position carry the "lead tile" hierarchy now, not a
+              differently-colored background. Content is unchanged from
+              before (label, "X of Y complete", the per-module segments). */}
+          <Link to="/learn"
+            className="col-span-2 flex flex-col bg-white border border-[var(--forest)]/25 hover:border-[var(--forest)]/60 transition-colors rounded-xl px-4 py-4 min-h-[124px]">
+            <div className="w-8 h-8 rounded-lg bg-[var(--forest-light)] flex items-center justify-center mb-2">
+              <i className="ti ti-book text-[var(--forest)] text-sm" aria-hidden="true"></i>
             </div>
-            <p className="font-medium text-sm text-white leading-tight">Plan your tasting</p>
-            <p className="text-xs text-white/55 mt-0.5">Wines · Food · Guests</p>
+            <p className="font-medium text-sm text-[var(--ink)] leading-tight">Lessons</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5">{lessonsDone} of {lessonsTotal} complete</p>
+            <div className="flex gap-1 mt-auto pt-3">
+              {LESSON_MODULES.map(m => (
+                <div key={m.id} className="flex-1 h-1 rounded-full transition-all duration-300"
+                  style={{ background: completedModules.includes(m.id) ? 'var(--forest)' : 'var(--border)' }} />
+              ))}
+            </div>
           </Link>
 
-          {/* My journal */}
+          {/* Plan a tasting — same tile family as the other three now (white
+              background, tinted border, colored icon chip) instead of a
+              solid burgundy fill, per live-device feedback that one block of
+              solid dark colour sitting next to three light tiles read as
+              inconsistent rather than intentional. Copy and destination
+              unchanged. */}
+          <Link to="/planner"
+            className="flex flex-col bg-white border border-[var(--burgundy)]/25 hover:border-[var(--burgundy)]/60 transition-colors rounded-xl px-4 py-3.5 min-h-[104px]">
+            <div className="w-8 h-8 rounded-lg bg-[var(--burgundy-tint)] flex items-center justify-center mb-2">
+              <i className="ti ti-glass text-[var(--burgundy)] text-sm" aria-hidden="true"></i>
+            </div>
+            <p className="font-medium text-sm text-[var(--ink)] leading-tight">Plan your tasting</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5">Wines · Food · Guests</p>
+          </Link>
+
+          {/* My journal — unchanged from before */}
           <Link to="/journal"
             className="flex flex-col bg-white border border-[var(--border)] hover:border-[var(--forest)] transition-colors rounded-xl px-4 py-3.5 min-h-[104px]">
             <div className="w-8 h-8 rounded-lg bg-[var(--forest-light)] flex items-center justify-center mb-2">
@@ -130,30 +163,21 @@ export default function Home() {
             <p className="text-xs text-[var(--muted)] mt-0.5 truncate">{journalSub}</p>
           </Link>
 
-          {/* Lessons — consolidated summary tile, replaces the old full list */}
-          <Link to="/learn"
-            className="flex flex-col bg-white border border-[var(--forest)]/25 hover:border-[var(--forest)]/60 transition-colors rounded-xl px-4 py-3.5 min-h-[104px]">
-            <div className="w-8 h-8 rounded-lg bg-[var(--forest-light)] flex items-center justify-center mb-2">
-              <i className="ti ti-book text-[var(--forest)] text-sm" aria-hidden="true"></i>
-            </div>
-            <p className="font-medium text-sm text-[var(--ink)] leading-tight">Lessons</p>
-            <p className="text-xs text-[var(--muted)] mt-0.5">{lessonsDone} of {lessonsTotal} complete</p>
-            <div className="flex gap-1 mt-auto pt-2">
-              {LESSON_MODULES.map(m => (
-                <div key={m.id} className="flex-1 h-0.5 rounded-full transition-all duration-300"
-                  style={{ background: completedModules.includes(m.id) ? '#264D3B' : '#E2DDD6' }} />
-              ))}
-            </div>
-          </Link>
-
-          {/* Quiz — separated out as its own standalone destination */}
+          {/* Quiz — full width but short: same copy and quizHighScore logic
+              as before, just reflowed horizontally instead of stacked, to
+              read as a lighter, separate thing rather than a fourth lesson. */}
           <Link to="/learn/quiz"
-            className="flex flex-col bg-white border border-[var(--gold)]/35 hover:border-[var(--gold)]/70 transition-colors rounded-xl px-4 py-3.5 min-h-[104px]">
-            <div className="w-8 h-8 rounded-lg bg-[var(--gold-tint)] flex items-center justify-center mb-2">
-              <i className="ti ti-trophy text-[var(--gold)] text-sm" aria-hidden="true"></i>
+            className="col-span-2 flex items-center justify-between bg-white border border-[var(--gold)]/35 hover:border-[var(--gold)]/70 transition-colors rounded-xl px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[var(--gold-tint)] flex items-center justify-center flex-shrink-0">
+                <i className="ti ti-trophy text-[var(--gold)] text-sm" aria-hidden="true"></i>
+              </div>
+              <div>
+                <p className="font-medium text-sm text-[var(--ink)] leading-tight">Quiz</p>
+                <p className="text-xs text-[var(--muted)] mt-0.5">{quizSub}</p>
+              </div>
             </div>
-            <p className="font-medium text-sm text-[var(--ink)] leading-tight">Quiz</p>
-            <p className="text-xs text-[var(--muted)] mt-0.5">{quizSub}</p>
+            <i className="ti ti-chevron-right text-[var(--gold)]/50 text-sm flex-shrink-0" aria-hidden="true"></i>
           </Link>
 
         </div>

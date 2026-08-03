@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pkill -f \"vite.*5173\")",
+      "Bash(nohup npm run dev -- --port 5173)",
+      "Bash(disown)",
+      "Read(//tmp/**)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(curl -s http://localhost:5173/learn/regions -o /dev/null -w \"%{http_code}\\\\n\")",
+      "WebSearch"
+    ]
+  }
+}

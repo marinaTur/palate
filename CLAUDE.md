@@ -9,7 +9,7 @@ before responding to a request that looks purely mechanical (a typo fix can stil
 documented decision, e.g. §17's "don't change without discussion" list). This file is the quick
 operational reference; PROJECT_MEMORY.md is the full rationale, history, rejected alternatives, and
 open questions, and §23 there is the authoritative current state if the two ever conflict.
-(PROJECT_MEMORY.md is currently ~440 lines / one Read call, once per session — flag to Marina if it
+(PROJECT_MEMORY.md is currently ~540 lines / one Read call, once per session — flag to Marina if it
 roughly doubles in length, since at that point the unconditional-read tradeoff should be revisited.)
 
 ## Stack
@@ -86,12 +86,15 @@ remembered unless it's written here.
   these names didn't need a rename. Don't remove the aliases without updating every call site first.
 - ~~Known unresolved bug: `--gold-light` and `--burgundy-light` share the identical hex~~ —
   **RESOLVED.** Renamed to `--gold-tint`/`--burgundy-tint` with distinct values as part of v1.1.
-- **New known issue, found while applying v1.1:** 19 hardcoded hex literals (not `var(--token)`)
-  remain across `Walkthrough.jsx`, `Wheel.jsx`, `Nose.jsx`, `Quiz.jsx`, `Home.jsx` — mostly inline
+- **New known issue, found while applying v1.1:** hardcoded hex literals (not `var(--token)`)
+  remain across `Walkthrough.jsx`, `Wheel.jsx`, `Nose.jsx`, `Quiz.jsx` — mostly inline
   SVG `stroke`/`fill` props and conditional style objects. These did **not** get updated by the
   v1.1 rollout and still reference old hex values. Fixing them needs judgment (which token each
   literal should map to, since some may be intentionally distinct data-viz colors, not brand
   tokens) — deliberately deferred as its own backlog item, not folded into the mechanical rollout.
+  Originally 19 across 5 files including `Home.jsx`; `Home.jsx`'s one instance is now fixed (folded
+  into the Home bento redesign, since that exact line was already being rewritten) — 18 remain.
+  See PROJECT_MEMORY.md §14 #17 and §23 ("Home dashboard becomes a bento layout").
 
 ## Architecture conventions
 - **`--nav-h` CSS custom property** (set in `Layout.jsx`, via `ResizeObserver` on the mobile bottom
@@ -286,6 +289,14 @@ no separate external doc exists for this module, unlike Regions).
   Planner's mobile scenario picker is the reference implementation — reuse this shape for any
   future section needing the same kind of choice. Full pattern detail and research basis in
   `MOBILE_LAYOUT_CONVENTION.md`.
+- **For a screen surfacing several *different-typed* destinations at once (not a single curated
+  set to choose from): a bento-style grid, where tile size itself carries hierarchy** — the
+  destination that matters most gets the largest tile, peers stay equal-sized, anything genuinely
+  lighter-weight can shrink to a slim strip. Home's dashboard (Lessons/Plan/Journal/Quiz) is the
+  reference implementation. Different job from the chip-row picker above — don't reach for one
+  where the other fits; see `MOBILE_LAYOUT_CONVENTION.md` §7 for the full distinction and
+  `PROJECT_MEMORY.md` §23 ("Home dashboard becomes a bento layout") for how it was chosen over the
+  alternative (an editorial-hero treatment) considered alongside it.
 
 ## Wheel — now a two-ring design, not a single pie
 Rebuilt from a flat 6-wedge pie into a two-ring wheel: inner ring is the 6 aroma families (same
@@ -354,9 +365,10 @@ wedges carry short name labels (first word only, same truncation convention as t
   localize these six pages. `Bottle.jsx` follows this deliberately, matching its siblings; the
   wine-type content in `bottleGuide.js` is English-only demo-style content, same reasoning as
   `samplePlans.js`/`regions.js` — not an oversight to "fix" by adding i18n.
-- 19 hardcoded hex literals across `Walkthrough.jsx`, `Wheel.jsx`, `Nose.jsx`, `Quiz.jsx`,
-  `Home.jsx` don't use `var(--token)` and were NOT updated by the Palette v1.1 rollout — see
+- 18 hardcoded hex literals across `Walkthrough.jsx`, `Wheel.jsx`, `Nose.jsx`, `Quiz.jsx`
+  don't use `var(--token)` and were NOT updated by the Palette v1.1 rollout — see
   Design system section above and the backlog for the judgment-call brief on fixing these.
+  (Originally 19 across 5 files; `Home.jsx`'s one instance is fixed — see PROJECT_MEMORY.md §23.)
 - `Difficulty` and "Mark done"/"Start over" button styling still live duplicated inside individual
   module files rather than as shared `src/components/ui/` components, despite the pattern now
   being proven across three modules.
