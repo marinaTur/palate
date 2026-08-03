@@ -81,7 +81,7 @@ const STEPS = [
 export default function Walkthrough() {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const { markModuleComplete, completedModules, markStepViewed, getStepsViewed, resetStepsViewed } = useAppStore()
+  const { markModuleComplete, completedModules, markStepViewed, getStepsViewed } = useAppStore()
 
   const [currentStep, setCurrentStep] = useState(0)
   const [expanded, setExpanded] = useState(false)
@@ -93,9 +93,13 @@ export default function Walkthrough() {
   const stepsViewed = getStepsViewed('walkthrough')
   const allStepsViewed = stepsViewed.length === STEPS.length
 
-  // Mark current step as viewed whenever it changes
+  // Mark current step as viewed after 3 seconds of being on it
   useEffect(() => {
-    markStepViewed('walkthrough', STEPS[currentStep].id)
+    const timer = setTimeout(() => {
+      markStepViewed('walkthrough', STEPS[currentStep].id)
+    }, 3000)
+
+    return () => clearTimeout(timer)
   }, [currentStep, markStepViewed])
 
   const step = STEPS[currentStep]
@@ -112,7 +116,6 @@ export default function Walkthrough() {
 
   function markDone() {
     markModuleComplete('walkthrough')
-    resetStepsViewed('walkthrough')
   }
 
   function prev() {
