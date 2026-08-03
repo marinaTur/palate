@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store/useAppStore'
@@ -81,7 +81,7 @@ const STEPS = [
 export default function Walkthrough() {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const { markModuleComplete, completedModules } = useAppStore()
+  const { markModuleComplete, completedModules, markStepViewed, getStepsViewed, resetStepsViewed } = useAppStore()
 
   const [currentStep, setCurrentStep] = useState(0)
   const [expanded, setExpanded] = useState(false)
@@ -90,18 +90,29 @@ export default function Walkthrough() {
   // fall out of sync with completedModules (same fix applied to Wheel.jsx).
   const finished = completedModules.includes('walkthrough')
 
+  const stepsViewed = getStepsViewed('walkthrough')
+  const allStepsViewed = stepsViewed.length === STEPS.length
+
+  // Mark current step as viewed whenever it changes
+  useEffect(() => {
+    markStepViewed('walkthrough', STEPS[currentStep].id)
+  }, [currentStep, markStepViewed])
+
   const step = STEPS[currentStep]
   const isLast = currentStep === STEPS.length - 1
   const isFirst = currentStep === 0
 
   function next() {
-    if (isLast) {
-      markModuleComplete('walkthrough')
-    } else {
+    if (!isLast) {
       setCurrentStep(s => s + 1)
       setExpanded(false)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
+  }
+
+  function markDone() {
+    markModuleComplete('walkthrough')
+    resetStepsViewed('walkthrough')
   }
 
   function prev() {
@@ -246,11 +257,18 @@ export default function Walkthrough() {
               ← {t('walkthrough.previous')}
             </button>
           )}
-          <button onClick={next}
-            className="flex-1 py-3 rounded-xl text-white text-sm font-medium transition-colors"
-            style={{ background: step.color }}>
-            {isLast ? t('walkthrough.complete') : t('walkthrough.nextStep', { phase: t(`walkthrough.phase.${STEPS[currentStep + 1].id}`) })}
-          </button>
+          {allStepsViewed ? (
+            <button onClick={markDone}
+              className="flex-1 py-3 rounded-xl text-white text-sm font-medium transition-colors bg-[var(--gold)] hover:opacity-90">
+              {t('walkthrough.markDone')}
+            </button>
+          ) : (
+            <button onClick={next}
+              className="flex-1 py-3 rounded-xl text-white text-sm font-medium transition-colors"
+              style={{ background: step.color }}>
+              {isLast ? t('walkthrough.viewedAll') : t('walkthrough.nextStep', { phase: t(`walkthrough.phase.${STEPS[currentStep + 1].id}`) })}
+            </button>
+          )}
         </div>
 
       </div>

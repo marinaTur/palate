@@ -74,7 +74,22 @@ export const useAppStore = create(
       markIntroCardSeen: (cardId) => set(s => ({
         seenIntroCards: { ...s.seenIntroCards, [cardId]: true }
       })),
+
+      // Tracks which steps user has viewed in step-based modules (e.g. Walkthrough).
+      // Shape: { [moduleId]: Set of step ids }. Used to determine when all steps
+      // have been seen, at which point a "Mark as done" button becomes available.
+      stepsViewed: {},
+      markStepViewed: (moduleId, stepId) => set(s => ({
+        stepsViewed: {
+          ...s.stepsViewed,
+          [moduleId]: [...(s.stepsViewed[moduleId] || []), stepId].filter((v, i, a) => a.indexOf(v) === i)
+        }
+      })),
+      getStepsViewed: (moduleId) => get().stepsViewed[moduleId] || [],
+      resetStepsViewed: (moduleId) => set(s => ({
+        stepsViewed: { ...s.stepsViewed, [moduleId]: [] }
+      })),
     }),
-    { name: 'palate-storage', version: 2 }
+    { name: 'palate-storage', version: 3 }
   )
 )
