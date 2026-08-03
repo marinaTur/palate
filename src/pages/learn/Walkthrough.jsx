@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store/useAppStore'
 
 const STEPS = [
@@ -79,7 +80,8 @@ const STEPS = [
 
 export default function Walkthrough() {
   const navigate = useNavigate()
-  const { markModuleComplete, unmarkModuleComplete, completedModules } = useAppStore()
+  const { t } = useTranslation()
+  const { markModuleComplete, completedModules } = useAppStore()
 
   const [currentStep, setCurrentStep] = useState(0)
   const [expanded, setExpanded] = useState(false)
@@ -110,13 +112,6 @@ export default function Walkthrough() {
     }
   }
 
-  // Resets the module to exactly its first-open state — same pattern as
-  // Wheel.jsx's "Start over": un-completes the module and returns to step 1.
-  function startOver() {
-    unmarkModuleComplete('walkthrough')
-    setCurrentStep(0)
-    setExpanded(false)
-  }
 
   // ── Main walkthrough — always rendered, never swapped for a separate page ──
   return (
@@ -124,10 +119,10 @@ export default function Walkthrough() {
       {/* Hero */}
       <div className="bg-gradient-to-br from-[var(--forest)] to-[var(--forest-dark)] px-5 pt-10 pb-6 md:rounded-b-2xl md:mx-4 mb-6">
         <button onClick={() => navigate('/learn')} className="flex items-center gap-2 text-white/60 hover:text-white text-sm mb-4 transition-colors">
-          <i className="ti ti-arrow-left" aria-hidden="true"></i> Back to lessons
+          <i className="ti ti-arrow-left" aria-hidden="true"></i> {t('learn.back')}
         </button>
-        <p className="text-xs tracking-[0.1em] text-white/45 uppercase mb-2">The 5-step ritual</p>
-        <h1 className="font-['Cormorant_Garamond'] text-4xl text-white italic leading-tight">Tasting walkthrough</h1>
+        <p className="text-xs tracking-[0.1em] text-white/45 uppercase mb-2">{t('walkthrough.eyebrow')}</p>
+        <h1 className="font-['Cormorant_Garamond'] text-4xl text-white italic leading-tight">{t('modules.walkthrough.label')}</h1>
       </div>
 
       <div className="px-4">
@@ -140,16 +135,10 @@ export default function Walkthrough() {
               <i className="ti ti-check text-white text-base" aria-hidden="true"></i>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[var(--ink)] mb-1">Module complete.</p>
-              <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-3">
-                You know the full 5-step ritual. The best way to deepen it now is to open a bottle and do it for real.
+              <p className="text-sm font-medium text-[var(--ink)] mb-1">{t('modules.done')}</p>
+              <p className="text-sm text-[var(--ink-soft)] leading-relaxed">
+                {t('walkthrough.moduleComplete')}
               </p>
-              <button
-                onClick={startOver}
-                className="text-xs font-medium text-[var(--gold)] border border-[var(--gold)]/40 rounded-full px-3 py-1.5 hover:bg-[var(--gold)] hover:text-white transition-colors"
-              >
-                Start over
-              </button>
             </div>
           </div>
         )}
@@ -157,15 +146,14 @@ export default function Walkthrough() {
         {/* ── Progress bar — now a consistent card, matching every other
              block on this page in size, rounding, and inset margin. ── */}
         <div className="bg-white border border-[var(--border)] rounded-xl px-4 pt-4 pb-3 mb-4">
-          {/* Coloured track — once finished, every segment shows green
-              regardless of which step is currently being viewed. Only
-              "Start over" (which un-completes the module) reverts this. */}
+          {/* Coloured track — once finished, every segment shows gold
+              regardless of which step is currently being viewed. */}
           <div className="flex gap-1 mb-3">
             {STEPS.map((_, i) => {
               const isDone = finished || i < currentStep
               return (
                 <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300"
-                  style={{ background: isDone ? '#264D3B' : i === currentStep ? '#B98A3D' : '#E2DDD6' }}
+                  style={{ background: isDone ? 'var(--gold)' : i === currentStep ? 'var(--gold)' : 'var(--border)' }}
                 />
               )
             })}
@@ -179,7 +167,7 @@ export default function Walkthrough() {
                   onClick={() => { setCurrentStep(i); setExpanded(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                   className="flex-1 flex flex-col items-center gap-1">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                    isDone ? 'bg-[var(--forest)]' : i === currentStep ? 'bg-[var(--gold)]' : 'bg-[var(--border)]'
+                    isDone ? 'bg-[var(--gold)]' : i === currentStep ? 'bg-[var(--gold)]' : 'bg-[var(--border)]'
                   }`}>
                     {isDone
                       ? <i className="ti ti-check text-white" style={{ fontSize: 10 }} aria-hidden="true"></i>
@@ -189,7 +177,7 @@ export default function Walkthrough() {
                     }
                   </div>
                   <span style={{ fontSize: 9, letterSpacing: '0.04em',
-                    color: isDone ? '#264D3B' : i === currentStep ? '#B98A3D' : '#7A6E64' }}>
+                    color: isDone ? 'var(--gold)' : i === currentStep ? 'var(--gold)' : 'var(--muted)' }}>
                     {s.phase}
                   </span>
                 </button>
@@ -200,7 +188,7 @@ export default function Walkthrough() {
 
         {/* Step counter */}
         <p className="text-xs tracking-[0.09em] text-[var(--muted)] uppercase mb-4">
-          Step {currentStep + 1} of {STEPS.length}
+          {t('walkthrough.step', { current: currentStep + 1, total: STEPS.length })}
         </p>
 
         {/* Step card */}
@@ -213,14 +201,14 @@ export default function Walkthrough() {
               <i className={`ti ${step.icon} text-base`} style={{ color: step.color }} aria-hidden="true"></i>
             </div>
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide" style={{ color: step.color }}>{step.phase}</p>
-              <h2 className="font-['Cormorant_Garamond'] text-2xl text-[var(--ink)] leading-tight">{step.title}</h2>
+              <p className="text-xs font-medium uppercase tracking-wide" style={{ color: step.color }}>{t(`walkthrough.phase.${step.id}`)}</p>
+              <h2 className="font-['Cormorant_Garamond'] text-2xl text-[var(--ink)] leading-tight">{t(`walkthrough.title.${step.id}`)}</h2>
             </div>
           </div>
 
           {/* Intro */}
           <div className="px-5 py-4">
-            <p className="text-sm text-[var(--ink-soft)] leading-relaxed">{step.intro}</p>
+            <p className="text-sm text-[var(--ink-soft)] leading-relaxed">{t(`walkthrough.intro.${step.id}`)}</p>
           </div>
 
           {/* Expandable detail */}
@@ -228,15 +216,15 @@ export default function Walkthrough() {
             <button onClick={() => setExpanded(e => !e)}
               className="w-full px-5 py-3 flex items-center justify-between text-sm font-medium transition-colors hover:bg-[var(--border-soft)]"
               style={{ color: step.color }}>
-              <span>{expanded ? 'Less detail' : 'Tell me more'}</span>
+              <span>{expanded ? t('walkthrough.lessDetail') : t('walkthrough.tellMore')}</span>
               <i className={`ti ${expanded ? 'ti-chevron-up' : 'ti-chevron-down'} text-sm`} aria-hidden="true"></i>
             </button>
             {expanded && (
               <div className="px-5 pb-5 space-y-4 border-t border-[var(--border-soft)]">
-                {step.detail.map((d, i) => (
-                  <div key={i}>
-                    <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-1">{d.label}</p>
-                    <p className="text-sm text-[var(--ink-soft)] leading-relaxed">{d.text}</p>
+                {['a', 'b', 'c', 'd', 'e'].slice(0, (step.detail || []).length).map((suffix) => (
+                  <div key={suffix}>
+                    <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-1">{t(`walkthrough.detail.${step.id}.${suffix}.label`)}</p>
+                    <p className="text-sm text-[var(--ink-soft)] leading-relaxed">{t(`walkthrough.detail.${step.id}.${suffix}.text`)}</p>
                   </div>
                 ))}
               </div>
@@ -247,7 +235,7 @@ export default function Walkthrough() {
         {/* Gold tip */}
         <div className="bg-[var(--gold-tint)] border border-[var(--gold)]/20 rounded-xl px-4 py-3.5 mb-6 flex items-start gap-3">
           <span className="text-[var(--gold)] text-base mt-0.5 flex-shrink-0">✦</span>
-          <p className="text-sm text-[var(--ink-soft)] leading-relaxed">{step.tip}</p>
+          <p className="text-sm text-[var(--ink-soft)] leading-relaxed">{t(`walkthrough.tip.${step.id}`)}</p>
         </div>
 
         {/* Nav buttons */}
@@ -255,13 +243,13 @@ export default function Walkthrough() {
           {!isFirst && (
             <button onClick={prev}
               className="flex-1 py-3 rounded-xl border border-[var(--border)] text-[var(--ink-soft)] text-sm font-medium hover:border-[var(--forest)] hover:text-[var(--forest)] transition-colors">
-              ← Previous
+              ← {t('walkthrough.previous')}
             </button>
           )}
           <button onClick={next}
             className="flex-1 py-3 rounded-xl text-white text-sm font-medium transition-colors"
             style={{ background: step.color }}>
-            {isLast ? 'Complete module ✓' : `Next: ${STEPS[currentStep + 1].phase} →`}
+            {isLast ? t('walkthrough.complete') : t('walkthrough.nextStep', { phase: t(`walkthrough.phase.${STEPS[currentStep + 1].id}`) })}
           </button>
         </div>
 

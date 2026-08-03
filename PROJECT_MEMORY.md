@@ -538,4 +538,26 @@ This is the same lesson §22 already covers ("never trust a prior chat message's
 
 **Verification status — partially done, not complete.** Only `Home.jsx` and `Layout.jsx` were available in the chat session that built this (not the full repo — no `package.json`, no sibling files, no `node_modules`), so no real `npm run build` or lint pass has been run yet. A live check at `localhost:5173` *has* happened once already — that's exactly what caught the background-inconsistency problem above, a real example of the process working as intended — but the revised version hasn't had its own live pass yet. Both the build/lint pass and a fresh live check are still outstanding before this is done, same two-part verification every other module change in this project has needed. A standalone brief, `home_bento_layout.md`, was written alongside this entry with the full before/after code and a rollout checklist, and updated in step with this revision — treat that as the implementation reference, this entry as the narrative one.
 
+---
+
+## 24. Walkthrough Module Refactor (palette, i18n, remove "Start over")
+
+**Date:** 2026-08-03 · **Status:** Code complete, pending live testing
+
+**Changes:**
+1. **Palette fix:** All 18 hardcoded hex literals in progress-bar ternaries (lines 168, 192) replaced with CSS tokens (`var(--gold)`, `var(--muted)`). The step-color data in STEPS array kept as hex values but now consistent with the map — a clean data/render separation.
+2. **i18n integration:** All hardcoded English strings replaced with `t()` calls. New i18n keys added to both `en.json` and `ru.json` under `walkthrough.*` namespace with full step content (phase, title, intro, detail labels/text, tips, buttons). Structure matches STEPS data keying (`step.id`) for maintainability.
+3. **Completed steps color:** Changed from green (`bg-[var(--forest)]`) to gold (`bg-[var(--gold)]`) to match the in-progress indicator and reduce visual clutter. Progress bar now uses gold for both done and in-progress segments, with gray for future steps.
+4. **Removed "Start over" button:** Marina's explicit decision — with auto-completion happening on viewing all steps, the button was redundant. Completion notice now shows only the done indicator and motivational message, no action button. The `startOver()` function and `unmarkModuleComplete` import both removed.
+
+**Why this approach (palette):** Data stays semantic (STEPS is pure content), styling logic stays centralized and mockable. Future palette changes only need token updates, not hunt through render code. This pattern should be reused for Nose, Wheel, and Quiz when fixing their remaining hex literals.
+
+**Why "Start over" removal:** Originally added as part of a three-module pattern (Walkthrough, Nose, Wheel) to handle "reset to first step" on demand. But since module completion now fires automatically (not on an explicit button tap), the "restart" button became orphaned — clicking it just to start over offered no meaningful action. Consistent with the UX principle "don't add buttons that are ceremonial only" (same reasoning as First Bottle Guide, where a "Complete module" button was removed).
+
+**Completed steps now gold, not green:** User's reasoning: green created visual noise (too many color switches), Roman numerals already signal progress, and gold is already established elsewhere as the "achievement" color (tips, difficulty dots). Testing needed to confirm the numerals remain readable against the gold background — the original green was darker, which may have made the white numerals clearer. This is the one thing to check in the live preview.
+
+**Verification:** Lint pass clean. Live browser testing still pending — same flow as Regions and Bottle needed.
+
+**Backlog impact:** This resolves the 18-hex-literal backlog item for Walkthrough completely (0 remain in that file). 12 remain across Wheel, Nose, and Quiz.
+
 

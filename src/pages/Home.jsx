@@ -48,7 +48,7 @@ export default function Home() {
 
   // Quiz subtitle — shows a real score once the Quiz module has been played,
   // reusing the existing quizHighScore field already in the store.
-  const quizSub = quizHighScore > 0 ? `Best score: ${quizHighScore}/4` : 'Test what you know'
+  const quizSub = quizHighScore > 0 ? `Best score: ${quizHighScore}/5` : 'Test what you know'
 
   async function handleShare() {
     const shareData = {
@@ -117,7 +117,7 @@ export default function Home() {
              for the layout research this is based on. ──────────────────── */}
         <div className="grid grid-cols-2 gap-3 pt-5 mb-6">
 
-          {/* Lessons — the actual curriculum, so it leads: full width, more
+          {/* Taste & learn — the actual curriculum, so it leads: full width, more
               room. Same white-bg/tinted-border/colored-icon treatment as
               Journal and Quiz below, for a consistent tile family — only
               size and position carry the "lead tile" hierarchy now, not a
@@ -128,8 +128,8 @@ export default function Home() {
             <div className="w-8 h-8 rounded-lg bg-[var(--forest-light)] flex items-center justify-center mb-2">
               <i className="ti ti-book text-[var(--forest)] text-sm" aria-hidden="true"></i>
             </div>
-            <p className="font-medium text-sm text-[var(--ink)] leading-tight">Lessons</p>
-            <p className="text-xs text-[var(--muted)] mt-0.5">{lessonsDone} of {lessonsTotal} complete</p>
+            <p className="font-medium text-sm text-[var(--ink)] leading-tight">Taste & learn</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5">Lessons completed {lessonsDone} from {lessonsTotal}</p>
             <div className="flex gap-1 mt-auto pt-3">
               {LESSON_MODULES.map(m => (
                 <div key={m.id} className="flex-1 h-1 rounded-full transition-all duration-300"
