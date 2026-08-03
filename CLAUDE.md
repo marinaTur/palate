@@ -87,14 +87,16 @@ remembered unless it's written here.
 - ~~Known unresolved bug: `--gold-light` and `--burgundy-light` share the identical hex~~ —
   **RESOLVED.** Renamed to `--gold-tint`/`--burgundy-tint` with distinct values as part of v1.1.
 - **New known issue, found while applying v1.1:** hardcoded hex literals (not `var(--token)`)
-  remain across `Walkthrough.jsx`, `Wheel.jsx`, `Nose.jsx`, `Quiz.jsx` — mostly inline
+  remain across `Wheel.jsx`, `Nose.jsx`, `Quiz.jsx` — mostly inline
   SVG `stroke`/`fill` props and conditional style objects. These did **not** get updated by the
   v1.1 rollout and still reference old hex values. Fixing them needs judgment (which token each
   literal should map to, since some may be intentionally distinct data-viz colors, not brand
   tokens) — deliberately deferred as its own backlog item, not folded into the mechanical rollout.
-  Originally 19 across 5 files including `Home.jsx`; `Home.jsx`'s one instance is now fixed (folded
-  into the Home bento redesign, since that exact line was already being rewritten) — 18 remain.
-  See PROJECT_MEMORY.md §14 #17 and §23 ("Home dashboard becomes a bento layout").
+  Originally 19 across 5 files including `Home.jsx`; `Home.jsx`'s one instance is fixed (folded
+  into the Home bento redesign), `Walkthrough.jsx`'s 18 progress-indicator instances are fixed
+  (folded into the Walkthrough refactor, §24–25) — 12 remain across Wheel, Nose, and Quiz.
+  See PROJECT_MEMORY.md §14 #17, §23 ("Home dashboard becomes a bento layout"), and §24
+  ("Walkthrough Module Refactor").
 
 ## Architecture conventions
 - **`--nav-h` CSS custom property** (set in `Layout.jsx`, via `ResizeObserver` on the mobile bottom
@@ -115,7 +117,25 @@ remembered unless it's written here.
   a real class of state-desync bugs where the local copy silently went stale. Use this pattern for
   Bottle guide's completion flag too.
 - `unmarkModuleComplete` (symmetric with `markModuleComplete`) backs every module's "Start over"
-  button — same button name across all three modules with a completion state, by design.
+  button — same button name across modules with a completion state, by design. **Walkthrough is now
+  the deliberate exception**: it has no "Start over" button (removed — see below) and completes
+  automatically, so `unmarkModuleComplete` is unused there. Nose and Wheel still use the button.
+- **Walkthrough-specific: `stepsViewed` store field** tracks which step ids a user has actually
+  dwelt on for 3+ seconds (`markStepViewed`/`getStepsViewed`/`resetStepsViewed`) — order-independent,
+  so jumping around the step scale still counts correctly. Once all step ids are present, the module
+  **auto-completes** (`markModuleComplete` fires from a `useEffect`, no button, no explicit tap).
+  This is a deliberate, scoped exception to the "no auto-advancing, timed UI" rule below — the timer
+  only gates *completion*, it never advances the user between steps or content on its own; the user
+  still taps Next/Previous or the step scale to navigate at all times. Don't generalize this pattern
+  to other modules without re-confirming — Nose/Wheel/Bottle use a different, exercise-toggle-based
+  completion model that doesn't need it.
+- **`src/utils/moduleProgress.js`** (`getModuleProgress(moduleId, store)`) is the one place that
+  normalizes each module's differently-shaped internal progress tracking (Walkthrough's
+  `stepsViewed` array, Nose/Wheel/Bottle's `exerciseProgress` with different key prefixes) into a
+  common `{ done, total }` shape, or `null` for modules with no fixed step count (Regions). Used by
+  Learn's directory list to show a `CircularProgress` ring ("X steps to go") for in-progress
+  modules — a third state between the "start here"/"new" badge and the "Done" badge. Extend this
+  file's switch statement, not Learn.jsx directly, if a new module needs the same indicator.
 - **Quiz is deliberately excluded from `completedModules`, from `LESSON_MODULES` on Home, and from
   `MODULE_IDS` in Learn.jsx.** It's treated as a standalone, infinitely-replayable feature ("more
   entertainment than curriculum" — Marina's framing), not a lesson. Its own `quizHighScore` /
@@ -124,8 +144,12 @@ remembered unless it's written here.
   works — it's just not listed in Learn's directory anymore. **If this looks like an inconsistency,
   it isn't — do not re-integrate Quiz into Lessons tracking.** Full reasoning in PROJECT_MEMORY.md §23.
 - No auto-advancing, timed UI anywhere in the app — every module, Quiz included, requires an
-  explicit tap to proceed. The very first prototype auto-advanced Quiz questions on a timer; the
-  real build deliberately does not, to stay consistent with every other module.
+  explicit tap to proceed *between* steps/questions. The very first prototype auto-advanced Quiz
+  questions on a timer; the real build deliberately does not, to stay consistent with every other
+  module. **Scoped exception: Walkthrough's completion** (not navigation) is timer-gated — see the
+  `stepsViewed` note above. The distinction that keeps this consistent with the rule's intent: the
+  timer never moves the user anywhere or changes what's on screen; it only unlocks a state
+  (all-steps-viewed) that the user already controls by choosing when to move on themselves.
 - Bump the `persist` version number whenever the store shape changes in a breaking way.
 - Demo/mock data lives in `src/data/`, strictly separate from `src/services/` (real API calls).
   Mock data must match the real API's output JSON shape exactly, so swapping to live AI is a
@@ -247,14 +271,17 @@ no separate external doc exists for this module, unlike Regions).
 
 ## Established interaction patterns — reuse, don't reinvent
 - Difficulty = dots with a text label, not stars (stars read as a quality rating).
-- Completion = explicit "Mark done"/"Done" text button, not an icon-only checkbox.
+- Completion = explicit "Mark done"/"Done" text button, not an icon-only checkbox. **Walkthrough is
+  the deliberate exception** — it auto-completes once all steps are viewed (3+ second dwell each,
+  any order), no button at all. See Architecture conventions above.
 - Finishing a module = an inline notice near the top of the still-fully-interactive page, never a
   separate full-page takeover that hides the module's content. All three curriculum modules
   (Walkthrough, Nose, Wheel) follow this; Quiz doesn't need it (see Architecture conventions above).
 - "Start over" = the standard name and behavior for resetting a finished module back to its
   first-open state (un-completes it, clears its own progress keys only, never touches other
-  modules' progress). Same name across all three modules — don't introduce a different word for
-  the same action in a future module.
+  modules' progress). Used by Nose and Wheel — don't introduce a different word for the same action
+  in a future module. **Walkthrough is the deliberate exception: no "Start over" button** — since it
+  auto-completes with no explicit "done" action either, there's no matching "undo" action to offer.
 - One-time intro/memo cards: expanded on genuine first visit, collapsed thereafter, marked seen
   on mount (not just on dismiss) via `seenIntroCards`.
 - Any multi-step module's current position must persist across refresh via `modulePosition`,
@@ -359,19 +386,27 @@ wedges carry short name labels (first word only, same truncation convention as t
   than the original free-text-plus-keyword-matcher flow. The old form still exists in the code,
   visibly disabled with a "Coming soon" tag, `matchSamplePlan`/`generate()` kept fully wired but
   unreachable — re-enabling it later (or swapping in live AI) doesn't require rebuilding it.
-- Russian locale (`ru.json`) is structurally complete but 100% untranslated placeholder English.
-- `Walkthrough.jsx`, `Nose.jsx`, `Wheel.jsx`, `Quiz.jsx`, `Regions.jsx`, and `Bottle.jsx` all bypass
-  i18n entirely (hardcoded English strings, not `t()` calls) — translating `ru.json` alone won't
-  localize these six pages. `Bottle.jsx` follows this deliberately, matching its siblings; the
-  wine-type content in `bottleGuide.js` is English-only demo-style content, same reasoning as
-  `samplePlans.js`/`regions.js` — not an oversight to "fix" by adding i18n.
-- 18 hardcoded hex literals across `Walkthrough.jsx`, `Wheel.jsx`, `Nose.jsx`, `Quiz.jsx`
+- Russian locale (`ru.json`) is structurally complete but 100% untranslated placeholder English
+  (this includes `walkthrough.*`, added when Walkthrough got real i18n support — see below).
+- `Nose.jsx`, `Wheel.jsx`, `Quiz.jsx`, `Regions.jsx`, and `Bottle.jsx` still bypass i18n entirely
+  (hardcoded English strings, not `t()` calls) — translating `ru.json` alone won't localize these
+  five pages. **`Walkthrough.jsx` is now the exception — fully wired to `t()` calls**, done as part
+  of its palette/completion-logic refactor (PROJECT_MEMORY.md §24). `Bottle.jsx` bypasses i18n
+  deliberately, matching its still-untranslated siblings; the wine-type content in `bottleGuide.js`
+  is English-only demo-style content, same reasoning as `samplePlans.js`/`regions.js` — not an
+  oversight to "fix" by adding i18n. Walkthrough should be the template for converting the
+  remaining five modules, not a one-off.
+- 12 hardcoded hex literals across `Wheel.jsx`, `Nose.jsx`, `Quiz.jsx`
   don't use `var(--token)` and were NOT updated by the Palette v1.1 rollout — see
   Design system section above and the backlog for the judgment-call brief on fixing these.
+  `Walkthrough.jsx`'s 18 were fixed as part of the same refactor mentioned above (0 remain there).
   (Originally 19 across 5 files; `Home.jsx`'s one instance is fixed — see PROJECT_MEMORY.md §23.)
 - `Difficulty` and "Mark done"/"Start over" button styling still live duplicated inside individual
   module files rather than as shared `src/components/ui/` components, despite the pattern now
-  being proven across three modules.
+  being proven across three modules. **One related piece was extracted, not this one**:
+  `CircularProgress` (the "X steps to go" ring on Learn's directory list) is a real shared
+  `src/components/ui/` component, added alongside `getModuleProgress` — see PROJECT_MEMORY.md §25.
+  `Difficulty`/Mark-done/Start-over extraction is still its own separate, not-yet-done task.
 
 ## Working with Marina
 - Non-developer (analyst). Any terminal/technical instructions must be plain, step-by-step, with

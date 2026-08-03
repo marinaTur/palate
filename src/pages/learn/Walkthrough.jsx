@@ -93,7 +93,9 @@ export default function Walkthrough() {
   const stepsViewed = getStepsViewed('walkthrough')
   const allStepsViewed = stepsViewed.length === STEPS.length
 
-  // Mark current step as viewed after 3 seconds of being on it
+  // Mark current step as viewed after 3 seconds of being on it. Once every
+  // step has been viewed, auto-complete the module — no separate "Mark as
+  // done" tap needed.
   useEffect(() => {
     const timer = setTimeout(() => {
       markStepViewed('walkthrough', STEPS[currentStep].id)
@@ -101,6 +103,12 @@ export default function Walkthrough() {
 
     return () => clearTimeout(timer)
   }, [currentStep, markStepViewed])
+
+  useEffect(() => {
+    if (allStepsViewed && !finished) {
+      markModuleComplete('walkthrough')
+    }
+  }, [allStepsViewed, finished, markModuleComplete])
 
   const step = STEPS[currentStep]
   const isLast = currentStep === STEPS.length - 1
@@ -112,10 +120,6 @@ export default function Walkthrough() {
       setExpanded(false)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-  }
-
-  function markDone() {
-    markModuleComplete('walkthrough')
   }
 
   function prev() {
@@ -164,7 +168,7 @@ export default function Walkthrough() {
               regardless of which step is currently being viewed. */}
           <div className="flex gap-1 mb-3">
             {STEPS.map((_, i) => {
-              const isDone = finished || i < currentStep
+              const isDone = finished || stepsViewed.includes(STEPS[i].id)
               return (
                 <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300"
                   style={{ background: isDone ? 'var(--gold)' : i === currentStep ? 'var(--gold)' : 'var(--border)' }}
@@ -175,7 +179,7 @@ export default function Walkthrough() {
           {/* Step circles + labels */}
           <div className="flex">
             {STEPS.map((s, i) => {
-              const isDone = finished || i < currentStep
+              const isDone = finished || stepsViewed.includes(STEPS[i].id)
               return (
                 <button key={s.id}
                   onClick={() => { setCurrentStep(i); setExpanded(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
@@ -260,16 +264,11 @@ export default function Walkthrough() {
               ← {t('walkthrough.previous')}
             </button>
           )}
-          {allStepsViewed ? (
-            <button onClick={markDone}
-              className="flex-1 py-3 rounded-xl text-white text-sm font-medium transition-colors bg-[var(--gold)] hover:opacity-90">
-              {t('walkthrough.markDone')}
-            </button>
-          ) : (
+          {!isLast && (
             <button onClick={next}
               className="flex-1 py-3 rounded-xl text-white text-sm font-medium transition-colors"
               style={{ background: step.color }}>
-              {isLast ? t('walkthrough.viewedAll') : t('walkthrough.nextStep', { phase: t(`walkthrough.phase.${STEPS[currentStep + 1].id}`) })}
+              {t('walkthrough.nextStep', { phase: t(`walkthrough.phase.${STEPS[currentStep + 1].id}`) })}
             </button>
           )}
         </div>

@@ -1,8 +1,9 @@
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store/useAppStore'
-import { Badge } from '../components/ui'
+import { Badge, CircularProgress } from '../components/ui'
 import { LEARN_MODULES } from '../constants/modules'
+import { getModuleProgress } from '../utils/moduleProgress'
 import Walkthrough from './learn/Walkthrough'
 import Nose from './learn/Nose'
 import Wheel from './learn/Wheel'
@@ -58,7 +59,8 @@ function ComingSoon({ moduleId }) {
 
 function LearnIndex() {
   const { t } = useTranslation()
-  const { completedModules } = useAppStore()
+  const store = useAppStore()
+  const { completedModules } = store
   return (
     <div className="max-w-2xl mx-auto pb-6">
       <div className="bg-gradient-to-br from-[var(--forest)] to-[var(--forest-dark)] px-5 pt-12 pb-6 md:rounded-b-2xl md:mx-4 mb-6">
@@ -68,6 +70,8 @@ function LearnIndex() {
       <div className="px-4 space-y-2">
         {LEARN_MODULES.map(({ id, badge: badgeKey }, idx) => {
           const done = completedModules.includes(id)
+          const progress = done ? null : getModuleProgress(id, store)
+          const started = progress && progress.done > 0
           return (
             <Link key={id} to={id}
               className="flex items-center gap-4 bg-white border border-[var(--border)] rounded-xl px-4 py-4 hover:border-[var(--forest)] transition-colors group">
@@ -83,6 +87,8 @@ function LearnIndex() {
               <div className="flex items-center gap-2">
                 {done ? (
                   <Badge variant="green">{t('modules.done')}</Badge>
+                ) : started ? (
+                  <CircularProgress done={progress.done} total={progress.total} />
                 ) : badgeKey ? (
                   <Badge variant="forest">{t(`modules.${badgeKey}`)}</Badge>
                 ) : null}

@@ -112,8 +112,6 @@
     "tellMore": "Tell me more",
     "lessDetail": "Less detail",
     "previous": "Previous",
-    "markDone": "Mark as done ✓",
-    "viewedAll": "You've seen all steps",
     "nextStep": "Next: {{phase}} →"
   },
   "learn": {
