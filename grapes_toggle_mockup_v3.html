@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regions and Grapes — variant C (circular tiles, inline expand)</title>
+<style>
+  :root {
+    --forest: #264D3B;
+    --forest-deep: #153025;
+    --forest-mid: #3E6B54;
+    --forest-tint: #EAF0EC;
+    --burgundy: #A02F49;
+    --burgundy-deep: #7A2038;
+    --gold: #B98A3D;
+    --gold-text: #8A6420;
+    --gold-tint: #F5EDE0;
+    --ink: #1E1E1E;
+    --ink-soft: #3A3530;
+    --muted: #7A6E64;
+    --border: #E2DDD6;
+    --border-soft: #EDE8E2;
+
+    --red-grape:   var(--burgundy-deep);
+    --red-tint:    #F3E3E7;
+    --white-grape: #7A6A2E;
+    --white-tint:  #F3EFDD;
+    --spark-grape: #3E6B54;
+    --spark-tint:  var(--forest-tint);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #FAF8F5;
+    color: var(--ink);
+  }
+  .phone {
+    max-width: 480px;
+    margin: 24px auto;
+    background: #fff;
+    min-height: 100vh;
+    box-shadow: 0 0 40px rgba(0,0,0,0.08);
+  }
+  .hero {
+    background: linear-gradient(to bottom right, var(--forest), var(--forest-deep));
+    padding: 28px 20px 20px;
+    color: white;
+  }
+  .hero .back { color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 12px; }
+  .hero .eyebrow { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); font-weight: 500; margin-bottom: 8px; }
+  .hero h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 34px; margin: 0; }
+  .content { padding: 0 16px; }
+
+  .annot {
+    background: #FFF9E8; border: 1px solid #EBD98A; border-radius: 10px;
+    padding: 10px 14px; margin: 16px 0; font-size: 12px; color: #6B5A1E; line-height: 1.5;
+  }
+
+  .toggle3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 16px 0; }
+  .toggle3 button {
+    padding: 10px 6px; border-radius: 8px; font-size: 13.5px; font-weight: 500;
+    border: 1px solid var(--border); background: white; color: var(--muted); cursor: pointer;
+  }
+  .toggle3 button.active { background: var(--forest); color: white; border-color: var(--forest); }
+
+  .search-wrap { position: relative; margin: 4px 0 16px; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.5; }
+  .search-input {
+    width: 100%; padding: 10px 12px 10px 34px; border-radius: 10px;
+    border: 1px solid var(--border); font-size: 14px; color: var(--ink);
+    background: white; font-family: inherit;
+  }
+  .search-input:focus { outline: none; border-color: var(--forest-mid); }
+  .no-results { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 0; }
+
+  .legend { display: flex; gap: 14px; margin-bottom: 14px; font-size: 11.5px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend .swatch { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+  .progress-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 18px; }
+  .progress-fill { height: 100%; background: var(--forest); border-radius: 4px; }
+
+  /* ── Honeycomb bubble grid — explicit rows, alternating rows shifted
+     half a bubble-width, circles touching edge-to-edge within a row.
+     Built as explicit .honeycomb-row divs rather than nth-child math on a
+     flat flex-wrap list — much easier to get the offset actually right,
+     and easier to re-flow if the real 27-grape build changes row length.
+     "Fresh air" comes from generous margin AROUND the whole packed
+     cluster, not from gaps between individual bubbles — tight/packed
+     matches the reference image, the breathing room lives at the page
+     level instead. */
+  /* One --gap value used for both the horizontal space between bubbles in
+     a row AND the vertical space between rows, so the two match exactly
+     rather than being tuned separately to "look about right." */
+  .bubble-grid { margin: 22px 0 16px; --gap: 10px; }
+  .honeycomb-row {
+    display: flex; justify-content: center; gap: var(--gap);
+    margin-top: var(--gap);
+  }
+  .honeycomb-row:first-child { margin-top: 0; }
+  .honeycomb-row.offset { margin-left: calc(41px + var(--gap) / 2); } /* half a bubble-width, shifts every other row */
+  .bubble-wrap {
+    width: 82px; height: 82px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .bubble {
+    width: 78px; height: 78px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; cursor: pointer; border: none; position: relative;
+    padding: 6px; transition: transform 0.15s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .bubble:active { transform: scale(0.94); }
+  .bubble.red   { background: radial-gradient(circle at 35% 30%, #C4667C, var(--red-grape)); }
+  .bubble.white { background: radial-gradient(circle at 35% 30%, #C9B36A, var(--white-grape)); }
+  .bubble.spark { background: radial-gradient(circle at 35% 30%, #6FA085, var(--spark-grape)); }
+  .bubble .b-name {
+    color: white; font-size: 11.5px; font-weight: 600; line-height: 1.2;
+  }
+  .bubble .b-check {
+    position: absolute; top: 2px; right: 6px; color: white; font-size: 12px;
+    background: rgba(0,0,0,0.2); border-radius: 50%; width: 16px; height: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bubble-label {
+    font-size: 10.5px; color: var(--muted); margin-top: 5px; text-align: center; line-height: 1.2;
+  }
+  .bubble.selected { box-shadow: 0 0 0 3px var(--gold); }
+
+  /* Combined-name grapes (Syrah/Shiraz) render as one bubble with a slashed
+     name across two lines — simpler than the earlier two-overlapping-circles
+     idea, and every bubble stays exactly the same size, no exceptions. */
+
+  .type-filter { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; }
+  .type-chip {
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 500; color: var(--muted);
+    background: white; border: 1px solid var(--border); border-radius: 999px;
+    padding: 6px 12px; cursor: pointer;
+  }
+  .type-chip .swatch { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .type-chip.active { background: var(--forest-tint); border-color: var(--forest-mid); color: var(--ink); font-weight: 600; }
+
+  /* ── Inline detail card, same accordion pattern as Regions.jsx ── */
+  .detail-card {
+    background: white; border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; margin: 16px 0; display: none;
+  }
+  .detail-card.open { display: block; }
+  .detail-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .detail-names { display: flex; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
+  .detail-name-badge {
+    font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 999px;
+  }
+  .detail-name-badge.red   { background: var(--red-tint); color: var(--red-grape); }
+  .detail-name-badge.white { background: var(--white-tint); color: var(--white-grape); }
+  .detail-name-badge.spark { background: var(--spark-tint); color: var(--spark-grape); }
+  .detail-title { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 22px; margin: 4px 0 0; }
+  .detail-close-x { background: var(--border-soft); border: none; width: 28px; height: 28px; border-radius: 50%; font-size: 13px; color: var(--muted); cursor: pointer; flex-shrink: 0; }
+
+  .aroma-banner { font-size: 14px; color: var(--ink-soft); line-height: 1.6; margin: 0 0 14px; }
+  .struct-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .struct-chip { border-radius: 10px; padding: 9px 11px; }
+  .struct-chip.red   { background: var(--red-tint); }
+  .struct-chip.white { background: var(--white-tint); }
+  .struct-chip.spark { background: var(--spark-tint); }
+  .struct-chip .sc-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.7; margin-bottom: 2px; }
+  .struct-chip .sc-value { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .style-copy { font-size: 13px; color: var(--ink-soft); line-height: 1.55; margin: 10px 0 16px; }
+
+  .dsec { margin-bottom: 16px; }
+  .dsec-label { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 5px; }
+  .dsec-value { font-size: 13px; color: var(--ink-soft); line-height: 1.55; margin: 0; }
+
+  .link-btn {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    border: 1px solid rgba(185,138,61,0.25);
+    border-radius: 9px; padding: 10px 12px; text-align: left; cursor: pointer; margin-top: 6px;
+    background: var(--gold-tint);
+  }
+  .link-btn .label { font-size: 12px; color: var(--ink-soft); }
+  .link-btn .label b { color: var(--gold-text); font-weight: 600; }
+  .link-btn .arrow { color: var(--gold-text); font-size: 12px; flex-shrink: 0; }
+
+  .more-toggle {
+    width: 100%; text-align: center; background: var(--border-soft); border: none;
+    padding: 10px 0; border-radius: 9px; font-size: 12px; color: var(--ink-soft);
+    font-weight: 500; cursor: pointer; margin: 4px 0 16px;
+  }
+
+  h2.mock-heading { font-size: 15px; margin: 28px 16px 6px; color: var(--ink); }
+  .section-note {
+    background: #fff; border: 1px dashed var(--border); border-radius: 10px;
+    padding: 12px 14px; margin: 8px auto 40px; font-size: 12.5px; color: var(--muted);
+    line-height: 1.6; max-width: 480px;
+  }
+  .section-note b { color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="hero">
+    <div class="back">&larr; Back to lessons</div>
+    <div class="eyebrow">Old World, New World, at a glance</div>
+    <h1>Regions and Grapes</h1>
+  </div>
+
+  <div class="content" style="padding-top: 4px;">
+
+    <div class="annot">
+      <b>Variant C, revised — same-size bubbles, no grid ordering implied, slashed names for
+      combined grapes, and a real red/white/sparkling filter.</b> Colour-coding by grapeType (now
+      a real field in <code>grapes.js</code>) as before, but every bubble is exactly the same
+      size regardless of prominence, Syrah/Shiraz now renders as one bubble reading "Syrah/Shiraz"
+      rather than two overlapping circles, and a chip row above the grid filters by grape colour
+      (composes with the search box — try filtering to "White" then searching "cognac"). Tapping a
+      bubble still opens its detail card inline below the grid, same accordion pattern
+      <code>Regions.jsx</code> already uses today.
+    </div>
+
+    <div class="toggle3">
+      <button>Old World</button>
+      <button>New World</button>
+      <button class="active">Grapes</button>
+    </div>
+
+    <div class="search-wrap">
+      <span class="search-icon">&#128269;</span>
+      <input class="search-input" type="text" placeholder="Search grape or region name…" oninput="filterBubbles(this.value)">
+    </div>
+
+    <div class="type-filter" id="typeFilter">
+      <button class="type-chip active" data-type="all" onclick="filterByType('all', this)">All</button>
+      <button class="type-chip" data-type="red" onclick="filterByType('red', this)"><span class="swatch" style="background:var(--red-grape);"></span>Red</button>
+      <button class="type-chip" data-type="white" onclick="filterByType('white', this)"><span class="swatch" style="background:var(--white-grape);"></span>White</button>
+      <button class="type-chip" data-type="sparkling" onclick="filterByType('sparkling', this)"><span class="swatch" style="background:var(--spark-grape);"></span>Sparkling</button>
+    </div>
+
+    <div class="progress-label">3 of 27 grapes explored</div>
+    <div class="progress-bar"><div class="progress-fill" style="width: 11%;"></div></div>
+
+    <div class="bubble-grid" id="bubbleGrid">
+
+      <div class="honeycomb-row">
+        <div class="bubble-wrap" data-search="cabernet sauvignon bordeaux napa stellenbosch maipo" data-type="red">
+          <button class="bubble red" id="b-cs" onclick="selectBubble('cs')">
+            <span class="b-check">&#10003;</span>
+            <span class="b-name">Cabernet<br>Sauvignon</span>
+          </button>
+        </div>
+        <div class="bubble-wrap" data-search="pinot noir burgundy champagne" data-type="red">
+          <button class="bubble red" id="b-pn" onclick="selectBubble('pn')">
+            <span class="b-name">Pinot<br>Noir</span>
+          </button>
+        </div>
+        <div class="bubble-wrap" data-search="glera prosecco conegliano valdobbiadene" data-type="sparkling">
+          <button class="bubble spark" id="b-gl" onclick="selectBubble('gl')">
+            <span class="b-name">Glera</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="honeycomb-row offset">
+        <div class="bubble-wrap" data-search="sauvignon blanc marlborough" data-type="white">
+          <button class="bubble white" id="b-sb" onclick="selectBubble('sb')">
+            <span class="b-name">Sauvignon<br>Blanc</span>
+          </button>
+        </div>
+        <div class="bubble-wrap" data-search="syrah shiraz cotes du rhone barossa valley" data-type="red">
+          <button class="bubble red" id="b-ss" onclick="selectBubble('ss')">
+            <span class="b-name">Syrah/<br>Shiraz</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="honeycomb-row">
+        <div class="bubble-wrap" data-search="ugni blanc trebbiano cognac tuscany" data-type="white">
+          <button class="bubble white" id="b-ub" onclick="selectBubble('ub')">
+            <span class="b-name">Ugni Blanc/<br>Trebbiano</span>
+          </button>
+        </div>
+        <div class="bubble-wrap" data-search="riesling mosel wachau" data-type="white">
+          <button class="bubble white" id="b-rs" onclick="selectBubble('sb')">
+            <span class="b-name">Riesling</span>
+          </button>
+        </div>
+        <div class="bubble-wrap" data-search="merlot bordeaux" data-type="red">
+          <button class="bubble red" id="b-me" onclick="selectBubble('cs')">
+            <span class="b-name">Merlot</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="no-results" id="noResults" style="display:none;">No grape or region matches that search.</p>
+
+    <!-- ══════ Inline detail cards — same expand-below-the-grid pattern as Regions.jsx ══════ -->
+
+    <div class="detail-card" id="detail-cs">
+      <div class="detail-card-header">
+        <div>
+          <span class="detail-name-badge red">Red grape</span>
+          <div class="detail-title">Cabernet Sauvignon</div>
+        </div>
+        <button class="detail-close-x" onclick="closeDetail('cs')">&#10005;</button>
+      </div>
+      <p class="aroma-banner">Black currant, black cherry, blackberry, plum — and a distinctive green bell pepper note, especially in cooler-climate or less-ripe examples.</p>
+      <div class="struct-row">
+        <div class="struct-chip red"><div class="sc-label">Body</div><div class="sc-value">Full</div></div>
+        <div class="struct-chip red"><div class="sc-label">Tannin</div><div class="sc-value">High, firm</div></div>
+      </div>
+      <div class="struct-row">
+        <div class="struct-chip red"><div class="sc-label">Acidity</div><div class="sc-value">Medium–high</div></div>
+        <div class="struct-chip red"><div class="sc-label">ABV</div><div class="sc-value">13.5–15.5%</div></div>
+      </div>
+      <p class="style-copy">Built to age, and it shows: firm, structured, one dominant style rather than a wide range. Old World versions (Bordeaux) lean more herbal and savory with a stronger green-pepper streak; New World versions (Napa) taste riper and juicier, with softer edges.</p>
+      <div class="dsec"><p class="dsec-label">Secondary / tertiary character</p><p class="dsec-value">Vanilla, clove, baking spice, cedar from oak aging; with bottle age: tobacco, leather, graphite.</p></div>
+      <div class="dsec">
+        <p class="dsec-label">Commonly confused with</p>
+        <p class="dsec-value">Merlot — Cabernet's tannin feels firmer and grips the sides of the mouth; Merlot's is rounder and "plush."</p>
+        <button class="link-btn" onclick="alert('Would jump to Merlot')"><span class="label"><b>Compare taste with</b> Merlot</span><span class="arrow">&#8594;</span></button>
+      </div>
+      <div class="dsec"><p class="dsec-label">Food pairing</p><p class="dsec-value">Complement — its high tannin wants fat (red meat, aged hard cheese) to soften against.</p></div>
+      <button class="more-toggle" onclick="toggle('cs-more')">More detail (sweetness, finish, colour, prevalence)</button>
+      <div id="cs-more" style="display:none;">
+        <div class="dsec"><p class="dsec-label">Sweetness</p><p class="dsec-value">Dry</p></div>
+        <div class="dsec"><p class="dsec-label">Finish</p><p class="dsec-value">Long</p></div>
+        <div class="dsec"><p class="dsec-label">Colour</p><p class="dsec-value">Deep ruby to garnet — one of the deepest reds, from thick skins.</p></div>
+        <div class="dsec"><p class="dsec-label">Global prevalence</p><p class="dsec-value">World's #1 most-planted wine grape, ~341,000 hectares.</p></div>
+      </div>
+      <p class="dsec-label">Where to find it</p>
+      <button class="link-btn" onclick="alert('Would jump to Bordeaux')"><span class="label">Bordeaux <span style="color:var(--muted);">— Left Bank</span></span><span class="arrow">&#8594;</span></button>
+      <button class="link-btn" onclick="alert('Would jump to Napa')"><span class="label">Napa Valley</span><span class="arrow">&#8594;</span></button>
+      <button class="link-btn" onclick="alert('Would jump to Stellenbosch')"><span class="label">Stellenbosch</span><span class="arrow">&#8594;</span></button>
+      <button class="link-btn" onclick="alert('Would jump to Maipo')"><span class="label">Maipo Valley</span><span class="arrow">&#8594;</span></button>
+    </div>
+
+    <div class="detail-card" id="detail-sb">
+      <div class="detail-card-header">
+        <div>
+          <span class="detail-name-badge white">White grape</span>
+          <div class="detail-title">Sauvignon Blanc</div>
+        </div>
+        <button class="detail-close-x" onclick="closeDetail('sb')">&#10005;</button>
+      </div>
+      <p class="aroma-banner">Two very different personalities depending on where it's grown: cut grass, green pepper, and gooseberry in cooler spots, or passionfruit, guava, and grapefruit in warmer ones.</p>
+      <div class="struct-row">
+        <div class="struct-chip white"><div class="sc-label">Body</div><div class="sc-value">Light–medium</div></div>
+        <div class="struct-chip white"><div class="sc-label">Tannin</div><div class="sc-value">None (white)</div></div>
+      </div>
+      <div class="struct-row">
+        <div class="struct-chip white"><div class="sc-label">Acidity</div><div class="sc-value">High–very high</div></div>
+        <div class="struct-chip white"><div class="sc-label">ABV</div><div class="sc-value">12–14%</div></div>
+      </div>
+      <p class="style-copy">Always leans dry and zesty. Loire Valley versions taste more restrained and mineral; Marlborough versions taste louder and more tropical — neither is the "right" one, just two equally valid takes on the same grape.</p>
+      <div class="dsec"><p class="dsec-label">Secondary / tertiary character</p><p class="dsec-value">Usually kept simple on purpose — made in stainless steel so nothing gets in the way of the fresh aroma above.</p></div>
+      <div class="dsec"><p class="dsec-label">Commonly confused with</p><p class="dsec-value">Verdejo — close enough that Spain's Rueda region legally allows the two grapes to be blended under the same label.</p></div>
+      <div class="dsec"><p class="dsec-label">Food pairing</p><p class="dsec-value">Contrast — its zing cuts right through goat cheese, oysters, and green vegetables.</p></div>
+      <button class="more-toggle" onclick="toggle('sb-more')">More detail (sweetness, finish, colour, prevalence)</button>
+      <div id="sb-more" style="display:none;">
+        <div class="dsec"><p class="dsec-label">Sweetness</p><p class="dsec-value">Typically dry</p></div>
+        <div class="dsec"><p class="dsec-label">Finish</p><p class="dsec-value">Medium</p></div>
+        <div class="dsec"><p class="dsec-label">Colour</p><p class="dsec-value">Very pale, often with a distinct green tint.</p></div>
+        <div class="dsec"><p class="dsec-label">Global prevalence</p><p class="dsec-value">Around the world's 8th most-planted grape, roughly 121,000 hectares.</p></div>
+      </div>
+      <p class="dsec-label">Where to find it</p>
+      <button class="link-btn" onclick="alert('Would jump to Marlborough')"><span class="label">Marlborough</span><span class="arrow">&#8594;</span></button>
+    </div>
+
+    <div class="detail-card" id="detail-pn">
+      <div class="detail-card-header">
+        <div>
+          <span class="detail-name-badge red">Red grape</span>
+          <div class="detail-title">Pinot Noir</div>
+        </div>
+        <button class="detail-close-x" onclick="closeDetail('pn')">&#10005;</button>
+      </div>
+      <p class="aroma-banner">Red cherry, raspberry, strawberry, cranberry, with floral notes of violet and rose.</p>
+      <div class="struct-row">
+        <div class="struct-chip red"><div class="sc-label">Body</div><div class="sc-value">Light–medium</div></div>
+        <div class="struct-chip red"><div class="sc-label">Tannin</div><div class="sc-value">Low–medium, silky</div></div>
+      </div>
+      <div class="struct-row">
+        <div class="struct-chip red"><div class="sc-label">Acidity</div><div class="sc-value">High</div></div>
+        <div class="struct-chip red"><div class="sc-label">ABV</div><div class="sc-value">12–14.5%</div></div>
+      </div>
+      <p class="style-copy">Delicate rather than powerful, and that's by design — the pleasure here is finesse, not force. Young bottles taste like fresh red fruit; older ones shift toward dried fruit, mushroom, and forest-floor notes.</p>
+      <div class="dsec"><p class="dsec-label">Commonly confused with</p><p class="dsec-value">Gamay — a genetic relative sharing the same light, high-acid, low-tannin shape, but more overtly floral and candied where Pinot Noir shows more structure and earthiness.</p></div>
+      <div class="dsec"><p class="dsec-label">Food pairing</p><p class="dsec-value">Complement, unusually flexible for a red — pairs like a food-friendly white would (salmon, mushroom dishes, roast chicken).</p></div>
+      <p class="dsec-label">Where to find it</p>
+      <button class="link-btn" onclick="alert('Would jump to Burgundy')"><span class="label">Burgundy</span><span class="arrow">&#8594;</span></button>
+      <button class="link-btn" onclick="alert('Would jump to Champagne')"><span class="label">Champagne</span><span class="arrow">&#8594;</span></button>
+    </div>
+
+    <div class="detail-card" id="detail-ss">
+      <div class="detail-card-header">
+        <div>
+          <div class="detail-names"><span class="detail-name-badge red">Syrah</span><span class="detail-name-badge red">Shiraz</span></div>
+          <div class="detail-title">Syrah / Shiraz</div>
+        </div>
+        <button class="detail-close-x" onclick="closeDetail('ss')">&#10005;</button>
+      </div>
+      <p class="aroma-banner">Blackberry, black cherry, plum (Syrah); riper blueberry, blackberry jam, cooked plum (Shiraz).</p>
+      <div class="struct-row">
+        <div class="struct-chip red"><div class="sc-label">Body</div><div class="sc-value">Medium+ to full</div></div>
+        <div class="struct-chip red"><div class="sc-label">Tannin</div><div class="sc-value">High, firm</div></div>
+      </div>
+      <p class="style-copy">Almost two different wines under one name. Syrah (Northern Rhône, cooler climate) is the elegant side: peppery, floral, restrained. Shiraz (Barossa, warmer climate) is the bold side: jammy, riper, more alcohol.</p>
+      <div class="dsec"><p class="dsec-label">Secondary / tertiary character</p><p class="dsec-value">Black pepper, from a compound called rotundone — this grape produces more of it than almost any other variety. Oak aging (more in Shiraz) adds vanilla, chocolate, sweet spice.</p></div>
+      <div class="dsec">
+        <p class="dsec-label">Commonly confused with</p>
+        <p class="dsec-value">Malbec — a genuinely weaker pairing than most, flagged honestly rather than overstated.</p>
+        <button class="link-btn" onclick="alert('Would jump to Malbec')"><span class="label"><b>Compare taste with</b> Malbec</span><span class="arrow">&#8594;</span></button>
+      </div>
+      <div class="dsec"><p class="dsec-label">Food pairing</p><p class="dsec-value">Complement — pepper and firm tannin pair with peppercorn-crusted or char-grilled meats.</p></div>
+      <button class="more-toggle" onclick="toggle('ss-more')">More detail (sweetness, finish, colour, prevalence)</button>
+      <div id="ss-more" style="display:none;">
+        <div class="dsec"><p class="dsec-label">Sweetness</p><p class="dsec-value">Dry</p></div>
+        <div class="dsec"><p class="dsec-label">Finish</p><p class="dsec-value">Long</p></div>
+        <div class="dsec"><p class="dsec-label">Colour</p><p class="dsec-value">Deep ruby-purple to inky black when young.</p></div>
+        <div class="dsec"><p class="dsec-label">Global prevalence</p><p class="dsec-value">World's #6 most-planted wine grape, ~190,000 hectares.</p></div>
+      </div>
+      <p class="dsec-label">Where to find it</p>
+      <button class="link-btn" onclick="alert('Would jump to Cotes du Rhone')"><span class="label">Côtes du Rhône <span style="color:var(--muted);">— as Syrah</span></span><span class="arrow">&#8594;</span></button>
+      <button class="link-btn" onclick="alert('Would jump to Barossa')"><span class="label">Barossa Valley <span style="color:var(--muted);">— as Shiraz</span></span><span class="arrow">&#8594;</span></button>
+    </div>
+
+    <div class="detail-card" id="detail-ub">
+      <div class="detail-card-header">
+        <div>
+          <div class="detail-names"><span class="detail-name-badge white">Ugni Blanc</span><span class="detail-name-badge white">Trebbiano</span></div>
+          <div class="detail-title">Ugni Blanc / Trebbiano</div>
+        </div>
+        <button class="detail-close-x" onclick="closeDetail('ub')">&#10005;</button>
+      </div>
+      <p class="aroma-banner">Apple, citrus, lemon, grapefruit, subtle tropical notes, with herbal undertones in cooler-climate examples.</p>
+      <div class="struct-row">
+        <div class="struct-chip white"><div class="sc-label">Body</div><div class="sc-value">Light–medium</div></div>
+        <div class="struct-chip white"><div class="sc-label">Tannin</div><div class="sc-value">None (white)</div></div>
+      </div>
+      <div class="struct-row">
+        <div class="struct-chip white"><div class="sc-label">Acidity</div><div class="sc-value">Very high</div></div>
+        <div class="struct-chip white"><div class="sc-label">ABV</div><div class="sc-value">8–9% (Cognac base)</div></div>
+      </div>
+      <p class="style-copy">Deliberately unremarkable, and that's the whole point — it's neutral so it doesn't compete with what's built on top of it: a blend's other grapes in Italy, or the developing character of Cognac itself in France.</p>
+      <div class="dsec"><p class="dsec-label">Secondary / tertiary character</p><p class="dsec-value">Minimal by design — the single defining fact of this grape.</p></div>
+      <div class="dsec"><p class="dsec-label">Commonly confused with</p><p class="dsec-value">No real taste-alike found, and that's itself a fact worth knowing — a grape this neutral has little for another grape to be confused with.</p></div>
+      <div class="dsec"><p class="dsec-label">Food pairing</p><p class="dsec-value">Flexible, light-touch — salads, light seafood, oily fish, without imposing its own character.</p></div>
+      <button class="more-toggle" onclick="toggle('ub-more')">More detail (sweetness, finish, colour, prevalence)</button>
+      <div id="ub-more" style="display:none;">
+        <div class="dsec"><p class="dsec-label">Sweetness</p><p class="dsec-value">Dry</p></div>
+        <div class="dsec"><p class="dsec-label">Finish</p><p class="dsec-value">Short to medium</p></div>
+        <div class="dsec"><p class="dsec-label">Colour</p><p class="dsec-value">Pale yellow</p></div>
+        <div class="dsec"><p class="dsec-label">Global prevalence</p><p class="dsec-value">World total 111,000 hectares, ranking #10 globally.</p></div>
+      </div>
+      <p class="dsec-label">Where to find it</p>
+      <button class="link-btn" onclick="alert('Would jump to Tuscany (white) — newly added region, see PROJECT_MEMORY.md §30')"><span class="label">Tuscany (white) <span style="color:var(--muted);">— its actual Italian home, newly added</span></span><span class="arrow">&#8594;</span></button>
+      <button class="link-btn" onclick="alert('Would jump to Cognac')"><span class="label">Cognac <span style="color:var(--muted);">— a spirits region, not a wine-tasting one</span></span><span class="arrow">&#8594;</span></button>
+    </div>
+
+    <div class="detail-card" id="detail-gl">
+      <div class="detail-card-header">
+        <div>
+          <span class="detail-name-badge spark">Sparkling grape</span>
+          <div class="detail-title">Glera</div>
+        </div>
+        <button class="detail-close-x" onclick="closeDetail('gl')">&#10005;</button>
+      </div>
+      <p class="aroma-banner">Green apple, pear, white peach, with floral notes like honeysuckle and acacia blossom.</p>
+      <div class="struct-row">
+        <div class="struct-chip spark"><div class="sc-label">Body</div><div class="sc-value">Light–medium</div></div>
+        <div class="struct-chip spark"><div class="sc-label">Tannin</div><div class="sc-value">None (white)</div></div>
+      </div>
+      <div class="struct-row">
+        <div class="struct-chip spark"><div class="sc-label">Acidity</div><div class="sc-value">High</div></div>
+        <div class="struct-chip spark"><div class="sc-label">ABV</div><div class="sc-value">8.5–12.5%</div></div>
+      </div>
+      <p class="style-copy">Kept deliberately simple and fresh — made mostly in steel tanks so the fruity, floral character stays front and center rather than picking up bready notes from bottle aging.</p>
+      <div class="dsec"><p class="dsec-label">Commonly confused with</p><p class="dsec-value">Not a taste mix-up but a real naming one: the EU renamed this grape from "Prosecco" to "Glera" in 2009 specifically so "Prosecco" could stay a protected place-name, not a grape name anyone could use.</p></div>
+      <p class="dsec-label">Where to find it</p>
+      <button class="link-btn" onclick="alert('Would jump to Conegliano Valdobbiadene')"><span class="label">Conegliano Valdobbiadene</span><span class="arrow">&#8594;</span></button>
+    </div>
+
+  </div>
+</div>
+
+<h2 class="mock-heading">Open questions for this variant</h2>
+<div class="section-note">
+  1. Tapping a bubble opens its detail card at the bottom of the grid, below all the bubbles, not
+  right next to the one you tapped — same as how Regions.jsx already scrolls to a target. Worth a
+  live-device check on whether that jump feels natural once there are 27 bubbles instead of 6.<br><br>
+  2. With 27 real grapes (not just this mockup's 6), does an unordered grid stay easy to scan, or
+  does it need some kind of grouping once the full set is in place — even without a strict A–Z or
+  tier order, e.g. keeping same-type bubbles loosely clustered?<br><br>
+  3. The type filter currently only filters — should selecting "White," say, also update the
+  progress count/bar above it to "X of 9 white grapes explored," or should that stay a fixed
+  27-grape total regardless of filter?
+</div>
+
+<script>
+  function toggle(id) {
+    const el = document.getElementById(id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+  let currentOpen = null;
+  function selectBubble(id) {
+    document.querySelectorAll('.detail-card').forEach(c => c.classList.remove('open'));
+    document.querySelectorAll('.bubble').forEach(b => b.classList.remove('selected'));
+    const card = document.getElementById('detail-' + id);
+    card.classList.add('open');
+    const bubbleEl = document.getElementById('b-' + id);
+    if (bubbleEl) bubbleEl.classList.add('selected');
+    currentOpen = id;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  function closeDetail(id) {
+    document.getElementById('detail-' + id).classList.remove('open');
+    const bubbleEl = document.getElementById('b-' + id);
+    if (bubbleEl) bubbleEl.classList.remove('selected');
+    currentOpen = null;
+  }
+
+  // Search and type filter compose — a bubble shows only if it passes BOTH.
+  let activeQuery = '';
+  let activeType = 'all';
+
+  function filterByType(type, btn) {
+    activeType = type;
+    document.querySelectorAll('.type-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilters();
+  }
+
+  function filterBubbles(query) {
+    activeQuery = query.trim().toLowerCase();
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const wraps = document.querySelectorAll('.bubble-wrap[data-search]');
+    let anyVisible = false;
+    wraps.forEach(wrap => {
+      const matchesSearch = !activeQuery || wrap.dataset.search.includes(activeQuery);
+      const matchesType = activeType === 'all' || wrap.dataset.type === activeType;
+      const match = matchesSearch && matchesType;
+      wrap.style.display = match ? '' : 'none';
+      if (match) anyVisible = true;
+    });
+    document.getElementById('noResults').style.display = anyVisible ? 'none' : 'block';
+  }
+</script>
+
+</body>
+</html>

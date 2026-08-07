@@ -191,10 +191,12 @@ alternate systems considered) lives in a standalone planning document that is **
   attaching each grape to its home region — not the reverse. Three other systems (Market Reality,
   Category Coverage, plain curation) were explicitly considered and rejected; don't re-litigate this
   choice without a real reason, but the reasoning is fully documented in the external planning doc.
-- **26 regions, 19 Old World + 7 New World** — this grew organically from an original curated ~10,
-  each addition driven by a specific gap (a missed grape, a broken "Compare to" pairing, a direct
-  request like "we missed Prosecco/Chile/Riesling"), not scope creep for its own sake. Don't assume
-  this number is "the curated set" in the original small sense — it's a considered, larger scope.
+- **27 regions** (originally 26, 19 Old World + 7 New World; grew to 27 when `tuscany-white` was
+  added for Ugni Blanc/Trebbiano — see PROJECT_MEMORY.md §30) — this grew organically from an
+  original curated ~10, each addition driven by a specific gap (a missed grape, a broken "Compare
+  to" pairing, a direct request like "we missed Prosecco/Chile/Riesling"), not scope creep for its
+  own sake. Don't assume this number is "the curated set" in the original small sense — it's a
+  considered, larger scope, and don't assume 26 is still current either.
 - **Tiers (1/2/3) are a suggested order, never a gate.** Every region is tappable at any time,
   consistent with the "no judgment, no locking" principle already established for Wheel/Nose. Do
   not add locking/gating logic to "match" the tier concept — that would contradict why it exists.
@@ -207,7 +209,25 @@ alternate systems considered) lives in a standalone planning document that is **
   visible). Don't add a "Sources" footer or citations to the Regions UI without re-confirming this.
 - **Classification decoder is a distinct content type, not a region** — reference material (what
   AOC/DOC/DOCG/DO actually mean), gold-accented like the app's existing "tip" styling rather than
-  the white region cards, and deliberately excluded from the 26-region explore/progress count.
+  the white region cards, and deliberately excluded from the region explore/progress count.
+- **"Regions and grapes" — DONE, shipped and live-tested.** `Regions.jsx` now has a real third
+  toggle mode, "Grapes," alongside Old World/New World — not a separate module, not a bento tile
+  (see PROJECT_MEMORY.md §26 for the full reasoning on why those two alternatives were rejected).
+  Implemented as its own `viewMode` state (`'regions' | 'grapes'`), not a third `world` value — a
+  grape has no `tier`/`world`, so the existing region-filtering logic was left completely
+  untouched. It rides on the existing `regions` module completion state via `jumpTo()`/
+  `jumpToGrape()`-style cross-navigation — no new progress/store field, no second "Complete
+  Grapes ✓" button. All 27 grapes (`src/data/grapes.js`) render as a colour-coded tile grid
+  (red/white/sparkling, via a real `grapeType` field), with a filter chip row and an inline detail
+  card per tapped tile. **The "roughly 15% of grapes have no regions.js anchor" concern once
+  flagged here turned out to be wrong once actually checked — every one of the 27 grapes has a
+  real anchor** (see PROJECT_MEMORY.md §29's own correction, and §30 for the one genuine gap that
+  research did surface — Ugni Blanc/Trebbiano's real Italian anchor is Tuscany, not the
+  no-anchor-at-all situation originally assumed). Full build account, the mockup iterations that
+  preceded it, and a real Tailwind-arbitrary-value bug caught during the build: PROJECT_MEMORY.md
+  §32. The research trail before the build (5 tranche documents, the original brief, the
+  implementation plan) is covered in §26–§31 — still not committed to the repo root as of this
+  writing.
 
 ## First Bottle Guide — content, structure & conventions
 Built as the last remaining Learn module, completing the original 5-module curriculum. Content
@@ -366,7 +386,17 @@ wedges carry short name labels (first word only, same truncation convention as t
   then Marina click-tested live and confirmed it passes.** All 26 regions explorable, "Compare to"
   navigation (verified Bordeaux ↔ Napa, a genuinely reciprocal pairing) works, Complete module /
   Start over both behave correctly, Classification Decoder opens as its own card. No longer an open
-  item — Regions is fully shipped and verified, not just build/lint-clean.
+  item — Regions is fully shipped and verified, not just build/lint-clean. (Historical note: this
+  entry predates the region count growing to 27 and the Grapes toggle being added — see the next
+  entry and PROJECT_MEMORY.md §32 for the current state.)
+- ~~Regions.jsx's third "Grapes" toggle mode was research-complete but code-not-started~~ —
+  **built, live-tested via a real headless-browser session driving the actual dev server, not just
+  read.** All 27 grapes render as a colour-coded tile grid, filter chips work, tapping a tile opens
+  an inline detail card, grape↔grape and grape→region cross-navigation both confirmed working with
+  real clicks and screenshots. Full account, including a real Tailwind-arbitrary-value bug caught
+  and fixed during the build (interpolated class names like `` `bg-[var(--${type}-grape)]` `` never
+  actually generate CSS — Tailwind's JIT scans for literal strings — fixed via static per-type
+  lookup objects instead): PROJECT_MEMORY.md §32.
 - ~~Module id/route/i18n-key alignment had no single source of truth~~ — **fixed.** Added
   `src/constants/modules.js` (`LEARN_MODULES`); this had already caused a real bug (`regions` was
   missing from Home.jsx's lesson tile, undercounting "X of Y complete"). See the Architecture
@@ -407,6 +437,19 @@ wedges carry short name labels (first word only, same truncation convention as t
   `CircularProgress` (the "X steps to go" ring on Learn's directory list) is a real shared
   `src/components/ui/` component, added alongside `getModuleProgress` — see PROJECT_MEMORY.md §25.
   `Difficulty`/Mark-done/Start-over extraction is still its own separate, not-yet-done task.
+- **Decided, not yet built: Wheel gets two new top-level aroma families, Vegetative and
+  Chemical** (alongside the existing Fruit/Earth/Oak/Floral/Spice/Other), surfaced while
+  researching Grapes-toggle content — real grape markers like green bell pepper, cut grass, and
+  Riesling's aged-petrol note had no clean home in the current 6 and were defaulting to "Other."
+  IP-clearance checked first (the two new names/concept, matching two of the 12 categories in Ann
+  Noble's professionally-established Wine Aroma Wheel, are not protectable; her specific diagram
+  and descriptor list are, and are not being copied). Real cost: wheel geometry changes (6→8
+  families affects the proportional outer-ring sizing), two new design-system colour tokens
+  needed, real subcategory content to draft for both, and this overlaps the already-open
+  hardcoded-hex-literal backlog item below since it touches `Wheel.jsx`'s family colour map. Needs
+  the standard "preview first, or build straight?" check before starting, same as the Wheel
+  two-ring rebuild and Home bento redesign each got. Full reasoning, the IP-clearance findings,
+  and the itemized build scope: PROJECT_MEMORY.md §27.
 
 ## Working with Marina
 - Non-developer (analyst). Any terminal/technical instructions must be plain, step-by-step, with

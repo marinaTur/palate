@@ -3,6 +3,29 @@ import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../store/useAppStore'
 import { Badge } from '../../components/ui'
 import { REGIONS, WORLD_LABEL, TIER_LABEL, REGION_KEYS } from '../../data/regions'
+import { GRAPES, GRAPE_KEYS } from '../../data/grapes'
+
+const GRAPE_TYPE_LABEL = { all: 'All', red: 'Red', white: 'White', sparkling: 'Sparkling' }
+
+// Static class-name lookups, not template-literal interpolation — Tailwind's
+// JIT compiler scans source for literal class strings, so `bg-[var(--${type}...)]`
+// would never actually generate the CSS at build time. One entry per
+// grapeType, referencing the tokens added to index.css's :root.
+const GRAPE_TINT_BG = {
+  red: 'bg-[var(--red-grape-tint)]',
+  white: 'bg-[var(--white-grape-tint)]',
+  sparkling: 'bg-[var(--spark-grape-tint)]',
+}
+const GRAPE_TEXT = {
+  red: 'text-[var(--red-grape)]',
+  white: 'text-[var(--white-grape)]',
+  sparkling: 'text-[var(--spark-grape)]',
+}
+const GRAPE_DOT_BG = {
+  red: 'bg-[var(--red-grape)]',
+  white: 'bg-[var(--white-grape)]',
+  sparkling: 'bg-[var(--spark-grape)]',
+}
 
 // ── Region card — compact row, expands inline on tap ───────────────
 // Same controlled-accordion pattern as Wheel's SubcategoryCard: isOpen/onToggle
@@ -59,6 +82,163 @@ function RegionCard({ region, isOpen, isExplored, onToggle, onJumpTo }) {
   )
 }
 
+// ── Grape card — compact tile, expands into a detail card rendered
+// below the grid (not inline in the tile itself, matching the
+// reviewed mockup rather than RegionCard's own same-card-expands shape).
+// Same controlled pattern as RegionCard: isOpen/onToggle are props.
+function GrapeTile({ grape, isOpen, isExplored, onToggle }) {
+  const wide = grape.names.length > 1
+  return (
+    <button
+      onClick={onToggle}
+      className={`relative rounded-2xl px-3 pt-3.5 pb-3 text-left overflow-hidden ${GRAPE_TINT_BG[grape.grapeType]} ${wide ? 'col-span-2 flex items-center justify-between gap-2.5' : ''} ${isOpen ? 'outline outline-2 outline-offset-2 outline-[var(--gold)]' : ''}`}
+    >
+      {isExplored && (
+        <i className={`ti ti-check absolute top-2.5 right-2.5 text-xs ${GRAPE_TEXT[grape.grapeType]}`} aria-hidden="true"></i>
+      )}
+      <div className={wide ? 'flex-1 min-w-0' : ''}>
+        <p className={`text-[10.5px] font-medium uppercase tracking-wide ${GRAPE_TEXT[grape.grapeType]}`}>
+          {GRAPE_TYPE_LABEL[grape.grapeType]}{wide ? ' · same grape, two names' : ''}
+        </p>
+        <p className="text-sm font-semibold text-[var(--ink)] leading-tight mt-0.5">{grape.names.join(' / ')}</p>
+      </div>
+    </button>
+  )
+}
+
+function GrapeDetail({ grape, onJumpToGrape, onJumpToRegion }) {
+  const [moreOpen, setMoreOpen] = useState(false)
+  const tintBg = GRAPE_TINT_BG[grape.grapeType]
+  const text = GRAPE_TEXT[grape.grapeType]
+  const dotBg = GRAPE_DOT_BG[grape.grapeType]
+  const confusedTargets = grape.confusedWith
+    .map(id => GRAPES.find(g => g.id === id))
+    .filter(Boolean)
+
+  return (
+    <div className="bg-white border border-[var(--border)] rounded-xl p-4 mb-2">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div>
+          <div className="flex gap-1.5 flex-wrap mb-1">
+            {grape.names.map(name => (
+              <span key={name} className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full ${tintBg} ${text}`}>
+                {name}
+              </span>
+            ))}
+          </div>
+          <p className="font-['Cormorant_Garamond'] italic text-xl text-[var(--ink)]">{grape.names.join(' / ')}</p>
+        </div>
+      </div>
+
+      <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-1">
+        <span className={`inline-block w-2 h-2 rounded-[2px] ${dotBg}`} aria-hidden="true"></span>
+        Primary aroma
+      </p>
+      <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-3">{grape.primaryAroma.value}</p>
+
+      <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-1.5">
+        <span className={`inline-block w-2 h-2 rounded-[2px] ${dotBg}`} aria-hidden="true"></span>
+        Structure
+      </p>
+      <div className="grid grid-cols-3 gap-1.5 mb-1.5">
+        <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">Body</p>
+          <p className="text-[13px] font-semibold text-[var(--ink)]">{grape.body.value}</p>
+        </div>
+        <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">Tannin</p>
+          <p className="text-[13px] font-semibold text-[var(--ink)]">{grape.tannin.value}</p>
+        </div>
+        <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">Colour</p>
+          <p className="text-[13px] font-semibold text-[var(--ink)]">{grape.colour.value}</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-1.5 mb-3">
+        <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">Acidity</p>
+          <p className="text-[13px] font-semibold text-[var(--ink)]">{grape.acidity.value}</p>
+        </div>
+        <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
+          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">ABV</p>
+          <p className="text-[13px] font-semibold text-[var(--ink)]">{grape.abv.value}</p>
+        </div>
+      </div>
+      <p className="text-[13px] text-[var(--ink-soft)] leading-relaxed mb-4">{grape.styleRange.value}</p>
+
+      <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-1">
+        <span className={`inline-block w-2 h-2 rounded-[2px] ${dotBg}`} aria-hidden="true"></span>
+        Secondary / tertiary character
+      </p>
+      <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-4">{grape.secondaryTertiary.value}</p>
+
+      <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-1">
+        <span className={`inline-block w-2 h-2 rounded-[2px] ${dotBg}`} aria-hidden="true"></span>
+        Commonly confused with
+      </p>
+      <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-1.5">{grape.confusedWithNote.value}</p>
+      {confusedTargets.map(target => (
+        <button
+          key={target.id}
+          onClick={() => onJumpToGrape(target.id)}
+          className="w-full flex items-center justify-between gap-2 bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-lg px-3 py-2.5 text-left mb-1.5"
+        >
+          <span className="text-xs text-[var(--ink-soft)]">
+            <span className="font-medium text-[var(--gold)]">Compare taste with </span>
+            {target.names.join(' / ')}
+          </span>
+          <i className="ti ti-arrow-right text-[var(--gold)] text-xs flex-shrink-0" aria-hidden="true"></i>
+        </button>
+      ))}
+
+      <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-1 mt-4">
+        <span className={`inline-block w-2 h-2 rounded-[2px] ${dotBg}`} aria-hidden="true"></span>
+        Food pairing
+      </p>
+      <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-4">{grape.foodPairing.value}</p>
+
+      <button
+        onClick={() => setMoreOpen(o => !o)}
+        className="w-full text-center bg-[var(--border-soft)] rounded-lg py-2.5 text-xs font-medium text-[var(--ink-soft)] mb-4"
+      >
+        {moreOpen ? 'Hide detail' : 'Show more detail'} (sweetness, finish, prevalence)
+      </button>
+      {moreOpen && (
+        <div className="mb-4 space-y-3">
+          <div>
+            <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-1">Sweetness</p>
+            <p className="text-sm text-[var(--ink-soft)] leading-relaxed">{grape.sweetness.value}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-1">Finish</p>
+            <p className="text-sm text-[var(--ink-soft)] leading-relaxed">{grape.finish.value}</p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-1">Global prevalence</p>
+            <p className="text-sm text-[var(--ink-soft)] leading-relaxed">{grape.globalPrevalence.value}</p>
+          </div>
+        </div>
+      )}
+
+      <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-1.5">Where to find it</p>
+      {grape.regionIds.map(regionId => {
+        const region = REGIONS.find(r => r.id === regionId)
+        if (!region) return null
+        return (
+          <button
+            key={regionId}
+            onClick={() => onJumpToRegion(regionId)}
+            className="w-full flex items-center justify-between gap-2 bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-lg px-3 py-2.5 text-left mb-1.5"
+          >
+            <span className="text-xs text-[var(--ink-soft)]">{region.name}</span>
+            <i className="ti ti-arrow-right text-[var(--gold)] text-xs flex-shrink-0" aria-hidden="true"></i>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Classification decoder — standalone reference, not a region ───
 const CLASSIFICATION_ROWS = [
   { country: 'France', tiers: 'AOC/AOP → IGP → Vin de France', note: 'Reformed in 2012 — an older 4-tier system (with "VDQS") is now over a decade out of date if you see it referenced.' },
@@ -111,6 +291,13 @@ export default function Regions() {
   const [openId, setOpenId] = useState(null)
   const [classificationOpen, setClassificationOpen] = useState(false)
 
+  // Grapes is a separate view mode, not a third `world` value — grape
+  // entries have no `tier`/`world`, so keeping `world` strictly 'old'/'new'
+  // means the existing REGIONS.filter/tiers logic below needs no changes.
+  const [viewMode, setViewMode] = useState('regions')
+  const [openGrapeId, setOpenGrapeId] = useState(null)
+  const [grapeTypeFilter, setGrapeTypeFilter] = useState('all')
+
   // Derived directly from the store — same reasoning as every other module
   // with a completion state (see Wheel, Walkthrough, Nose).
   const finished = completedModules.includes('regions')
@@ -128,16 +315,40 @@ export default function Regions() {
     if (opening) markExplored(id)
   }
 
-  // Jumping via "Compare to" may cross Old World / New World — switch
-  // the toggle to match, then open and scroll to the target region.
+  function markGrapeExplored(id) {
+    if (!exerciseProgress[`grape-${id}`]) toggleExercise(`grape-${id}`)
+  }
+
+  function toggleGrape(id) {
+    const opening = openGrapeId !== id
+    setOpenGrapeId(opening ? id : null)
+    if (opening) markGrapeExplored(id)
+  }
+
+  // Jumping via "Compare to" or a grape's "Where to find it" link may cross
+  // Old World / New World, and may originate from the Grapes view — switch
+  // the toggle to match and land back on the Regions view, then scroll.
   function jumpTo(id) {
     const target = REGIONS.find(r => r.id === id)
     if (!target) return
+    setViewMode('regions')
     setWorld(target.world)
     setOpenId(id)
     markExplored(id)
     requestAnimationFrame(() => {
       document.getElementById(`region-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  }
+
+  // Grape → grape "Compare taste with" link — stays within the Grapes view.
+  function jumpToGrape(id) {
+    const target = GRAPES.find(g => g.id === id)
+    if (!target) return
+    setViewMode('grapes')
+    setOpenGrapeId(id)
+    markGrapeExplored(id)
+    requestAnimationFrame(() => {
+      document.getElementById(`grape-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     })
   }
 
@@ -147,11 +358,18 @@ export default function Regions() {
 
   // Resets to exactly first-open state, same "Start over" name/behavior as
   // Walkthrough, Nose, and Wheel — clears only this module's own progress.
+  // Grapes exploration rides on the same 'regions' module completion state
+  // (no separate Grapes progress/completion concept, per the original
+  // toggle-mode design decision), so its own exercise keys reset here too.
   function startOver() {
     unmarkModuleComplete('regions')
     resetExerciseProgress(REGION_KEYS)
+    resetExerciseProgress(GRAPE_KEYS)
     setOpenId(null)
+    setOpenGrapeId(null)
     setWorld('old')
+    setViewMode('regions')
+    setGrapeTypeFilter('all')
   }
 
   const visible = REGIONS.filter(r => r.world === world)
@@ -177,7 +395,7 @@ export default function Regions() {
               <i className="ti ti-check text-white text-base" aria-hidden="true"></i>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[var(--ink)] mb-1">All 26 explored.</p>
+              <p className="text-sm font-medium text-[var(--ink)] mb-1">All {REGIONS.length} explored.</p>
               <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-3">
                 Next time a bottle mentions a place you don't recognize, you've got a real shot at guessing what's in the glass before you read the label.
               </p>
@@ -196,40 +414,94 @@ export default function Regions() {
           <div className="h-full bg-[var(--forest)] rounded-full transition-all duration-300" style={{ width: `${(exploredCount / REGIONS.length) * 100}%` }} />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mb-6">
+        <div className="grid grid-cols-3 gap-2 mb-6">
           {['old', 'new'].map(w => (
             <button
               key={w}
-              onClick={() => setWorld(w)}
+              onClick={() => { setViewMode('regions'); setWorld(w) }}
               className={`py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                world === w ? 'bg-[var(--forest)] text-white' : 'bg-white border border-[var(--border)] text-[var(--muted)]'
+                viewMode === 'regions' && world === w ? 'bg-[var(--forest)] text-white' : 'bg-white border border-[var(--border)] text-[var(--muted)]'
               }`}
             >
               {WORLD_LABEL[w]}
             </button>
           ))}
+          <button
+            onClick={() => setViewMode('grapes')}
+            className={`py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              viewMode === 'grapes' ? 'bg-[var(--forest)] text-white' : 'bg-white border border-[var(--border)] text-[var(--muted)]'
+            }`}
+          >
+            Grapes
+          </button>
         </div>
 
-        <div>
-          {tiers.map(tier => (
-            <div key={tier} className="mb-5">
-              <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-2">
-                Tier {tier} — {TIER_LABEL[tier]}
-              </p>
-              {visible.filter(r => r.tier === tier).map(region => (
-                <div key={region.id} id={`region-${region.id}`}>
-                  <RegionCard
-                    region={region}
-                    isOpen={openId === region.id}
-                    isExplored={!!exerciseProgress[`region-${region.id}`]}
-                    onToggle={() => toggleRegion(region.id)}
-                    onJumpTo={jumpTo}
+        {viewMode === 'regions' && (
+          <div>
+            {tiers.map(tier => (
+              <div key={tier} className="mb-5">
+                <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-2">
+                  Tier {tier} — {TIER_LABEL[tier]}
+                </p>
+                {visible.filter(r => r.tier === tier).map(region => (
+                  <div key={region.id} id={`region-${region.id}`}>
+                    <RegionCard
+                      region={region}
+                      isOpen={openId === region.id}
+                      isExplored={!!exerciseProgress[`region-${region.id}`]}
+                      onToggle={() => toggleRegion(region.id)}
+                      onJumpTo={jumpTo}
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {viewMode === 'grapes' && (
+          <div className="mb-5">
+            <div className="flex gap-1.5 mb-4 overflow-x-auto">
+              {['all', 'red', 'white', 'sparkling'].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setGrapeTypeFilter(t)}
+                  className={`flex-shrink-0 flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1.5 border transition-colors ${
+                    grapeTypeFilter === t
+                      ? 'bg-[var(--forest-tint)] border-[var(--forest-mid)] text-[var(--ink)]'
+                      : 'bg-white border-[var(--border)] text-[var(--muted)]'
+                  }`}
+                >
+                  {t !== 'all' && (
+                    <span className={`w-2 h-2 rounded-full ${GRAPE_DOT_BG[t]}`} aria-hidden="true"></span>
+                  )}
+                  {GRAPE_TYPE_LABEL[t]}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 mb-4">
+              {GRAPES.filter(g => grapeTypeFilter === 'all' || g.grapeType === grapeTypeFilter).map(grape => (
+                <div key={grape.id} id={`grape-${grape.id}`}>
+                  <GrapeTile
+                    grape={grape}
+                    isOpen={openGrapeId === grape.id}
+                    isExplored={!!exerciseProgress[`grape-${grape.id}`]}
+                    onToggle={() => toggleGrape(grape.id)}
                   />
                 </div>
               ))}
             </div>
-          ))}
-        </div>
+
+            {openGrapeId && (
+              <GrapeDetail
+                grape={GRAPES.find(g => g.id === openGrapeId)}
+                onJumpToGrape={jumpToGrape}
+                onJumpToRegion={jumpTo}
+              />
+            )}
+          </div>
+        )}
 
         <div className="mt-6 mb-6">
           <ClassificationDecoder isOpen={classificationOpen} onToggle={() => setClassificationOpen(o => !o)} />

@@ -15,6 +15,17 @@
   --gold-text:     #8A6420;   /* text-safe gold — labels, cited-authority lines */
   --gold-tint:     #F5EDE0;   /* decorative surface — replaces old --gold-light */
 
+  /* ── Grape-type colour-coding (Grapes toggle, Regions module) — distinct
+     taxonomy from Wheel's own aroma-family palette, same brand hue family.
+     Reviewed and approved across grapes_toggle_mockup.html through _v4.html
+     before being adopted here. */
+  --red-grape:     #7A2038;   /* same hue as --burgundy-deep */
+  --red-grape-tint:#F3E3E7;
+  --white-grape:   #7A6A2E;
+  --white-grape-tint: #F3EFDD;
+  --spark-grape:   #3E6B54;   /* same hue as --forest-mid */
+  --spark-grape-tint: #EAF0EC; /* same as --forest-tint */
+
   /* Aliases — v1.1's own drop-in omitted these three names, but 34 existing
      call sites across 14 files still reference them. Pointing them at the
      new tokens keeps this genuinely "values only," as the brief intended,
@@ -31,7 +42,10 @@
   --focus:          #3E6B54;  /* visible keyboard focus ring (a11y) */
 
   /* ── Backgrounds ── */
-  --cream:         #F7F4EF;   /* warm parchment background */
+  --cream:         #FAF8F5;   /* warm parchment background — updated from #F7F4EF
+                                  per PROJECT_MEMORY.md §31: Marina preferred the
+                                  grapes-toggle mockups' background over the prior
+                                  value; adopted deliberately, not a mockup drift */
   --surface:       #ffffff;   /* card surfaces */
 
   /* ── Text ── */

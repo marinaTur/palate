@@ -81,7 +81,7 @@ export const REGIONS = [
   },
   {
     id: 'marlborough', name: 'Marlborough', country: 'New Zealand', world: 'new', tier: 1,
-    grapes: 'Sauvignon Blanc (roughly 90% of regional plantings)',
+    grapes: 'Sauvignon Blanc (roughly 80% of regional plantings)',
     style: 'Intensely aromatic \u2014 passionfruit, gooseberry, fresh-cut grass.',
     onLabel: ['Marlborough alone functions almost like a style guarantee'],
     story: 'The region\u2019s first commercial vines weren\u2019t planted until 1973, and it only became internationally famous after one wine: Cloudy Bay\u2019s 1985 debut. Winemaker David Hohnen called the reaction to its intensity "the eyebrow factor" \u2014 watching people\u2019s eyebrows involuntarily lift the second they put their nose in the glass.',
@@ -221,10 +221,18 @@ export const REGIONS = [
   },
   {
     id: 'priorat', name: 'Priorat', country: 'Spain', world: 'old', tier: 3,
-    grapes: 'Carignan (locally Cariñena), typically blended with Garnacha',
+    grapes: 'Carignan (locally Cariñena), typically blended with Grenache (locally Garnacha)',
     style: 'Concentrated, dark-fruited, mineral-driven.',
     onLabel: ['Priorat DOQa', 'Montsant'],
     story: 'For most of the 20th century, Carignan was the most-planted grape in both France\u2019s Languedoc and, remarkably, California \u2014 almost entirely for cheap bulk wine. Old, low-yield vines in Priorat\u2019s slate soils tell a completely different story: some of Spain\u2019s most sought-after reds.',
+    compareTo: null,
+  },
+  {
+    id: 'tuscany-white', name: 'Tuscany (white)', country: 'Italy', world: 'old', tier: 3,
+    grapes: 'Trebbiano Toscano — the same grape as France’s Ugni Blanc',
+    style: 'Light, simple, high-acid, made for immediate drinking — honestly more everyday table wine than a prestige style.',
+    onLabel: ['Bianco di Pitigliano DOC', 'Montecarlo Bianco DOC', 'Vin Santo del Chianti DOC'],
+    story: 'For most of the 20th century, this grape was quietly blended into red Chianti itself — up to 10%, a required part of the legal recipe. Since 1996, Chianti Classico DOCG has required 100% Sangiovese, banning Trebbiano from the blend entirely. In France, the same grape becomes Ugni Blanc, the deliberately neutral base wine behind Cognac.',
     compareTo: null,
   },
 ]

@@ -177,7 +177,7 @@ After the palette-alone fix still "looked like Vivino" per Marina's feedback, th
 The original architecture (proposed early, before any code existed) had **three pillars**:
 
 1. **Learn to taste** — Tasting walkthrough ✅ built, Flavour wheel ⏳ placeholder, First bottle guide ⏳ placeholder
-2. **Develop your nose** — Nose training ✅ built (rich, 4-week/16-exercise), Quiz ⏳ placeholder, **"Regions and grapes" module ❌ silently dropped** — it appeared in the original architecture diagram (10 essential wines, region maps, tasting profiles) but was never carried into the actual `MODULE_IDS` list in the built app. Nobody explicitly decided to cut it; it simply didn't make it into later iterations. Worth a deliberate decision: revive it, or confirm it's intentionally out of scope.
+2. **Develop your nose** — Nose training ✅ built (rich, 4-week/16-exercise), Flavour wheel ✅ built (§23, now a two-ring design), Quiz ✅ built (§23), **Regions ✅ built (§23) — originally scoped as "Regions and grapes," grapes half silently dropped, now being revived as a third toggle mode inside Regions rather than a separate module (§26; execution not yet started, see the standalone research brief).**
 3. **Organize a tasting** — Tasting Planner ✅ built (demo mode), Tasting notes sheet — **partially built**. The original brief explicitly asked for "wine testing template for personal notes... with option to download or print." The Journal module supports logging structured notes, but has **no print or download/export function at all**. Only the Planner has a print button (basic `window.print()`, no dedicated printable template). This is a real gap against the original stated requirement, not just an unbuilt nice-to-have.
 
 Also from the original vision: the **Journal/"Personal journal"** module was originally scoped to "log all past tastings, **search by wine or date**, **track your palate over time**." The built version supports add/view/delete only — no search, no filtering, no over-time visualization. This is a partial implementation, not a full one.
@@ -198,7 +198,7 @@ This is the section to act on first when picking the project back up.
 6. **Module id / route / i18n key alignment has no single source of truth** — three separate places (`MODULE_IDS` arrays in Home.jsx and Learn.jsx, the router paths, and the `modules.*` i18n keys) must be kept manually in sync. No enforcement mechanism exists. Risk of drift as more modules are added. Note: Quiz has now deliberately broken this alignment on purpose (removed from `MODULE_IDS` in both files, route kept) — see §23 for why that's intentional, not drift.
 7. **Whether to extract `Difficulty` and the "Mark done"/"Start over" buttons into shared `src/components/ui/` components** — they still live duplicated inside individual module files (`Nose.jsx`, `Wheel.jsx`, `Walkthrough.jsx`) rather than as shared components, even though the same patterns are now proven across three modules. Genuinely worth doing now, more than when first flagged.
 8. ~~Which module gets built next~~ — **RESOLVED and then some.** Flavour Wheel, and Quiz are both now built (see §23). First Bottle Guide is the only Learn module left as a placeholder.
-9. **"Regions and grapes" module** — still dropped from the original architecture plan, still never explicitly revived or confirmed cut. No change since it was first flagged.
+9. ~~"Regions and grapes" module~~ — **RESOLVED (decision made, execution not started).** A concrete structural decision was made: Grapes becomes a third mode of Regions' existing Old World/New World toggle, not a separate module or bento-style tile — see §26. Content research is scoped via a standalone brief (`grapes_research_brief_tranche1.md`); Tranche 1 (5 of 27 grapes) has not yet been executed. **The "revive or confirm cut" question this item used to track is closed — what's left is execution, tracked in the brief itself, not in this list.**
 10. **Journal print/export feature** — never built despite being in the original brief. Needs a decision on scope (simple print button like Planner's, or a proper per-wine printable tasting sheet template as originally described).
 11. **Journal search/filter and palate-over-time tracking** — originally scoped, never built. Still wanted, or descoped?
 12. ~~Home hero background image treatment (vineyard photo)~~ — **MOOT.** The photo was removed from Home's hero entirely (§5); there's no longer a background-image treatment to extend or keep unique.
@@ -536,13 +536,13 @@ Unlike the two earlier Home redesigns (above), this one started from an explicit
 
 This is the same lesson §22 already covers ("never trust a prior chat message's description, re-check the actual file") encountered from the opposite direction — not a stale claim about what Claude itself had done, but a stale, incomplete description in this very document about what the app already contained. **General reminder this reinforces: this document describing something, or failing to mention something, isn't proof of the app's actual state — when the real files are available, checking them directly still beats trusting the memory doc's own account, even this one.**
 
-**Verification status — partially done, not complete.** Only `Home.jsx` and `Layout.jsx` were available in the chat session that built this (not the full repo — no `package.json`, no sibling files, no `node_modules`), so no real `npm run build` or lint pass has been run yet. A live check at `localhost:5173` *has* happened once already — that's exactly what caught the background-inconsistency problem above, a real example of the process working as intended — but the revised version hasn't had its own live pass yet. Both the build/lint pass and a fresh live check are still outstanding before this is done, same two-part verification every other module change in this project has needed. A standalone brief, `home_bento_layout.md`, was written alongside this entry with the full before/after code and a rollout checklist, and updated in step with this revision — treat that as the implementation reference, this entry as the narrative one.
+**Verification status — live-tested and pushed, but Marina isn't satisfied with the result.** The revised (background-fixed) version has now had its own live browser pass, and the changes are pushed to the live site (verdant-dodol-3d12df.netlify.app) — closing out the build/lint + live-check two-part verification this entry previously flagged as outstanding. **However, seeing it live, Marina said she isn't totally happy with the result and wants to make it more dynamic.** She's deliberately parking this rather than iterating immediately — **intends to return to it later.** Treat the current bento layout as shipped-but-provisional, not a settled design: don't assume this is the final form the next time Home comes up, and don't be surprised if a future session reopens this with a "make it more dynamic" brief. What "more dynamic" means concretely (motion/animation? live data instead of static tiles? something else?) was not specified — worth asking rather than assuming, whenever this is picked back up. A standalone brief, `home_bento_layout.md`, was written alongside this entry with the full before/after code and a rollout checklist — still the implementation reference for the current, provisional version.
 
 ---
 
 ## 24. Walkthrough Module Refactor (palette, i18n, remove "Start over")
 
-**Date:** 2026-08-03 · **Status:** Code complete, pending live testing
+**Date:** 2026-08-03 · **Status:** Live-tested and pushed to production
 
 **Changes:**
 1. **Palette fix:** All 18 hardcoded hex literals in progress-bar ternaries (lines 168, 192) replaced with CSS tokens (`var(--gold)`, `var(--muted)`). The step-color data in STEPS array kept as hex values but now consistent with the map — a clean data/render separation.
@@ -556,7 +556,7 @@ This is the same lesson §22 already covers ("never trust a prior chat message's
 
 **Completed steps now gold, not green:** User's reasoning: green created visual noise (too many color switches), Roman numerals already signal progress, and gold is already established elsewhere as the "achievement" color (tips, difficulty dots). Testing needed to confirm the numerals remain readable against the gold background — the original green was darker, which may have made the white numerals clearer. This is the one thing to check in the live preview.
 
-**Verification:** Lint pass clean. Live browser testing still pending — same flow as Regions and Bottle needed.
+**Verification:** Lint pass clean. Live browser testing now done and changes are pushed to production — same verification flow Regions and Bottle each needed, now closed out here too. This also settles the one open visual check this section had flagged (numeral readability against the gold background) — no readability problem was reported back, so treat that as confirmed fine rather than still-open.
 
 **Backlog impact:** This resolves the 18-hex-literal backlog item for Walkthrough completely (0 remain in that file). 12 remain across Wheel, Nose, and Quiz.
 
@@ -588,8 +588,620 @@ This is the same lesson §22 already covers ("never trust a prior chat message's
 
 **A second, later "Done isn't showing" report was real user-flow confusion, not a bug at all:** Marina cleared app memory, viewed all 5 steps, went to `/learn`, and saw a circular progress ring showing "0 steps to go" instead of "Done." The circular-progress code was working exactly as designed — `stepsViewed` had all 5 entries, so `total - done = 0` — but `completedModules` did **not** yet contain `walkthrough`, because at that point in the build the explicit "Mark as done" button (see above) still existed and she hadn't clicked it. This is the same root confusion that led to replacing the button with pure auto-complete, surfacing a second time from a different angle (Learn's list instead of Walkthrough's own completion notice). Once auto-complete replaced the button, this resolved itself with no further code change needed.
 
-**Verification: live-tested by Marina after the auto-complete fix, confirmed working as expected.** Build passes, lint clean.
+**Verification: live-tested by Marina after the auto-complete fix, confirmed working as expected — and now pushed to production alongside §24's changes.** Build passes, lint clean.
 
 **Reusability note for future modules:** the `stepsViewed` + 3-second-dwell + `getModuleProgress` + `CircularProgress` combination is now the reference pattern for any future step-sequence module that wants the same "seen all of X, in any order, for real" completion rule instead of "reached the last one." Nose/Wheel/Bottle already have their own working completion mechanisms (exercise toggles, not step-sequences) and don't need to be retrofitted onto this — this is specifically for modules shaped like Walkthrough (a fixed ordered sequence you can also jump around in via a scale/dot-nav).
+
+---
+
+## 26. "Regions and grapes" revived — structural decision made, content research scoped (execution not started)
+
+**Date:** 2026-08-03 · **Status:** Decision made and documented; research brief written; no code or content produced yet.
+
+This closes the long-open question tracked at §13 point 2 and §14 #9 since this document's first version: whether the grapes half of the original "Regions and grapes" module (§13) should be revived, and how.
+
+**Decision: Grapes becomes a third mode of Regions' existing Old World/New World toggle**, not a separate Learn module and not a bento-style second tile. The toggle becomes three-way:
+
+```
+[ Old World ]  [ New World ]  [ Grapes ]
+```
+
+**Two alternatives were considered and rejected, with reasoning:**
+- **A separate bento-style destination tile**, the same pattern used for Home's Plan/Journal/Lessons/Quiz — rejected because Regions and Grapes are two lenses on the *same* 26-region dataset, not genuinely different destinations. `mobile_ux_research_2026.md` §1.1 is explicit that bento fits multi-destination overview screens where the person's job is "what do I do next" among different-typed things; Regions/Grapes is closer to "which direction do I browse the same reference material from." `MOBILE_LAYOUT_CONVENTION.md` §7 already warns against reaching for bento just because it worked on Home when the actual need is a different shape — this is exactly that situation.
+- **Grape info nested inside each region's existing accordion card** (an extra "grapes grown here" subsection when a region is expanded) — rejected because it only supports region→grape discovery, never grape→person-thinking-of-a-grape-name discovery. Since Regions' own selection system was Grape-First (§13, §23 — grapes were chosen before regions, regions attached to them afterward), grapes are conceptually primary in this module's own history and deserve a real top-level entry point, not a buried subsection someone would only find after already picking the right region.
+
+**Why a toggle extension and not a new mechanism entirely:** it reuses everything already proven in `Regions.jsx` — the `RegionCard` visual language, the `jumpTo()` cross-navigation already powering "Compare to," and critically, **the existing `exerciseProgress`-based completion state**. Tapping through from a grape to its home region marks that region explored via the same mechanism "Compare to" already uses. **No new store field, no second progress/completion concept was needed or added.** Grapes rides on the existing 26-region completion state as a navigation lens, not a second thing to finish — this was a deliberate choice, not an oversight, and matches this project's general aversion to parallel/duplicate state (see the `finished`-derived-from-store convention, §17).
+
+**Content gap, honestly stated:** `regions.js`'s existing `grapes` field is a plain descriptive string per region (e.g. Bordeaux's `"Cabernet Sauvignon-led blends (Left Bank) or Merlot-led (Right Bank)"`) — a label riding on the region, not an independently addressable entity with its own content. Building a real Grapes view needs actual per-grape content (characteristics, tasting profile, what it's commonly confused with) that doesn't exist anywhere in the codebase yet. This is a genuine research-and-writing task, not a data-reshaping one.
+
+**Scope requested: the larger, independently-scoped version** — not just a thin summary derived from what `regions.js` already implies, but real per-grape depth, comprehensive characteristics, each one confidence-marked by how well it's actually sourced. Marina's explicit instruction, worth preserving verbatim since it should govern the content's shape more than any assumption about what a "grape reference" normally contains:
+
+> "make a research on Grapes. review the ways grapes are described, bring as many characteristics as possible, mark the usual params, mark params which are easy to fetch. Do not imagine things, use proved sources. Keep in mind that the entire purpose of the app — learn to taste wine — grapes section should help in the task"
+
+That last clause is the real design filter: grape entries should prioritize what helps someone *recognize and describe a wine while tasting it* — structure, aroma character, style range, what it's commonly mistaken for — not re-derive the history/DNA-mystery angle `regions.js` already covers well (Chinon's Cabernet Franc parentage, the Primitivo/Zinfandel DNA story, Carmenère's Chile survival). New content should add the tasting layer that's currently missing, not duplicate the story layer that already exists.
+
+**26 regions → 27 distinct anchor grapes**, after deduplicating regions that share a grape under different names (Primitivo/Zinfandel — already stated as genetically identical directly in `regions.js`'s own text; Pinot Gris/Grigio — same; Syrah/Shiraz — same underlying grape, Côtes du Rhône vs. Barossa's regional naming, not yet explicitly confirmed with Marina as a combined entry though the ampelological fact itself isn't in question) plus regions that share a grape under the same name (Riesling: Mosel + Wachau; Malbec: Cahors + Mendoza). Both Pinot Meunier (Champagne's secondary blend grape) and Chenin Blanc (Stellenbosch's secondary grape) were explicitly confirmed for full standalone entries despite being secondary to their region's primary anchor grape — not folded into a shorter mention.
+
+**A standalone research brief was written and is the actual next step**, following this project's established pattern of giving substantial reusable reasoning its own document rather than leaving it only in chat history — the same treatment Palette v1.1, `MOBILE_LAYOUT_CONVENTION.md`, and `mobile_ux_research_2026.md` each got. The brief:
+- Defines a 5-grape first tranche (Cabernet Sauvignon, Pinot Noir, Riesling, Sangiovese, Sauvignon Blanc) — deliberately chosen as a stress-test spread (two reds of different weight, one grape with a genuine style-range problem, one Mediterranean red, one aromatic white) to validate the research process and attribute schema before scaling to all 27.
+- Does **not** hand over a fixed attribute schema — instead makes "survey how grapes are actually described across real sources" the first research step, so the schema is derived from what real sources converge on rather than assumed in advance. Consistent with the "do not imagine things" instruction.
+- Requires per-attribute (not per-grape) confidence marking — well-documented / thinner sourcing / contested-or-inconsistent — matching the same "state uncertainty honestly rather than fill the gap" discipline already established for the region content itself (§23's grape-variety-coverage estimate, reported as a genuine range rather than one invented number).
+- Is written to be self-contained enough to execute in a fresh conversation with no access to the conversation that produced it — project docs (`CLAUDE.md`, `PROJECT_MEMORY.md`, `regions.js`) plus the brief itself should be sufficient context.
+- Is not yet executed. Tranche 1's actual research has not started as of this entry.
+
+**File:** `grapes_research_brief_tranche1.md` — not yet committed to the repo root (delivered as a standalone output in the session that produced it); should follow the same repo-root placement as `colour_palette_v1.1.md` and `MOBILE_LAYOUT_CONVENTION.md` once Marina has it.
+
+**What's still explicitly open, carried forward from the brief itself rather than re-litigated here:**
+- Whether grape aroma profiles should be tagged using Wheel's existing 6 aroma families (Fruit/Earth/Oak/Floral/Spice/Other) to create a cross-reference between Grapes and Wheel, or described in grape-specific terms — flagged in the brief as a decision to make once real content exists, not decided in advance.
+- Syrah/Shiraz as one combined entry — my own working assumption while scoping the full roster, consistent with how `regions.js` already treats Primitivo/Zinfandel, but not yet explicitly confirmed with Marina the way Pinot Meunier/Chenin Blanc's full-entry status was.
+- Where the finished content actually lives in the codebase (`src/data/grapes.js`, matching the `regions.js`/`bottleGuide.js` convention, is the near-certain answer per §7's established pattern but wasn't explicitly restated as a decision for this specific new file).
+- The actual `Regions.jsx` code change to add the third toggle mode is a separate, not-yet-started task — informed by whatever the finished Tranche 1 entries look like, but not blocked on all 27 grapes being researched first.
+
+**Do not re-open the "revive or confirm cut" question this replaces** (formerly §14 #9) — that's resolved. What's open now is execution against the brief, tracked there and in the TO DO list this session's chat also produced.
+
+**SUPERSEDED by §27 and §28 — append-only note, this section's own history left intact above.**
+Everything this section listed as open is now resolved or completed: the Wheel-taxonomy question
+(open-item bullet 1 above) was decided in §27; Syrah/Shiraz's combined-entry treatment (bullet 2)
+was explicitly confirmed and used as the template for three more same-grape-two-name entries; all
+27 grapes across all 5 tranches are now researched, not just Tranche 1 (§28 has the full account,
+including several real mistakes made and caught during that work — worth reading before treating
+any individual tranche as automatically reliable). Still genuinely open: where the finished content
+lives in the codebase (bullet 3 above — `src/data/grapes.js` remains the likely but still-unconfirmed
+answer) and the actual `Regions.jsx` code change (bullet 4 — still not started, see §28's own
+closing note for why it shouldn't be assumed to be a simple content-swap once started).
+
+---
+
+## 27. Wheel gets two new aroma families — Vegetative and Chemical (decided, code not started)
+
+**Date:** 2026-08-04 · **Status:** Decision made and IP-cleared; `Wheel.jsx` code/UI change **not yet
+started.** Recorded here per this file's own memory-discipline rule (decisions get written down
+the same turn they happen) because the To Do list this decision would normally also go on wasn't
+available in the session that made the decision — see the closing note below.
+
+**Where this came from:** surfaced as a real gap while researching the first tranche of the
+Grapes toggle content (§26) — see `grapes_tranche1_research.md`, not yet committed to the repo
+root (same pending-placement status as `grapes_research_brief_tranche1.md` itself). Testing real
+grape aroma content against Wheel's existing 6 families (Fruit/Earth/Oak/Floral/Spice/Other)
+found that several of the single most diagnostically important markers for common grapes —
+Cabernet Sauvignon's green bell pepper, Sauvignon Blanc's cut grass, Riesling's aged-petrol
+note — have no clean home in those 6 and would all default into the catch-all "Other" bucket,
+understating how central they are to actually recognizing these wines.
+
+**Decision (per Marina): extend Wheel itself, not just Grapes' own content.** Add two new
+top-level families — **Vegetative** and **Chemical** — matching two of the twelve categories in
+Ann C. Noble's Wine Aroma Wheel (UC Davis, 1984; cited via *The Oxford Companion to Wine*, 3rd
+ed.), the professionally-established convention this whole exercise is modeled on and that
+Palate's original 6 families were always a trimmed-down subset of.
+
+**IP-clearance was checked before deciding this, same discipline as the Palette v1.1 brief's own
+font/colour appendix (§5).** Findings, in short:
+- The category **names** ("Vegetative," "Chemical") and the underlying **concept** of grouping
+  wine aromas this way are not protectable — generic descriptive terms for real, independently
+  documented sensory/chemical phenomena, not creative expression original to Noble. This is the
+  same idea/expression-and-merger-doctrine logic (*Baker v. Selden* and its line of cases) that
+  covers why a described system isn't locked up by the copyright on the document describing it.
+- Noble's own **specific circular diagram** and her particular assembled list of ~80 descriptors
+  **are** actively, commercially copyrighted — confirmed via a live business (InnoVinum LLC)
+  explicitly selling reproductions marked as such, and an explicit "Copyright A. C. Noble 2002"
+  notice on her own materials. **Do not screenshot, closely mimic the layout of, or lift her
+  exact assembled descriptor list wholesale** — Wheel's own descriptor choices, colours, and
+  wedge proportions should stay independently built, the same way they already are for the
+  existing 6 families.
+- A genuinely useful real-world cautionary precedent surfaced during this research: the German
+  Wine Institute's own adapted version of Noble's wheel dropped the entire "Chemical" category
+  (including petrol) from its white-wine wheel, and that omission is on record as criticized by
+  outside experts — because mature Riesling, Germany's own signature grape, is the textbook wine
+  that shows exactly this aroma. Quietly folding petrol into "Other" for Palate's own Riesling
+  content, or dropping a Chemical category altogether, would repeat a documented, criticized
+  mistake, not avoid one.
+- Caveat carried forward from the Palette v1.1 appendix's own standard: this is general
+  information, not legal advice; a real clearance search is a different exercise from what's been
+  checked here, and would matter more if Palate ever sought formal IP registration.
+
+**What actually needs to happen in code — not yet started, scoped here for whoever picks it up:**
+1. `Wheel.jsx`'s inner ring goes from 6 families to 8 (Fruit, Earth, Oak, Floral, Spice, Other,
+   **Vegetative**, **Chemical**) — this changes wheel geometry, not just adds a wedge: proportional
+   outer-ring sizing (CLAUDE.md, "Wheel — now a two-ring design") is keyed to each family's aroma
+   count, so the two new families need their own real subcategory/aroma lists, not placeholder
+   single entries, for the proportional sizing to mean anything.
+2. Two new colour tokens needed for the new families' inner-ring wedges and outer-ring tints —
+   this is itself a real design-system touchpoint (CLAUDE.md's "do not change the design system...
+   without discussion" rule) since it's adding to, not just consuming, the existing palette. Should
+   go through the same kind of process Palette v1.1 itself went through, not be picked ad hoc.
+3. Real subcategory content for Vegetative (e.g. bell pepper, cut grass, eucalyptus, asparagus —
+   independently sourced, not lifted from Noble's list) and Chemical (petrol/kerosene as the
+   headline entry, given the Riesling connection above) needs to be drafted — this is a Wheel
+   content task, separate from the Grapes content already researched, though the same underlying
+   chemistry (methoxypyrazines, TDN) already sourced in `grapes_tranche1_research.md` should carry
+   over directly rather than being re-researched.
+4. The 12 existing hardcoded hex literals still open across `Wheel.jsx`/`Nose.jsx`/`Quiz.jsx`
+   (CLAUDE.md, Known Issues; PROJECT_MEMORY.md §14's backlog brief) touch `Wheel.jsx`'s own family
+   color map directly — worth doing this alongside that backlog item rather than adding two more
+   hardcoded-vs-token literals to the same already-flagged mess.
+5. Per CLAUDE.md's "Working with Marina" section: this is a new/structurally significant change
+   (not a small copy/bug fix), so it should get the standard "preview first, or build straight?"
+   check before implementation starts, same as the Wheel two-ring rebuild and the Home bento
+   redesign each did.
+
+**On why this is in PROJECT_MEMORY.md and not the TO DO list it more naturally belongs on:** the
+session that made this decision didn't have access to that TO DO list's actual current file — per
+this project's own §22/§23 lesson (never trust a prior description of a file's contents, re-check
+the real thing before building on it), the safer move was writing the decision into the
+established, always-available memory doc rather than guessing at the TO DO list's structure or
+creating a second, competing tracking file. **Next session with real access to the actual TO DO
+list should fold this item into it** and can then treat this section as the source for what the
+item should say, per the memory-discipline rule that superseded sections get an append-only note
+rather than deletion.
+
+---
+
+## 28. Grapes content research — complete, all 27 grapes across 5 tranches (execution now done; code integration not started)
+
+**Date:** 2026-08-06 · **Status:** Content research complete and self-reviewed. `Regions.jsx` code
+integration (the actual third toggle mode) **not started** — this section documents finished
+research, not a finished feature. Closes the "execution not started" framing in §26 and in
+CLAUDE.md's own "Regions module" section, both written when only the brief existed and no grapes
+had actually been researched yet.
+
+### What was produced
+
+Following `grapes_research_brief_tranche1.md`'s own process (survey real sources → lock a shared
+schema → research each grape against it → self-review → flag genuine gaps rather than invent
+answers), all 27 grapes in the brief's own §7 roster were researched across five standalone
+documents, delivered as `grapes_tranche1_research.md` through `grapes_tranche5_research.md` (none
+yet committed to the repo root — same pending-placement status as the original brief itself, once
+Marina has them):
+
+- **Tranche 1** (5): Cabernet Sauvignon, Pinot Noir, Riesling, Sangiovese, Sauvignon Blanc.
+- **Tranche 2** (6): Merlot, Chardonnay, Tempranillo, Malbec, Grüner Veltliner, Syrah/Shiraz.
+- **Tranche 3** (5): Cabernet Franc, Chenin Blanc, Pinot Gris/Grigio, Gewürztraminer,
+  Grenache/Garnacha.
+- **Tranche 4** (6): Primitivo/Zinfandel, Carmenère, Pinotage, Mourvèdre, Barbera, Zweigelt.
+- **Tranche 5** (5): Pinot Meunier, Glera, Muscat Blanc à Petits Grains, Ugni Blanc/Trebbiano,
+  Montepulciano.
+
+5+6+5+6+5 = 27, matching the brief's own roster exactly — verified by counting each document's
+actual entries directly rather than trusting a running tally (see "What went wrong" below for why
+this check matters more than it sounds like it should).
+
+**The locked schema (14 fields per grape) held for all 27 grapes with zero changes needed**,
+across a genuinely wide range of grape types — reds and whites, still and sparkling, single-region
+and two-region splits, blend components (Grenache) and deliberately neutral base-wine grapes (Ugni
+Blanc), aromatic and structurally plain. Worth treating this schema as validated for any future
+grape-content work in this app, not just this specific 27-grape set. The fields: body, tannin,
+acidity, sweetness, typical ABV, finish, colour, primary aroma/flavour, secondary/tertiary
+character, style range, commonly confused with, global prevalence, food pairing tendency, and a
+Palate-specific "connects to `regions.js`" field naming which existing region entry the grape
+anchors and what story content that entry already covers, so the grape entry's own content stays
+on the tasting-mechanics layer rather than re-deriving history `regions.js` already tells well.
+
+**Four grapes are one combined entry each, not two separate ones**, matching how `regions.js`
+already treats Primitivo/Zinfandel and Pinot Gris/Grigio as single same-grape-two-name cases:
+Syrah/Shiraz, Primitivo/Zinfandel, Pinot Gris/Grigio, and Ugni Blanc/Trebbiano. Each was confirmed
+via real DNA/ampelological sourcing, not just family resemblance — Primitivo/Zinfandel in
+particular traces to a specific 1994 UC Davis genetic study and a 2001 Croatian-origin discovery
+(Crljenak Kaštelanski/Tribidrag), the most rigorously documented identity case of the whole
+project.
+
+**Real, sourced aroma chemistry — not just descriptive language — anchors three entries directly**,
+a genuine strength worth knowing about: Riesling's petrol/kerosene note traces to a specific
+compound (TDN, peer-reviewed sensory threshold ~2 µg/L); Sauvignon Blanc's green-vs-tropical split
+traces to methoxypyrazines vs. volatile thiols (specifically 4-MMP); Gewürztraminer's and Muscat
+Blanc à Petits Grains' shared perfume traces to the same two monoterpene compounds (linalool,
+geraniol) independently confirmed in both entries' own separate research passes.
+
+**The OIV *Focus 2017* world top-10 prevalence table** — the same source already anchoring
+`regions.js`'s own grape-coverage claims per §23 — was used as the primary prevalence source
+throughout, fetched directly from the OIV report itself (not a secondary citation) for the final
+entry, Ugni Blanc/Trebbiano. 9 of the table's 10 positions are represented somewhere across the 27
+grapes (#1 Cabernet Sauvignon through #10 Ugni Blanc/Trebbiano, skipping only #4 Airén, which
+isn't in the 27-grape roster at all) — checked directly by listing all ten positions and confirming
+each one against the actual entries, after an early draft of the closing tranche wrongly claimed
+all ten were covered (see "What went wrong" below).
+
+### The Wheel-taxonomy decision this research surfaced
+
+Already fully recorded in **§27** — not repeated in full here, only cross-referenced, per this
+file's own rule against duplicating content that already has a home. In short: researching real
+grape aroma content directly surfaced that Wheel's original 6 families (Fruit/Earth/Oak/Floral/
+Spice/Other) had no clean home for several genuinely important markers (green bell pepper, cut
+grass, petrol), which led to the decision to extend Wheel to 8 families (adding Vegetative and
+Chemical, matching two of the 12 categories in Ann Noble's professionally-established Wine Aroma
+Wheel, IP-clearance checked first). That decision is dated 2026-08-04, made *during* Tranche 1's
+own research, and is tracked as its own scoped-but-not-built code item in §27 — this section exists
+so someone reading only §28 for the grapes-research history still knows the Wheel decision
+happened and where to find it, without re-deriving it here.
+
+### What went wrong during this work — read this before trusting any individual tranche blindly
+
+This is the section worth reading most carefully, because the mistakes below are not really about
+grapes — they're about a recurring pattern in how verification was (and wasn't) actually applied,
+and the pattern matters more than any single wrong fact.
+
+**Tranche 3 — an arithmetic/count error, caught before presenting but only after several instances
+of it had already been written into the document.** A closing summary claimed "10 grapes remain"
+and named 12, including a grape from that same tranche as if it were still pending. The actual
+number (11) was reached by manually tallying tranche sizes in a running mental count rather than
+by counting each tranche's real entries — caught by literally counting `###` headers in the actual
+files before presenting, then found in five separate places throughout the document that all
+needed fixing individually, not just the one summary line where it was first noticed.
+
+**Tranche 4 — Zweigelt's entry was initially drafted from general knowledge, not researched.**
+Every other entry in the project, before and after, went through the same live multi-source
+search-and-cross-check process. Zweigelt didn't, at first — caught by chance during the document's
+own closing self-review, not by any deliberate check, since the entry existed in the right shape
+and an entry-count check (which had just been added specifically because of the Tranche 3 mistake)
+has no way to detect "this entry exists but wasn't actually researched." Once caught, a full
+research pass was run and the entry rewritten properly before the document was presented.
+
+**Tranche 5 — Montepulciano repeated the exact same mistake, despite an explicit stated commitment
+at the top of that document to specifically prevent it.** The commitment ("verify live results
+exist before writing each table") was real and honestly meant, but it didn't actually get checked
+against Montepulciano until after its placeholder table was already written — the same shape of
+failure as Tranche 4, just caught one step earlier (within the same drafting pass, rather than
+only at final review). **The document's own conclusion, worth repeating verbatim here rather than
+softened: "a stated intention to verify something is not the same as actually verifying it at the
+moment the verifiable thing is created."** The same document then made a third, smaller version of
+this exact error while writing its own closing summary — a claim that "all ten positions" of the
+OIV top-10 table were now covered across the 27 grapes, which was false (9 of 10; Airén was never
+covered) and was only caught by stopping to actually count the ten positions against the real
+entries instead of trusting how clean the round number sounded.
+
+**Why this belongs in PROJECT_MEMORY.md and not just inside the tranche documents themselves:**
+this is exactly the kind of "non-obvious bug/fix worth remembering" this file's own memory-
+discipline rule exists for — a pattern in how work gets checked, not a fact about wine. If any
+future research work in this app (a revision pass on these 27 grapes, research beyond them, or a
+structurally similar task in an unrelated part of the app) reuses this brief-and-tranche process,
+**the lesson to carry forward is specific: verification has to happen at the moment each
+individual piece of content is written, not as an intention stated before starting or a review
+done after finishing.** A stated commitment and an after-the-fact self-review both sound like real
+safeguards and both genuinely failed to catch the same mistake twice in a row here.
+
+### Genuinely open items — not resolved by this research, listed once here rather than scattered
+
+Several of these were flagged in an individual tranche's own closing section and never followed up
+on in a later tranche; collected here so they're not lost across five separate documents.
+
+- **Cabernet Franc's Chinon connection (`regions.js`) was never independently re-verified**
+  against the actual file text, unlike every other grape's region connection in the project — self-
+  flagged in Tranche 3, never checked in Tranches 4 or 5 either. Worth a direct check (the same
+  five-minute grep that resolved the Grüner Veltliner/Wachau question) before this entry is
+  treated as fully reliable.
+- **Tranche 1's own Pinot Noir entry has a real, acknowledged content gap**: it names Gamay as
+  Pinot Noir's confused-with pairing but doesn't mention that Pinot Noir is also a parent (via
+  cross) of Chardonnay or, via Pinot Gris's own mutation, an ancestor of Pinot Blanc — both facts
+  surfaced later, in Tranche 3's own research. Not silently fixed, since Tranche 1 was already
+  approved and editing an approved tranche without flagging it would repeat the same category of
+  problem as the process failures above. Needs an explicit decision on whether to append a note.
+- **`regions.js` integration gaps are real and larger than any single grape's own question** —
+  worth naming as one structural finding, not five small ones. Grenache is listed as a blend
+  component at two regions rather than a named primary/secondary grape at one (Tranche 3); and,
+  more significantly, **4 of Tranche 5's 5 grapes have no `regions.js` anchor at all** — Pinot
+  Meunier's natural home (Champagne) isn't a `regions.js` region, Glera and Muscat Blanc à Petits
+  Grains have no anchor, and Ugni Blanc/Trebbiano's real association (Cognac) is a spirits region,
+  not a wine-tasting one the way the other 26 entries are. Roughly 15% of the full 27-grape roster
+  has no clean cross-navigation path to an existing region. This is a real design question for
+  whoever builds the toggle-mode code — does every grape need a region link, and if some
+  genuinely can't have one, what does the UI do instead — not something this research pass should
+  resolve unilaterally.
+- **Two low-stakes, already-surfaced `regions.js` figure corrections, neither urgent enough to
+  warrant its own edit but worth applying next time that file is opened for an unrelated reason**:
+  Marlborough's Sauvignon Blanc share is closer to ~80% than the file's own "roughly 90%"; no
+  second correction of comparable size was found elsewhere.
+- **Two prevalence figures are marked "No exact number found"** (Riesling, Tranche 1) or flagged
+  as thinner-sourced than the rest of their own tranche (Pinot Noir's exact hectare figure, also
+  Tranche 1; Muscat Blanc à Petits Grains' global total, Tranche 5, due to a genuine scope
+  ambiguity between the single variety and its broader family) — reported honestly per Marina's
+  own standing instruction rather than filled with plausible-sounding numbers, and still open as
+  of this writing.
+- **Malbec's confused-with pairing (Syrah/Shiraz) is real but markedly weaker than every other
+  pairing in the whole project** — actual tasters in a forum discussion say they don't find the
+  two much alike — and its global prevalence figure required picking between a 2023 source and
+  2025–26 sources that disagreed by a real margin, not just a rounding difference (Tranche 2).
+  Both handled conservatively per Marina's standing instruction; both worth knowing about if either
+  entry is ever excerpted or summarized elsewhere without its own caveats attached.
+
+### What's still not started
+
+The actual `Regions.jsx`/`Wheel.jsx` code changes remain untouched — this section is about
+finished content research, not a finished feature. Wheel's own code scope is tracked in §27.
+`Regions.jsx`'s own third-toggle-mode implementation has no code scope written yet at all; it
+should be informed by the `regions.js` integration gaps above (particularly the roughly-15%
+no-anchor problem) rather than assumed to be a simple content-swap once the toggle exists.
+
+---
+
+## 29. Grapes data transcribed into `src/data/grapes.js` — the "no anchor" premise corrected, code integration still not started
+
+**Date:** 2026-08-07 · **Status:** Data layer complete and verified. `Regions.jsx`'s actual
+third-toggle-mode UI is **still not built** — this section documents the data file landing, not a
+finished feature, same distinction §28 already draws for the research itself.
+
+**What happened:** all 27 grapes from `grapes_tranche1_research.md` through
+`grapes_tranche5_research.md` were transcribed into a real `src/data/grapes.js` file, following
+the locked 14-field schema (mapped to `body`/`tannin`/`acidity`/`sweetness`/`abv`/`finish`/
+`colour`/`primaryAroma`/`secondaryTertiary`/`styleRange`/`confusedWithNote`/`globalPrevalence`/
+`foodPairing`, each a `{ value, confidence }` pair, plus `regionIds` and `confusedWith` as
+separate structured arrays rather than prose fields). This closes the actual data-authoring gap
+§28 itself flagged as still open — the research existed only in five standalone markdown
+documents, none committed to the repo, until this session.
+
+**A real correction surfaced while verifying against the actual `regions.js` file, worth stating
+plainly since it overturns something §28 itself asserted as fact.** §28's own "genuinely open
+items" section claimed roughly 15% of the 27-grape roster (Pinot Meunier, Glera, Muscat Blanc à
+Petits Grains, and Ugni Blanc/Trebbiano) has no `regions.js` anchor at all. Checking directly
+against the real file (not assumed from the research documents' own self-reported gaps) shows this
+was wrong: **every one of the 27 grapes has at least one real `regions.js` anchor.** Champagne
+(→ Pinot Meunier, alongside Chardonnay and Pinot Noir), Conegliano Valdobbiadene (→ Glera), and
+Asti (→ Muscat Blanc à Petits Grains, alongside Barbera) are all real, fully-built `regions.js`
+entries with their own `story`/`onLabel`/`compareTo` content — they simply weren't checked against
+when the "no anchor" claim was first written into the research documents or into §28 itself. Ugni
+Blanc/Trebbiano does anchor to Cognac, though Cognac is a spirits region, not a wine-tasting one
+the way the other 26 are — a real but different kind of edge case (right link, arguably wrong kind
+of place) than "no link at all." **This supersedes §28's own "roughly 15% has no clean
+cross-navigation path" framing** — the real integration question for whoever builds the toggle
+mode is narrower than §28 described: how to handle Cognac's genre-mismatch, not how to handle
+several genuinely missing links. Carignan/Cariñena (Priorat's second blend grape) remains a real,
+separate, smaller gap — it has a `regions.js` anchor but was never one of the 27 researched grapes,
+so it has a link with no content behind it yet.
+
+**Verified relationship shape, confirmed richer than initially scoped, not just "confirmed true":**
+this is a genuine many-to-many relationship, not a simple one-grape-one-region case with a few
+exceptions. Cabernet Sauvignon alone anchors 4 regions (Bordeaux, Napa, Stellenbosch, Maipo);
+Champagne, Côtes du Rhône, and Stellenbosch each anchor 3 grapes. A schema using a single
+`regionId` string per grape would have failed immediately for at least 8 of the 27 grapes, not
+"eventually" as volume grew — `regionIds` is an array on every entry for exactly this reason.
+
+**Two corrections this same research surfaced were applied directly to `regions.js` itself, in the
+same session, not left as a separate pending task:**
+- Marlborough's `grapes` field: "roughly 90% of regional plantings" → "roughly 80%", matching what
+  independent sources (New Zealand Wine's own vineyard reports, an OIV-citing source) converge on
+  more precisely than the original figure.
+- Priorat's `grapes` field: clarified that "Garnacha" is the local name for Grenache (now reads
+  "typically blended with Grenache (locally Garnacha)"), so the grape's identity is unambiguous
+  now that `grapes.js`'s own Grenache/Garnacha entry exists as a real cross-reference target
+  anchoring both Côtes du Rhône and Priorat.
+
+**`confusedWith` is deliberately restricted to grape ids that exist in `grapes.js`.** Several
+research entries name a taste-alike that isn't one of the 27 (Dolcetto, standalone Gamay, Verdejo,
+Pinot Blanc, Viognier, Nebbiolo, Petite Sirah) — these stay as real, sourced facts inside a prose
+`confusedWithNote` field rather than becoming a broken or one-directional link. Don't "fix" this by
+inventing entries for these grapes just to make every mentioned pairing linkable — several were
+explicitly flagged in the research itself as real but never scoped for full-entry treatment.
+
+**Verification performed:** a direct `node -e` check confirmed 27 entries, no duplicate ids, every
+`regionIds` value resolves against a real `regions.js` id, every `confusedWith` value resolves
+against a real `grapes.js` id, and all 13 value fields carry both `value` and `confidence` on every
+entry. `npm run build` and `npm run lint` both pass clean on the new file and on the two
+`regions.js` edits.
+
+**What's still not started, unchanged from §28's own closing note:** the actual `Regions.jsx` UI
+change to add the third toggle mode. The `grapes_toggle_implementation_plan.md` document (also not
+yet committed to the repo) already verified `jumpTo()` generalizes to grape→region navigation with
+zero code changes, and that region→grape needs a new sibling function since `jumpTo` only ever
+searches `REGIONS`. That plan's Phase 0 decision was "preview first, not straight to code" — this
+data-layer session doesn't change that; the preview/mockup is still the next real step before any
+`Regions.jsx` code is written.
+
+---
+
+## 30. `regions.js` grows to 27 regions — a new Tuscany entry added for Ugni Blanc/Trebbiano, closing a real gap the mockup surfaced
+
+**Date:** 2026-08-07 · **Status:** Done, verified, build/lint clean. Surfaced while reviewing the
+Grapes toggle mockup (§29), not part of the original data-transcription pass.
+
+**What happened:** while looking at the mockup, Marina asked why the Ugni Blanc/Trebbiano card's
+Cognac note didn't mention Italy at all, given the grape is more commonly known there as
+Trebbiano. Checking directly against `regions.js` confirmed this was a real gap, not a display
+bug — `abruzzo` exists in `regions.js`, but anchors Montepulciano, not any Trebbiano. There was no
+region anchoring **Trebbiano Toscano** (the actual grape behind Ugni Blanc) as its primary grape.
+
+**A real trap, caught by checking rather than assuming: "Trebbiano d'Abruzzo" looked like the
+obvious fix and would have been a factual error.** Multiple sources ([Italian Wine Central](https://italianwinecentral.com/trebbiano_family/),
+Wikipedia's Bombino Bianco/Trebbiano d'Abruzzo entries) confirm Trebbiano Toscano, Trebbiano
+Abruzzese, and Trebbiano Romagnolo are genetically distinct grapes that happen to share a name —
+a 2001 DNA study found the various Trebbianos "do not share a common ancestor." Whether Trebbiano
+d'Abruzzo is the same as Bombino Bianco specifically remains DNA-unconfirmed. Anchoring the real
+Ugni Blanc/Trebbiano Toscano entry to Abruzzo would have quietly mislabeled a different grape as
+the same one — exactly the kind of same-name-different-grape trap this project's grape research has
+hit before (Montepulciano-the-grape vs. Vino Nobile di Montepulciano-the-wine, §28).
+
+**Real research resolved it: Trebbiano Toscano's actual home is Tuscany**, confirmed across
+multiple independent sources — [Cellar Tours](https://www.cellartours.com/blog/italy/trebbiano-toscano-grape-variety)
+and [Viniou](https://www.viniou.com/grape-varieties/336_trebbiano-toscano) both state it directly
+as Tuscany's most widely planted white grape variety; 21,500 hectares in Italy (5th most-planted
+variety nationally), a figure independently sourced and distinct from Trebbiano Romagnolo's
+~15,900 ha — not double-counted with it. **A genuinely good, sourced story exists, matching the
+bar this app's other region entries set:** Trebbiano Toscano was a required part of the legal
+Chianti recipe (up to 10%) for most of the 20th century, until the 1996 Chianti Classico DOCG
+reform banned it in favor of 100% Sangiovese ([Visit Tuscany](https://www.visittuscany.com/en/ideas/docg-wines-of-tuscany/)).
+This is the same grape that becomes Ugni Blanc in France — a real, verified identity, not an
+assumption.
+
+**New region added: `tuscany-white`** (id chosen to avoid colliding with any future plain
+"Tuscany" entry, and to signal this isn't a general Tuscany region the way `chianti` already is).
+Tier 3, `world: 'old'`, `compareTo: null` — **deliberately not linked to Chianti**, even though the
+real connection (Trebbiano was literally blended into Chianti until 1996) is arguably more directly
+earned than Chianti's existing `compareTo: 'abruzzo'` pairing. Chianti's existing pairing is already
+shipped and live-tested (§23); swapping it to point here instead would have been a bigger, riskier
+change than this session's actual scope, so the new entry stands alone rather than touching
+Chianti's existing link. Revisit this only as its own deliberate decision, not a side effect of
+closing the Trebbiano gap.
+
+**This grows `regions.js` from 26 to 27 regions** — the first change to that count since the
+module's original build (§23) settled it at 26. `grapes.js`'s Ugni Blanc/Trebbiano entry now has
+`regionIds: ['cognac', 'tuscany-white']` instead of `['cognac']` alone. Verified via the same
+`node -e` check used in §29: region id resolves, no duplicates, build and lint both pass clean.
+
+**A real structural question this raises, not resolved here:** `REGIONS.length` (used throughout
+`Regions.jsx` for the "X of 26 regions explored" progress copy and `allExplored` check) will now
+read 27 automatically, since it derives from the array rather than a hardcoded number — no code
+change needed there. But **any place outside the code that states "26 regions" as a fact** (this
+file's own §13, §21 reference table, and CLAUDE.md's "Regions module" section) is now stale and
+needs updating the next time either doc gets a dedicated pass — not fixed here since this section's
+job is recording the decision, not a full documentation sweep.
+
+---
+
+## 31. A mockup background colour Marina liked better than the real palette's `--cream` — flagged, not applied
+
+**Date:** 2026-08-07 · **Status:** Observation recorded, deliberately not acted on. No code or
+palette change made — this is a note for a future, deliberate palette conversation, not a
+decision.
+
+**What happened:** all three grapes-toggle mockups (`grapes_toggle_mockup.html`,
+`_v2.html`, `_v3.html`) use a page background of `#FAF8F5`, written directly as a mockup-only hex
+value rather than referencing `var(--cream)` (the real app's page-background token, `#F7F4EF` per
+`index.css`). The two hex values are close but genuinely different — not a rounding artifact.
+While reviewing the v3 mockup, Marina said she likes the mockup's background better than the app's
+real one, and separately observed the mockup's buttons "look lighter" overall, asking for this to
+be "fixed somewhere."
+
+**Root cause, confirmed by direct comparison rather than assumed:** the mockups' card surfaces,
+chips, and search bar all sit on plain `white`/`#fff`, and their buttons already borrow the real
+`--forest`/`--gold`/`--burgundy` tokens correctly via CSS custom properties copied from
+`index.css`. **The button colours themselves are not the discrepancy** — it's the page background
+sitting behind them. `#FAF8F5` reads slightly lighter/warmer than `--cream`'s `#F7F4EF`, and
+against a lighter backdrop, the same white cards and forest/gold buttons read as a lighter overall
+composition, even though their own hex values are unchanged. This is worth stating precisely
+since it would be easy to mis-diagnose as a button problem and go tuning button colours instead of
+the one line that's actually different.
+
+**Deliberately not fixed in the mockup, per Marina's explicit instruction** — she asked to note
+this rather than correct the mockup toward the real `--cream` value, since she prefers the
+mockup's `#FAF8F5` and wants this treated as a possible **real palette change** to consider later,
+not a mockup bug to quietly patch away. Per CLAUDE.md's design-system rule ("do not change the
+design system... without discussion" — this exact clause exists for exactly this kind of drift),
+this needs its own deliberate before/after comparison and decision, the same process Palette v1.1
+itself went through (§5), not a one-line swap buried inside grapes-toggle mockup work.
+
+**What a future pass on this should actually do:** compare `--cream` (`#F7F4EF`) against
+`#FAF8F5` directly — side by side, not just as isolated swatches, since a background shift this
+subtle can look fine in isolation and still change how every other token reads against it (the
+same "structure/colour interact" lesson from Palette v1.1's own gold/burgundy contrast work, §5).
+If `#FAF8F5` is adopted, it would be a `--cream` value change in `index.css`'s `:root`, not a new
+token — every other reference to `var(--cream)` across the app would follow automatically. Until
+that discussion happens, the mockups intentionally keep using the un-adopted `#FAF8F5` rather than
+being quietly reconciled to match `--cream` — don't "fix" this mismatch in a future session without
+first checking whether it was actually resolved by that discussion.
+
+**RESOLVED — 2026-08-07, same session as the real Grapes toggle build (§32).** When asked directly
+whether the real `Regions.jsx` implementation should also adopt `#FAF8F5`, Marina said yes — closing
+this out as an active decision rather than leaving it open. `index.css`'s `--cream` is now
+`#FAF8F5` (was `#F7F4EF`); every `var(--cream)` reference across the app inherited the new value
+automatically, no other call sites touched. This is the first real Palette v1.1-adjacent value
+change since v1.1 itself shipped — treat it with the same weight as any other design-system change
+per CLAUDE.md's rule, i.e. don't casually revisit without a reason, even though the process this
+time was a direct question-and-answer rather than a full comparison pass.
+
+---
+
+## 32. Grapes toggle mode — shipped in `Regions.jsx`, live-tested, closing §26/§29/§30's "code not started" status
+
+**Date:** 2026-08-07 · **Status:** Built, verified (`npm run build`/`npm run lint` clean), and
+live-tested via a real browser session (Playwright + headless Chromium) driving the actual dev
+server — not just a static read of the code. This is the first entry in the whole Grapes arc
+(§26 → §28 → §29 → §30 → this) where "done" means a real, clicked-through feature, not research or
+data-layer work still waiting on a UI.
+
+**What shipped, concretely, in `src/pages/learn/Regions.jsx`:**
+- A genuine third toggle mode, but implemented as a separate `viewMode` state
+  (`'regions' | 'grapes'`), **not** a third value threaded into the existing `world` state.
+  `world` stays strictly `'old' | 'new'`, so the existing `REGIONS.filter(r => r.world === world)`
+  and tier-rendering logic needed zero changes — a grape has no `tier`/`world`, and forcing one to
+  exist just to reuse that render branch would have been the wrong kind of "reuse."
+- `GrapeTile` (collapsed, colour-coded by `grapeType`) and `GrapeDetail` (the expanded view,
+  rendered as a **separate block below the whole tile grid**, not nested inside the tapped tile)
+  as two new components local to `Regions.jsx`, matching where `RegionCard` and
+  `ClassificationDecoder` already live — this file, not a new file under `src/components/`.
+  `GrapeTile` follows `RegionCard`'s own controlled-component convention exactly (`isOpen`/
+  `onToggle` as props, no internal state).
+- `jumpTo(id)` (the existing region-jump function used by "Compare to") got exactly one added
+  line — `setViewMode('regions')` — so a grape's "Where to find it" link correctly switches back to
+  the Regions view before scrolling, rather than trying to render a region card inside the Grapes
+  view. A new sibling, `jumpToGrape(id)`, handles grape→grape "Compare taste with" links and stays
+  within the Grapes view.
+- `markGrapeExplored`/`toggleGrape` mirror `markExplored`/`toggleRegion` exactly, using
+  `grape-${id}` keys via `GRAPE_KEYS` (already exported from `grapes.js` for this exact purpose).
+  **No second `completedModules` entry, no "Complete Grapes ✓" button** — confirmed against the
+  original design decision (§26): Grapes rides on the existing `regions` module completion state.
+  `startOver()` was extended to also `resetExerciseProgress(GRAPE_KEYS)` and reset `viewMode`/
+  `openGrapeId`/`grapeTypeFilter`, so resetting Regions progress doesn't leave stale grape-explored
+  keys behind — a real gap that would've existed if this hadn't been checked directly.
+- A red/white/sparkling filter chip row, backed by the real `grapeType` field already in
+  `grapes.js` (§29) — filters only, composes with nothing else, per the standing instruction from
+  the mockup-review conversation.
+- **A real pre-existing bug fixed as a side effect of touching this code, not deferred**: the "all
+  explored" banner read the hardcoded literal `"All 26 explored."` even though `REGIONS.length` had
+  already grown to 27 back in §30. Now reads `` `All {REGIONS.length} explored.` ``, so it can't go
+  stale again the same way.
+
+**A real implementation bug caught during the build, not left in:** the first draft used
+Tailwind arbitrary-value class names built via template-literal interpolation —
+`` `bg-[var(--${grape.grapeType}-grape-tint)]` `` — which `npm run lint` flagged as an unused-import
+warning on `GRAPE_KEYS` but would **not** have caught the deeper problem: Tailwind's JIT compiler
+scans source for literal class strings at build time, so an interpolated class name like this never
+actually generates real CSS — the tiles would have rendered with no colour at all in production,
+despite looking correct in whatever the dev tool preview showed at edit time. Fixed by adding three
+static lookup objects (`GRAPE_TINT_BG`, `GRAPE_TEXT`, `GRAPE_DOT_BG`) keyed by `grapeType`, each
+holding the full literal class string Tailwind can actually see. **General lesson worth carrying
+into any future colour-by-data-field UI in this codebase: never build a Tailwind arbitrary-value
+class name by string interpolation — always look it up from a small object of pre-written literal
+strings, one per possible value.** This is exactly the kind of build-time-invisible bug that only a
+real rendered check (not just reading the JSX) would catch — see the live-test note below for why
+that step mattered here specifically, not just as routine diligence.
+
+**New design-system tokens added to `index.css`**, reviewed and approved across all four mockup
+iterations before being adopted here: `--red-grape`/`--red-grape-tint`,
+`--white-grape`/`--white-grape-tint`, `--spark-grape`/`--spark-grape-tint` — a distinct taxonomy
+from Wheel's own aroma-family palette, sharing the same brand hue family (`--red-grape` reuses
+`--burgundy-deep`'s hex, `--spark-grape` reuses `--forest-mid`'s). Per CLAUDE.md's design-system
+rule, this is flagged explicitly as a real addition, not smuggled in silently — the colours
+themselves were shown to and approved by Marina across the mockup review, so that approval is
+treated as covering the tokens, not just the throwaway mockup HTML they first appeared in.
+
+**Live-tested with a real browser, not just read**, per this project's own standing lesson (§18,
+§22–23: "never trust a description of what code does, check the actual running thing") — a
+Playwright session drove the actual `npm run dev` server headlessly and confirmed, with real
+screenshots: the 3-way toggle renders and switches correctly; the 27-grape tile grid renders with
+correct per-`grapeType` colour-coding (confirming the Tailwind-interpolation bug above was actually
+fixed, not just theoretically fixed); the red/white/sparkling filter narrows the grid correctly;
+tapping a tile opens its detail card below the grid with the gold selected-outline and checkmark
+appearing on the tile; "Show more detail" reveals Sweetness/Finish/Global prevalence; "Compare
+taste with Merlot" correctly jumps to Merlot's own card within the Grapes view; a "Where to find
+it" region link correctly switches the toggle back to "Old World," opens Bordeaux's `RegionCard`,
+marks it explored, and updates the progress count to "1 of 27." No console or page errors at any
+step.
+
+**What's genuinely still open, not done in this session:**
+- ~~CLAUDE.md's own "Regions module" section still doesn't mention the Grapes toggle~~ — **done**,
+  same session: CLAUDE.md's "Regions module" section and its "Known issues" list were both updated
+  right after this entry was written.
+- The mockup files (`grapes_toggle_mockup.html` through `_v4.html`) and the standalone planning
+  documents referenced throughout §26–§31 (`grapes_research_brief_tranche1.md`, the five tranche
+  research documents, `grapes_toggle_implementation_plan.md`) are still not committed to the repo
+  root — same pending-placement status noted repeatedly since §26. Worth doing now that the feature
+  they informed is actually live, so the reasoning trail doesn't live only in chat history.
+- No i18n — `Regions.jsx` already bypasses i18n entirely per CLAUDE.md's own "still open" list, and
+  the new Grapes UI follows the same (already-accepted) pattern, not a new gap.
+- **A real design concern flagged by Marina after seeing it live: the Structure block's per-grape
+  text values (Body/Tannin/Colour/Acidity/ABV) don't fit cleanly in the tile-style chip layout —
+  some values (e.g. Tannin's "High — firm, 'gripping,' felt on the gums...") are full sentences,
+  not the short 1–3 word labels the chip design assumes, so they wrap awkwardly or blow out the
+  chip's height. Two options were raised, not yet decided between: (1) shorten and unify the
+  Structure text across all 27 entries specifically for display purposes — e.g. a compact
+  "high/medium/low" style value alongside (not replacing) the fuller descriptive text, which stays
+  available elsewhere or behind "Show more detail"; or (2) abandon the tile/chip layout for the
+  Structure section specifically and use plain stacked label/value rows instead (matching how
+  Secondary/tertiary and Food pairing already render, which don't have this problem since they're
+  full-paragraph fields, not chip fields). Needs a decision before this is polished further — don't
+  let the current shipped shape be mistaken for finished/approved as-is.
+
+
+
+
+
+
 
 
