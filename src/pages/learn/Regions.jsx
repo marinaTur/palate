@@ -43,7 +43,7 @@ function RegionCard({ region, isOpen, isExplored, onToggle, onJumpTo, onJumpToGr
           )}
           <div className="min-w-0">
             <p className="text-sm font-medium text-[var(--ink)] truncate">{region.name}</p>
-            <p className="text-xs text-[var(--muted)] truncate">{region.country} · {region.grapes}</p>
+            <p className={`text-xs text-[var(--muted)] ${isOpen ? 'whitespace-normal' : 'truncate'}`}>{region.country} · {region.grapes}</p>
           </div>
         </div>
         <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'} text-sm text-[var(--muted)] flex-shrink-0`} aria-hidden="true"></i>
@@ -65,18 +65,21 @@ function RegionCard({ region, isOpen, isExplored, onToggle, onJumpTo, onJumpToGr
           <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-1">The story</p>
           <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-3">{region.story}</p>
 
-          {region.compareTo && (
-            <button
-              onClick={() => onJumpTo(region.compareTo)}
-              className="w-full flex items-center justify-between gap-2 bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-lg px-3 py-2.5 text-left mb-1.5"
-            >
-              <span className="text-xs text-[var(--ink-soft)]">
-                <span className="font-medium text-[var(--gold)]">Compare to </span>
-                {region.compareNote}
-              </span>
-              <i className="ti ti-arrow-right text-[var(--gold)] text-xs flex-shrink-0" aria-hidden="true"></i>
-            </button>
-          )}
+          {region.compareTo && (() => {
+            const targetRegion = REGIONS.find(r => r.id === region.compareTo)
+            return (
+              <button
+                onClick={() => onJumpTo(region.compareTo)}
+                className="w-full flex items-start justify-between gap-2 bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-lg px-3 py-2.5 text-left mb-1.5"
+              >
+                <span className="text-xs text-[var(--ink-soft)] flex-1">
+                  <span className="font-medium text-[var(--gold)] block mb-0.5">Compare to {targetRegion?.name}</span>
+                  <span className="text-[var(--ink-soft)]">{region.compareNote}</span>
+                </span>
+                <i className="ti ti-arrow-right text-[var(--gold)] text-xs flex-shrink-0 mt-0.5" aria-hidden="true"></i>
+              </button>
+            )
+          })()}
 
           {anchorGrapes.map(grape => (
             <button
@@ -327,7 +330,7 @@ export default function Regions() {
     exerciseProgress, toggleExercise, resetExerciseProgress,
   } = useAppStore()
 
-  const [world, setWorld] = useState('old')
+  const [world, setWorld] = useState('all')
   const [openId, setOpenId] = useState(null)
   const [classificationOpen, setClassificationOpen] = useState(false)
 
@@ -420,12 +423,12 @@ export default function Regions() {
     resetExerciseProgress(GRAPE_KEYS)
     setOpenId(null)
     setOpenGrapeId(null)
-    setWorld('old')
+    setWorld('all')
     setViewMode('regions')
     setGrapeTypeFilter('all')
   }
 
-  const visible = REGIONS.filter(r => r.world === world)
+  const visible = REGIONS.filter(r => world === 'all' || r.world === world)
   const tiers = [1, 2, 3].filter(t => visible.some(r => r.tier === t))
 
   return (
@@ -434,7 +437,7 @@ export default function Regions() {
         <button onClick={() => navigate('/learn')} className="flex items-center gap-2 text-white/60 hover:text-white text-sm mb-3 transition-colors">
           <i className="ti ti-arrow-left" aria-hidden="true"></i> Back to lessons
         </button>
-        <p className="text-xs tracking-[0.1em] text-[var(--gold)] uppercase font-medium mb-2">Old World, New World, at a glance</p>
+        <p className="text-xs tracking-[0.1em] text-[var(--gold)] uppercase font-medium mb-2">Every bottle has a story</p>
         <h1 className="font-['Cormorant_Garamond'] text-3xl md:text-5xl text-white italic leading-tight">Regions and Grapes</h1>
       </div>
 
@@ -462,32 +465,71 @@ export default function Regions() {
           </div>
         )}
 
-        <p className="text-xs text-[var(--muted)] mb-2">{exploredCount} of {REGIONS.length} regions explored</p>
-        <div className="h-1 bg-[var(--border)] rounded-full mb-6 overflow-hidden">
-          <div className="h-full bg-[var(--forest)] rounded-full transition-all duration-300" style={{ width: `${(exploredCount / REGIONS.length) * 100}%` }} />
-        </div>
+        {/* Progress scale — changes based on view mode */}
+        {viewMode === 'regions' && (
+          <>
+            <p className="text-xs text-[var(--muted)] mb-2">{exploredCount} of {REGIONS.length} regions explored</p>
+            <div className="h-1 bg-[var(--border)] rounded-full mb-6 overflow-hidden">
+              <div className="h-full bg-[var(--forest)] rounded-full transition-all duration-300" style={{ width: `${(exploredCount / REGIONS.length) * 100}%` }} />
+            </div>
+          </>
+        )}
 
-        <div className="grid grid-cols-3 gap-2 mb-6">
-          {['old', 'new'].map(w => (
-            <button
-              key={w}
-              onClick={() => { setViewMode('regions'); setWorld(w) }}
-              className={`py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                viewMode === 'regions' && world === w ? 'bg-[var(--forest)] text-white' : 'bg-white border border-[var(--border)] text-[var(--muted)]'
-              }`}
-            >
-              {WORLD_LABEL[w]}
-            </button>
-          ))}
+        {viewMode === 'grapes' && (
+          <>
+            {(() => {
+              const grapeCount = GRAPES.filter(g => grapeTypeFilter === 'all' || g.grapeType === grapeTypeFilter).length
+              const exploredGrapeCount = GRAPES.filter(g => (grapeTypeFilter === 'all' || g.grapeType === grapeTypeFilter) && exerciseProgress[`grape-${g.id}`]).length
+              return (
+                <>
+                  <p className="text-xs text-[var(--muted)] mb-2">{exploredGrapeCount} of {grapeCount} grapes explored</p>
+                  <div className="h-1 bg-[var(--border)] rounded-full mb-6 overflow-hidden">
+                    <div className="h-full bg-[var(--forest)] rounded-full transition-all duration-300" style={{ width: `${(exploredGrapeCount / grapeCount) * 100}%` }} />
+                  </div>
+                </>
+              )
+            })()}
+          </>
+        )}
+
+        {/* Main navigation: Regions button + World filter + Grapes button */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setViewMode('regions')}
+            className={`py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex-1 ${
+              viewMode === 'regions' ? 'bg-[var(--forest)] text-white' : 'bg-white border border-[var(--border)] text-[var(--muted)]'
+            }`}
+          >
+            Regions
+          </button>
           <button
             onClick={() => setViewMode('grapes')}
-            className={`py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex-1 ${
               viewMode === 'grapes' ? 'bg-[var(--forest)] text-white' : 'bg-white border border-[var(--border)] text-[var(--muted)]'
             }`}
           >
             Grapes
           </button>
         </div>
+
+        {/* World filter — only shown in regions view */}
+        {viewMode === 'regions' && (
+          <div className="flex gap-1.5 mb-6 overflow-x-auto">
+            {['all', 'old', 'new'].map(w => (
+              <button
+                key={w}
+                onClick={() => setWorld(w)}
+                className={`flex-shrink-0 text-xs font-medium rounded-full px-3 py-1.5 border transition-colors ${
+                  world === w
+                    ? 'bg-[var(--forest-tint)] border-[var(--forest-mid)] text-[var(--ink)]'
+                    : 'bg-white border-[var(--border)] text-[var(--muted)]'
+                }`}
+              >
+                {w === 'all' ? 'All' : WORLD_LABEL[w]}
+              </button>
+            ))}
+          </div>
+        )}
 
         {viewMode === 'regions' && (
           <div>

@@ -23,7 +23,7 @@
     "nose": { "label": "Train your nose", "sub": "30-day programme, 5 min a day" },
     "wheel": { "label": "Flavour wheel", "sub": "Explore aromas interactively" },
     "bottle": { "label": "First bottle guide", "sub": "One wine, guided from start to finish" },
-    "regions": { "label": "Regions and Grapes", "sub": "Old World, New World, at a glance" },
+    "regions": { "label": "Regions and Grapes", "sub": "Every bottle has a story" },
     "quiz": { "label": "Quick quiz", "sub": "Test what you know — 4 questions" },
     "startHere": "Start here",
     "new": "New",
