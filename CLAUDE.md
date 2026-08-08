@@ -210,24 +210,23 @@ alternate systems considered) lives in a standalone planning document that is **
 - **Classification decoder is a distinct content type, not a region** — reference material (what
   AOC/DOC/DOCG/DO actually mean), gold-accented like the app's existing "tip" styling rather than
   the white region cards, and deliberately excluded from the region explore/progress count.
-- **"Regions and grapes" — DONE, shipped and live-tested.** `Regions.jsx` now has a real third
-  toggle mode, "Grapes," alongside Old World/New World — not a separate module, not a bento tile
-  (see PROJECT_MEMORY.md §26 for the full reasoning on why those two alternatives were rejected).
-  Implemented as its own `viewMode` state (`'regions' | 'grapes'`), not a third `world` value — a
-  grape has no `tier`/`world`, so the existing region-filtering logic was left completely
+- **"Regions and Grapes" — DONE, shipped and live-tested.** The module hero changed from "Old World,
+  New World, at a glance" to "Every bottle has a story" — a view-agnostic eyebrow that works equally
+  for exploring either regions or grapes. Navigation merged Old World/New World buttons into one
+  "Regions" button; Old World/New World became a filter chip row (All/Old World/New World, only
+  visible in Regions view). Grapes view shows the same design as before with a separate progress
+  scale that respects the active grape-type filter. `Regions.jsx` has a real third toggle mode,
+  "Grapes," implemented as its own `viewMode` state (`'regions' | 'grapes'`), not a third `world`
+  value — a grape has no `tier`/`world`, so the existing region-filtering logic was left completely
   untouched. It rides on the existing `regions` module completion state via `jumpTo()`/
-  `jumpToGrape()`-style cross-navigation — no new progress/store field, no second "Complete
-  Grapes ✓" button. All 27 grapes (`src/data/grapes.js`) render as a colour-coded tile grid
-  (red/white/sparkling, via a real `grapeType` field), with a filter chip row and an inline detail
-  card per tapped tile. **The "roughly 15% of grapes have no regions.js anchor" concern once
-  flagged here turned out to be wrong once actually checked — every one of the 27 grapes has a
-  real anchor** (see PROJECT_MEMORY.md §29's own correction, and §30 for the one genuine gap that
-  research did surface — Ugni Blanc/Trebbiano's real Italian anchor is Tuscany, not the
-  no-anchor-at-all situation originally assumed). Full build account, the mockup iterations that
-  preceded it, and a real Tailwind-arbitrary-value bug caught during the build: PROJECT_MEMORY.md
-  §32. The research trail before the build (5 tranche documents, the original brief, the
-  implementation plan) is covered in §26–§31 — still not committed to the repo root as of this
-  writing.
+  `jumpToGrape()`-style cross-navigation — no new progress/store field, no second "Complete Grapes ✓"
+  button. All 27 grapes (`src/data/grapes.js`) render as a colour-coded tile grid (red/white/sparkling,
+  via a real `grapeType` field), with a filter chip row and an inline detail card per tapped tile.
+  RegionCard "Compare to" button now shows the target region's name first (bold), then the explanation
+  on a separate line. RegionCard second-line text (country · grapes) expands to full width when the
+  card is open (whitespace-normal instead of truncate). Every one of the 27 grapes has a real anchor
+  (see PROJECT_MEMORY.md §29's correction, and §30 for Ugni Blanc/Trebbiano's Tuscany anchor).
+  Full build account and bugs caught during: PROJECT_MEMORY.md §32–34.
 
 ## First Bottle Guide — content, structure & conventions
 Built as the last remaining Learn module, completing the original 5-module curriculum. Content
@@ -353,6 +352,20 @@ at a glance). Tapping the outer ring jumps straight to that specific aroma's det
 inner ring still opens the family for browsing multiple aromas, unchanged from before. The center
 hub shows dynamic text reflecting whatever's currently selected, rather than a static label. Outer
 wedges carry short name labels (first word only, same truncation convention as the inner ring).
+
+## Planner — demo scenarios removed
+Demo scenario pickers (both desktop chip row and mobile fixed bar) were removed entirely. The custom
+form is now the only UI presented, shown as disabled with "Coming soon" message, so the full form
+remains visible and conceptually clear even though nothing currently responds to input. This
+makes the future enabling a trivial change — just remove the `opacity-50 pointer-events-none` classes.
+Spacing reduced between hero and form (`mb-6` → `mb-2` on hero; `py-12` → `py-4` on empty state).
+
+## Journal — edit entries added
+Each journal entry now has an "Edit" button (visible on hover, alongside "Remove"). Clicking "Edit"
+populates the form with the entry's data, changes the form title to "Edit wine", and shows a
+"Cancel edit" button. The save function uses `updateJournalEntry` from the store (already existed,
+never used until now) to modify entries in-place. Follows the established pattern of "one-tap-to-edit"
+and reuses the same save flow as adding new entries.
 
 ## Known issues / gaps (verified against code)
 

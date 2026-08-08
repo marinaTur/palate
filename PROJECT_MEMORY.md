@@ -1362,6 +1362,179 @@ change ever puts, say, `styleRange` or `foodPairing` into a similarly space-cons
 that field would need the exact same `short`-plus-"Read more" treatment added then, not assumed to
 already have it.
 
+---
+
+## 35. Regions and Grapes navigation simplified; Planner demo scenarios removed; Journal gets edit
+
+**Date:** 2026-08-08 · **Status:** All three changes done, verified (`npm run build`/`npm run lint`
+clean), pushed to production (commits `2280e07` and `d2a85a8`). Working session driven directly via
+Claude Code with real local disk/git access — the workflow described in §22 as aspirational for a
+future Claude Code session is now the actual, confirmed-working reality, not a hypothetical.
+
+### Regions and Grapes — Old World/New World demoted from a toggle to a filter
+
+**The ask: merge the separate "Old World"/"New World" toggle buttons into the Regions/Grapes toggle
+itself, with world becoming a filter chip row instead of a third parallel control.** Before this
+session, the top-level control was three buttons side by side (Old World / New World / Grapes) —
+world selection and view-mode selection lived at the same visual level despite being conceptually
+different things (world filters *within* Regions view; Grapes is a different view entirely).
+
+**What changed in `Regions.jsx`:** two now-separate rows. Row 1: two equal-width buttons, "Regions"
+and "Grapes" — this is `viewMode`, unchanged in concept from §32's original design, just no longer
+sharing a row with world. Row 2 (Regions view only): a chip row, `['all', 'old', 'new']`, styled
+identically to the existing Grapes-view type filter chips (`bg-[var(--forest-tint)]`/
+`border-[var(--forest-mid)]` when active) — reusing an existing visual pattern rather than
+inventing a new one, the same reasoning behind every other chip-filter decision in this file.
+**`world`'s default state changed from `'old'` to `'all'`** — opening Regions now shows every
+region from both worlds by default, world filtering is opt-in. `visible` filtering logic changed
+from `r.world === world` to `world === 'all' || r.world === world`. `startOver()` now resets to
+`world: 'all'`, matching the new default.
+
+**Grapes view gets its own progress scale, mirroring Regions' exactly.** Previously only Regions
+view showed "X of 27 regions explored" with a progress bar; Grapes view had no equivalent. Added:
+"X of Y grapes explored" with the same height-1 progress-bar styling, computed against
+`grapeTypeFilter` — narrowing to "Red" shows progress against red grapes only, not all 27. Marina's
+explicit requirement: **the correct scale must show for the current view** — Regions view shows the
+regions scale, Grapes view shows the grapes scale, never a mismatch or both at once.
+
+**Hero copy changed twice in the same session, both explicitly directed rather than proposed
+unprompted.** First: the eyebrow "Old World, New World, at a glance" no longer described the module
+now that World was a filter, not a structural half of the whole experience — asked for 3–6
+view-agnostic replacement candidates (i.e., phrasing that works whether someone is currently
+browsing Regions or Grapes, not phrasing anchored to one view). Generated two batches (5 + 4
+options); Marina compared "Every bottle has a story" against "Terroir and genetics" directly,
+choosing the former for its narrative warmth over the latter's scientific precision — both were
+judged genuinely viable, this was a stylistic pick, not a rejection of the runner-up. **The h1
+headline was initially changed too** (to "Two chapters: place and plant", the pairing tested
+alongside the winning eyebrow) but Marina asked for it reverted specifically to stay **consistent
+with the Learn page's own listing**, which references this module by its established name,
+"Regions and Grapes" — the h1 stayed as that literal string, only the eyebrow above it changed.
+Both `en.json` and `ru.json`'s `modules.regions.sub` key updated to match (still English-only
+placeholder in `ru.json`, per the existing untranslated-Russian status, not a new gap).
+
+**RegionCard — two smaller UI fixes, both caught only by using the shipped feature, not from a
+design review.** (1) The second line of a region's collapsed header (`{country} · {grapes}`) used
+`truncate`, cutting off longer grape lists even once the card was expanded — when a card opens, the
+line now switches to `whitespace-normal` so the full text wraps and displays; still `truncate` when
+collapsed, so the compact list view is unaffected. (2) "Compare to" previously rendered the target
+region's `compareNote` text inline immediately after the words "Compare to" with no name — reading
+awkwardly and requiring the tap itself to discover which region was being suggested. Now resolves
+`region.compareTo` against `REGIONS` to render the target's actual name first, bold, on its own
+line, with `compareNote`'s explanation directly below it — same underlying data, restructured
+presentation only, no `regions.js` changes needed.
+
+**Data-review tooling: `scripts/export-regions-csv.mjs` added**, mirroring the existing
+`scripts/export-grapes-csv.mjs` pattern (§33) exactly — reads `REGIONS` from `src/data/regions.js`,
+writes `regions_export.csv` at the repo root (27 rows × 11 columns: id, name, country, world, tier,
+grapes, style, story, onLabel, compareTo, compareNote), one-way export only, never reads the CSV
+back. Same purpose as the grapes export: lets Marina review/spot-check the region content in Excel
+without reading raw JS. Re-run with `node scripts/export-regions-csv.mjs` any time after editing
+`regions.js`.
+
+### Planner — demo scenario system removed entirely, not just hidden
+
+**This reverses part of what §23's "Planner redesigned — scenario picker replaces the free-text
+form" entry documented as the primary interaction.** That entry is not deleted (per this file's own
+append-only rule) — it's superseded here. Marina's instruction was explicit and unambiguous: "Remove
+demo plans at all. No need." Not "hide," not "deprioritize" — removed.
+
+**What was actually deleted from `Planner.jsx`:** the desktop scenario chip row (`hidden md:block`),
+the mobile fixed scenario chip bar (`md:hidden fixed ... bottom: var(--nav-h...)`), the demo-mode
+notice banner, the `activeScenarioId` derived value, the `selectScenario()` function, and the
+mount-time `useEffect` that auto-selected the first demo scenario on a genuine first visit. Imports
+trimmed to match: `SAMPLE_PLANS_EN` and the local `SCENARIO_META` object are gone from this file
+(the `samplePlans.js` data file itself and its `matchSamplePlan()` export are untouched — still
+imported and still used by the disabled custom-form's `generate()` function, since that logic
+predates and is independent of the scenario-picker feature being removed).
+
+**What was deliberately kept, after Marina caught an over-removal in the same session:** the custom
+free-text planner form (wines/foods/season/guests/notes) — still rendered, still fully wired
+(`generate()`, `matchSamplePlan()`, the `inputs` state), still visually disabled
+(`opacity-50 pointer-events-none select-none`) exactly as it was before this session, per the
+existing "show a not-yet-available feature, don't hide it" rule (CLAUDE.md, Established interaction
+patterns). **First pass over-corrected: the whole form was accidentally removed along with the
+scenario picker** — caught immediately ("you should remove just a title, not a entire disabled
+form") and restored in full. The only thing actually removed from that form section was its own
+section title/label, "Or build your own" (plus its adjacent "Coming soon" pill, since the pill was
+paired with that specific label) — the form's fields, disabled styling, and wiring are all
+unchanged from before this session.
+
+**Empty state changed from a sentence to a status word.** With no scenarios to prompt "pick one
+above," the plan-output empty state previously read "Pick a scenario above to see a full tasting
+plan." — no longer accurate once that picker was gone. Changed to "COMING SOON" (uppercase, styled
+as a status label rather than an instruction, matching the disabled form's own "Coming soon" pill
+styling elsewhere on the same page).
+
+**Three rounds of spacing tightened, each a direct, specific request rather than a redesign.** Hero
+bottom margin `mb-6` → `mb-2`; empty-state block `py-12 mb-8` → `py-4 mb-2`; disabled form given
+`mt-2`. Net effect: without the removed scenario pickers occupying vertical space, the page read as
+having oversized gaps between hero → empty state → disabled form — each request targeted one
+specific gap in sequence (hero-to-content, then the "COMING SOON" block's own internal padding)
+rather than one combined pass, and each was verified with a fresh build before moving to the next.
+
+**What's now dead code, not yet removed, flagged for whoever next touches this file:** `samplePlans.js`
+and its `SAMPLE_PLANS_EN`/`matchSamplePlan` exports are unused for their original purpose (populating
+a scenario picker) but still imported/called by the disabled form's `generate()` — so the file isn't
+fully dead, just partially repurposed. If the custom form is ever fully removed or replaced with live
+AI, `matchSamplePlan`'s keyword-matching logic should be re-evaluated for continued relevance at that
+point, not assumed still needed.
+
+### Journal — edit capability added, closing a real gap against the original brief
+
+**This directly addresses part of §13's own "Roadmap: Original Vision vs Current State" entry**,
+which named Journal as only supporting "add/view/delete... no search, no filtering, no over-time
+visualization" against a brief that explicitly wanted more. Edit wasn't itself named in that original
+list, but it's the same category of gap — Marina asked for it directly ("Journal section should have
+an option edit for added records") without needing to reference that history.
+
+**The store's `updateJournalEntry(id, patch)` action already existed and had been fully unused since
+whenever the store was first scaffolded** — a plain merge-patch update (`e.id === id ? {...e, ...patch}
+: e`), symmetric with `addJournalEntry`/`deleteJournalEntry`. This session's actual work was entirely
+in `Journal.jsx`: no store changes were needed, confirming (per the same reasoning already established
+for `unmarkModuleComplete` and other symmetric actions elsewhere in this app) that generic CRUD
+primitives added early tend to pay off exactly when a feature using them finally gets built.
+
+**UI shape:** each entry card's action row (previously just a hover-revealed "Remove" link) now shows
+"Edit" and "Remove" side by side, both still gated behind the same `opacity-0 group-hover:opacity-100`
+hover-reveal convention already used for delete. Tapping "Edit" calls a new `editEntry(entry)` function
+that copies the full entry object into the existing form state and sets a new `editingId` value, then
+opens the form (`setShowForm(true)`) — reusing the exact same form UI already used for adding a new
+entry, not a second, parallel edit-only form. The form's own title conditionally reads "Edit wine"
+instead of the existing `t('journal.formTitle')` string when `editingId` is set, and a new "Cancel
+edit" text button (visible only while editing) resets `editingId`/`form`/`showForm` together via a new
+`cancelEdit()` function — distinct from the pre-existing generic "Cancel" button, which closes the form
+without necessarily being mid-edit.
+
+**The `save()` function now branches on `editingId`:** if set, calls `updateJournalEntry(editingId, form)`
+and clears `editingId`; if not, calls `addJournalEntry(form)` exactly as before. Same button, same
+validation (`form.wine.trim()` required), same field set — editing reuses 100% of the add-entry
+plumbing rather than introducing parallel save logic, matching this project's general aversion to
+duplicate/parallel state mechanisms (the same principle behind `finished`-derived-from-store and
+Grapes riding on Regions' completion state, both cited elsewhere in this file).
+
+**Not yet done, explicitly out of scope for this pass:** the edit UI's two new user-facing strings
+("Edit wine", "Cancel edit") are hardcoded English, not run through `t()` — matching `Journal.jsx`'s
+existing i18n status for its structural chrome (most of the form already uses `t('journal.*')` keys,
+but these two are new and weren't added to `en.json`/`ru.json` in this pass). This is a small,
+real gap against the project's own "add new UI strings to both files, same commit" convention
+(CLAUDE.md, Architecture conventions) — worth fixing next time this file is touched, not assumed
+already covered by the module's general i18n status.
+
+### Documentation-workflow note worth recording plainly, since it changes how this file gets updated
+
+**This session ran through Claude Code with genuine local disk and git access — real commits, real
+`git push`, real production deploys — not the claude.ai chat-interface-plus-manual-file-handoff
+workflow §22 describes as "what actually happens."** §22's own closing paragraph already anticipated
+this possibility ("If a real standalone Claude Code CLI session ever does pick this project up with
+genuine local disk and git access, the workflow could simplify further... but that has not been the
+observed reality in the sessions this document covers") — this session is the first confirmation that
+it has now happened. Worth a dedicated, explicit note here rather than silently treating it as
+unremarkable: **§22's hard rules (no `.git` deletion, no re-`init`, no routine force-push, no
+committed tokens) still apply without exception now that push access is real and direct** — the
+lower-friction workflow doesn't relax any of those safety constraints, it just removes the manual
+file-handoff step that used to sit between "Claude verifies a change" and "the change reaches
+Marina's machine."
+
 
 
 
