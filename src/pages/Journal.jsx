@@ -7,16 +7,34 @@ const EMPTY = { wine: '', region: '', vintage: '', appearance: '', nose: '', pal
 
 export default function Journal() {
   const { t, i18n } = useTranslation()
-  const { journalEntries, addJournalEntry, deleteJournalEntry } = useAppStore()
+  const { journalEntries, addJournalEntry, updateJournalEntry, deleteJournalEntry } = useAppStore()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY)
+  const [editingId, setEditingId] = useState(null)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
   function save() {
     if (!form.wine.trim()) return
-    addJournalEntry(form)
+    if (editingId) {
+      updateJournalEntry(editingId, form)
+      setEditingId(null)
+    } else {
+      addJournalEntry(form)
+    }
     setForm(EMPTY); setShowForm(false)
+  }
+
+  function editEntry(entry) {
+    setForm(entry)
+    setEditingId(entry.id)
+    setShowForm(true)
+  }
+
+  function cancelEdit() {
+    setForm(EMPTY)
+    setEditingId(null)
+    setShowForm(false)
   }
 
   function formatDate(iso) {
@@ -56,10 +74,17 @@ export default function Journal() {
       </div>
 
       <div className="px-4">
-        {/* Add entry form */}
+        {/* Add/Edit entry form */}
         {showForm && (
           <div className="bg-white border border-[var(--border)] rounded-xl p-5 mb-6">
-            <h2 className="text-xl text-[var(--ink)] mb-4">{t('journal.formTitle')}</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl text-[var(--ink)]">{editingId ? 'Edit wine' : t('journal.formTitle')}</h2>
+              {editingId && (
+                <button onClick={cancelEdit} className="text-xs text-[var(--muted)] hover:text-[var(--forest)]">
+                  Cancel edit
+                </button>
+              )}
+            </div>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -124,10 +149,16 @@ export default function Journal() {
                   </div>
                   <div className="flex flex-col items-end gap-2 flex-shrink-0">
                     <p className="text-xs text-[var(--muted)]">{formatDate(e.date)}</p>
-                    <button onClick={() => deleteJournalEntry(e.id)}
-                      className="text-xs text-[var(--muted)] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
-                      {t('journal.remove')}
-                    </button>
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                      <button onClick={() => editEntry(e)}
+                        className="text-xs text-[var(--muted)] hover:text-[var(--forest)]">
+                        Edit
+                      </button>
+                      <button onClick={() => deleteJournalEntry(e.id)}
+                        className="text-xs text-[var(--muted)] hover:text-red-500">
+                        {t('journal.remove')}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
