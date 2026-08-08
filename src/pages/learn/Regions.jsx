@@ -30,7 +30,8 @@ const GRAPE_DOT_BG = {
 // ── Region card — compact row, expands inline on tap ───────────────
 // Same controlled-accordion pattern as Wheel's SubcategoryCard: isOpen/onToggle
 // are props, no internal state, so nothing can go stale on a filter switch.
-function RegionCard({ region, isOpen, isExplored, onToggle, onJumpTo }) {
+function RegionCard({ region, isOpen, isExplored, onToggle, onJumpTo, onJumpToGrape }) {
+  const anchorGrapes = GRAPES.filter(g => g.regionIds.includes(region.id))
   return (
     <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden mb-2">
       <button onClick={onToggle} className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left">
@@ -67,7 +68,7 @@ function RegionCard({ region, isOpen, isExplored, onToggle, onJumpTo }) {
           {region.compareTo && (
             <button
               onClick={() => onJumpTo(region.compareTo)}
-              className="w-full flex items-center justify-between gap-2 bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-lg px-3 py-2.5 text-left"
+              className="w-full flex items-center justify-between gap-2 bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-lg px-3 py-2.5 text-left mb-1.5"
             >
               <span className="text-xs text-[var(--ink-soft)]">
                 <span className="font-medium text-[var(--gold)]">Compare to </span>
@@ -76,29 +77,57 @@ function RegionCard({ region, isOpen, isExplored, onToggle, onJumpTo }) {
               <i className="ti ti-arrow-right text-[var(--gold)] text-xs flex-shrink-0" aria-hidden="true"></i>
             </button>
           )}
+
+          {anchorGrapes.map(grape => (
+            <button
+              key={grape.id}
+              onClick={() => onJumpToGrape(grape.id)}
+              className="w-full flex items-center justify-between gap-2 bg-[var(--gold-tint)] border border-[var(--gold)]/25 rounded-lg px-3 py-2.5 text-left mb-1.5"
+            >
+              <span className="text-xs text-[var(--ink-soft)]">
+                <span className="font-medium text-[var(--gold)]">See in Grapes </span>
+                {grape.names.join(' / ')}
+              </span>
+              <i className="ti ti-arrow-right text-[var(--gold)] text-xs flex-shrink-0" aria-hidden="true"></i>
+            </button>
+          ))}
         </div>
       )}
     </div>
   )
 }
 
+// Column span derived from actual label length, not just "has two names" —
+// checked against the real 27-grape roster: 19 fit in one 3-col cell, 6 need
+// two cells (mostly combined names, plus a couple of long single names like
+// Cabernet Sauvignon/Grüner Veltliner), and only the two longest combined
+// names (Pinot Gris/Grigio, Muscat Blanc à Petits Grains) need the full row.
+function grapeSpan(names) {
+  const label = names.join(' / ')
+  if (label.length > 24) return 3
+  if (label.length > 15) return 2
+  return 1
+}
+const SPAN_CLASS = { 1: '', 2: 'col-span-2', 3: 'col-span-3' }
+
 // ── Grape card — compact tile, expands into a detail card rendered
 // below the grid (not inline in the tile itself, matching the
 // reviewed mockup rather than RegionCard's own same-card-expands shape).
 // Same controlled pattern as RegionCard: isOpen/onToggle are props.
 function GrapeTile({ grape, isOpen, isExplored, onToggle }) {
-  const wide = grape.names.length > 1
+  const span = grapeSpan(grape.names)
+  const wide = span > 1
   return (
     <button
       onClick={onToggle}
-      className={`relative rounded-2xl px-3 pt-3.5 pb-3 text-left overflow-hidden ${GRAPE_TINT_BG[grape.grapeType]} ${wide ? 'col-span-2 flex items-center justify-between gap-2.5' : ''} ${isOpen ? 'outline outline-2 outline-offset-2 outline-[var(--gold)]' : ''}`}
+      className={`relative rounded-2xl px-3 pt-3.5 pb-3 text-left overflow-hidden ${GRAPE_TINT_BG[grape.grapeType]} ${SPAN_CLASS[span]} ${wide ? 'flex items-center justify-between gap-2.5' : ''} ${isOpen ? 'outline outline-2 outline-offset-2 outline-[var(--gold)]' : ''}`}
     >
       {isExplored && (
         <i className={`ti ti-check absolute top-2.5 right-2.5 text-xs ${GRAPE_TEXT[grape.grapeType]}`} aria-hidden="true"></i>
       )}
       <div className={wide ? 'flex-1 min-w-0' : ''}>
         <p className={`text-[10.5px] font-medium uppercase tracking-wide ${GRAPE_TEXT[grape.grapeType]}`}>
-          {GRAPE_TYPE_LABEL[grape.grapeType]}{wide ? ' · same grape, two names' : ''}
+          {GRAPE_TYPE_LABEL[grape.grapeType]}{grape.names.length > 1 ? ' · same grape, two names' : ''}
         </p>
         <p className="text-sm font-semibold text-[var(--ink)] leading-tight mt-0.5">{grape.names.join(' / ')}</p>
       </div>
@@ -143,25 +172,25 @@ function GrapeDetail({ grape, onJumpToGrape, onJumpToRegion }) {
       <div className="grid grid-cols-3 gap-1.5 mb-1.5">
         <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
           <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">Body</p>
-          <p className="text-[13px] font-semibold text-[var(--ink)]">{grape.body.value}</p>
+          <p className="text-[13px] font-normal text-[var(--ink)]">{grape.body.value}</p>
         </div>
         <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
           <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">Tannin</p>
-          <p className="text-[13px] font-semibold text-[var(--ink)]">{grape.tannin.value}</p>
+          <p className="text-[13px] font-normal text-[var(--ink)]">{grape.tannin.value}</p>
         </div>
         <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
           <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">Colour</p>
-          <p className="text-[13px] font-semibold text-[var(--ink)]">{grape.colour.value}</p>
+          <p className="text-[13px] font-normal text-[var(--ink)]">{grape.colour.value}</p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-1.5 mb-3">
         <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
           <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">Acidity</p>
-          <p className="text-[13px] font-semibold text-[var(--ink)]">{grape.acidity.value}</p>
+          <p className="text-[13px] font-normal text-[var(--ink)]">{grape.acidity.value}</p>
         </div>
         <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
           <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">ABV</p>
-          <p className="text-[13px] font-semibold text-[var(--ink)]">{grape.abv.value}</p>
+          <p className="text-[13px] font-normal text-[var(--ink)]">{grape.abv.value}</p>
         </div>
       </div>
       <p className="text-[13px] text-[var(--ink-soft)] leading-relaxed mb-4">{grape.styleRange.value}</p>
@@ -382,7 +411,7 @@ export default function Regions() {
           <i className="ti ti-arrow-left" aria-hidden="true"></i> Back to lessons
         </button>
         <p className="text-xs tracking-[0.1em] text-[var(--gold)] uppercase font-medium mb-2">Old World, New World, at a glance</p>
-        <h1 className="font-['Cormorant_Garamond'] text-3xl md:text-5xl text-white italic leading-tight">Regions</h1>
+        <h1 className="font-['Cormorant_Garamond'] text-3xl md:text-5xl text-white italic leading-tight">Regions and Grapes</h1>
       </div>
 
       <div className="px-4">
@@ -451,6 +480,7 @@ export default function Regions() {
                       isExplored={!!exerciseProgress[`region-${region.id}`]}
                       onToggle={() => toggleRegion(region.id)}
                       onJumpTo={jumpTo}
+                      onJumpToGrape={jumpToGrape}
                     />
                   </div>
                 ))}
@@ -480,7 +510,7 @@ export default function Regions() {
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 mb-4">
+            <div className="grid grid-cols-3 gap-2.5 mb-4">
               {GRAPES.filter(g => grapeTypeFilter === 'all' || g.grapeType === grapeTypeFilter).map(grape => (
                 <div key={grape.id} id={`grape-${grape.id}`}>
                   <GrapeTile

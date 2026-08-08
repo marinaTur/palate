@@ -1198,6 +1198,90 @@ step.
   full-paragraph fields, not chip fields). Needs a decision before this is polished further — don't
   let the current shipped shape be mistaken for finished/approved as-is.
 
+---
+
+## 33. Grapes toggle — five follow-up fixes from live feedback, plus the module renamed to "Regions and Grapes"
+
+**Date:** 2026-08-08 · **Status:** All five items done, verified (`npm run build`/`npm run lint`
+clean), live-tested via the same headless-browser-driving-the-real-dev-server discipline as §32 —
+not just a code read. This is a direct follow-up session to §32, working from live feedback after
+seeing the shipped feature rather than a fresh design pass.
+
+**1. Structure block bold removed — partial fix, not the full decision §32 flagged as open.**
+The `text-[13px] font-semibold` on each Structure chip's value line (Body/Tannin/Colour/Acidity/
+ABV) is now `font-normal`. This addresses the "bold at the front of the text" complaint directly,
+but **does not resolve §32's own still-open Structure-block decision** — the underlying question
+(shorten/unify the text, or abandon chips for Structure entirely) is unchanged and still needs a
+real decision before this section is considered finished. Removing the bold made the current chip
+shape read less visually aggressive, but full-sentence values like Tannin's still wrap across
+several lines inside a narrow chip — a real, unresolved layout tension, not fixed by this alone.
+
+**2. Grape tile grid: 3 columns, span width driven by real label length, not a `names.length > 1`
+guess.** Previously every combined-name grape (`names.length > 1`) got a fixed 2-column span in a
+2-column base grid — meaning a combined name spanned the *entire* row regardless of how long it
+actually was. Checked directly against all 27 real labels before picking thresholds, rather than
+guessing: 19 grapes (≤15 characters) fit a single narrow cell in a 3-column grid, 6 (16–24
+characters — mostly combined names, plus two long single names, Cabernet Sauvignon and Grüner
+Veltliner) need 2 cells, and only the 2 longest (Pinot Gris/Grigio at 25, Muscat Blanc à Petits
+Grains at 28) need the full 3-cell row. New `grapeSpan(names)` helper function encodes this
+length-derived rule; `SPAN_CLASS` maps the resulting 1/2/3 to a Tailwind `col-span-*` class (not a
+template-literal interpolation this time — learned directly from §32's own Tailwind-JIT bug, these
+three values are a small enough fixed set that a literal object lookup was the obvious right shape
+from the start). Net effect: a genuinely more compact, variable-density grid instead of the
+previous fixed-2-column one, confirmed via a live screenshot showing 3 short names per row with a
+wide tile correctly filling out the remaining space in its own row.
+
+**3. New Region → Grapes cross-link — a real navigation gap, not previously covered.** §32's build
+gave grapes a "Where to find it" link to every anchoring region, and gave grapes a "Compare taste
+with" link to other grapes — but gave **regions no way back to Grapes mode at all**. Someone
+reading a region's card had no path back to the grape(s) anchored there without manually re-opening
+the Grapes toggle and searching. Fixed by adding a "See in Grapes [name]" button to `RegionCard`,
+appearing once per grape that anchors that region (`GRAPES.filter(g => g.regionIds.includes(
+region.id))` — computed inline in the component, not a new derived-data field), reusing the
+existing `jumpToGrape` function. **Checked directly against the real data before shipping, not
+assumed:** 26 of the 27 regions anchor at least one of the 27 researched grapes; only
+`vinho-verde` (Loureiro, a grape outside the 27-grape roster) has no link — a real, known,
+pre-existing gap (see §26–§30's own account of the 27-grape roster's actual coverage), not a new
+bug introduced here. Several regions anchor more than one grape (Bordeaux → Cabernet Sauvignon +
+Merlot; Champagne → Pinot Noir + Chardonnay + Pinot Meunier; etc.) and correctly render one button
+per grape, not just the first. Live-tested end to end: Bordeaux's card → "See in Grapes Cabernet
+Sauvignon" → lands on Cabernet Sauvignon's own detail card with its tile shown selected, confirmed
+via screenshot, not just code inspection.
+
+**4. Background colour re-checked, found already correct — no change needed.** Marina asked to
+re-verify `--cream` was `#FAF8F5`; it already was, from §31's resolution the day before. Confirmed
+by direct grep against `index.css` rather than assumed from memory of the previous session — worth
+noting explicitly since "did I actually do this already" is exactly the kind of thing this
+project's own memory-discipline rule exists to make checkable rather than re-argued from scratch.
+
+**5. New CSV export tool, `scripts/export-grapes-csv.mjs`.** A one-off script (not app code, not
+imported anywhere, not wired into any build step) that reads `src/data/grapes.js` and writes
+`grapes_export.csv` at the repo root — 27 rows, 31 columns (all 13 value fields plus their
+confidence tags, plus id/names/grapeType/regionIds/confusedWith). Purpose: let Marina review and
+edit the grape content text in Excel rather than reading raw JS. Re-run with `node
+scripts/export-grapes-csv.mjs` any time after editing `grapes.js` to regenerate a fresh export —
+the script only reads from `grapes.js`, it never writes back into it, so editing the CSV in Excel
+has no effect on the app unless someone manually re-applies those edits to `grapes.js` afterward.
+**This is a one-way export tool, not a two-way sync** — worth stating plainly so a future session
+doesn't assume edited-CSV-content flows back automatically.
+
+**6. Module renamed to "Regions and Grapes"** — in both places its name actually appears: the
+Learn directory list (via `modules.regions.label` in `en.json`/`ru.json`, both updated together in
+the same commit per the project's standing i18n convention — the module id itself, its route, and
+every internal reference stayed `regions`, only the *display* label changed) and the module's own
+page header (`Regions.jsx`'s hardcoded `<h1>`, consistent with that file already bypassing i18n
+entirely). Confirmed via live screenshots of both locations, not just the two edited lines.
+`ru.json`'s value is still untranslated placeholder English, matching its existing structural-mirror
+status — not a new translation gap, just the same one carried forward under a new label string.
+
+**What's still genuinely open, carried forward rather than resolved here:**
+- The Structure-block chip-vs-stacked-rows decision from §32, only partially addressed (bold
+  removed) — see item 1 above.
+- `vinho-verde`'s missing grape anchor (its real grape, Loureiro, isn't one of the 27 researched
+  grapes) — a known, pre-existing gap from the original 27-grape roster scoping, not new.
+- The mockup files and standalone research/planning documents referenced throughout §26–§32 are
+  still not committed to the repo root — same pending-placement status noted repeatedly.
+
 
 
 
