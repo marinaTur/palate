@@ -135,6 +135,32 @@ function GrapeTile({ grape, isOpen, isExplored, onToggle }) {
   )
 }
 
+// One Structure chip — shows the short display value by default (per the
+// grapes.js `short` field, see its own header comment), with a "Read more"
+// toggle only when the full `value` actually differs from `short` (a few
+// fields, like Body: "Full", already are short — no toggle needed there).
+// Own local open/closed state per chip is fine here, unlike RegionCard/
+// GrapeTile's controlled pattern — this is a leaf-level, purely-cosmetic
+// disclosure with no other component needing to know its state.
+function StructChip({ tintBg, label, field }) {
+  const [open, setOpen] = useState(false)
+  const hasMore = field.short && field.short !== field.value
+  return (
+    <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
+      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">{label}</p>
+      <p className="text-[13px] font-normal text-[var(--ink)]">{field.short || field.value}</p>
+      {hasMore && (
+        <button onClick={() => setOpen(o => !o)} className="text-[10.5px] font-medium text-[var(--gold-text)] mt-0.5">
+          {open ? 'Show less' : 'Read more'}
+        </button>
+      )}
+      {hasMore && open && (
+        <p className="text-[12px] text-[var(--ink-soft)] leading-relaxed mt-1">{field.value}</p>
+      )}
+    </div>
+  )
+}
+
 function GrapeDetail({ grape, onJumpToGrape, onJumpToRegion }) {
   const [moreOpen, setMoreOpen] = useState(false)
   const tintBg = GRAPE_TINT_BG[grape.grapeType]
@@ -170,28 +196,13 @@ function GrapeDetail({ grape, onJumpToGrape, onJumpToRegion }) {
         Structure
       </p>
       <div className="grid grid-cols-3 gap-1.5 mb-1.5">
-        <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">Body</p>
-          <p className="text-[13px] font-normal text-[var(--ink)]">{grape.body.value}</p>
-        </div>
-        <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">Tannin</p>
-          <p className="text-[13px] font-normal text-[var(--ink)]">{grape.tannin.value}</p>
-        </div>
-        <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">Colour</p>
-          <p className="text-[13px] font-normal text-[var(--ink)]">{grape.colour.value}</p>
-        </div>
+        <StructChip tintBg={tintBg} label="Body" field={grape.body} />
+        <StructChip tintBg={tintBg} label="Tannin" field={grape.tannin} />
+        <StructChip tintBg={tintBg} label="Colour" field={grape.colour} />
       </div>
       <div className="grid grid-cols-2 gap-1.5 mb-3">
-        <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">Acidity</p>
-          <p className="text-[13px] font-normal text-[var(--ink)]">{grape.acidity.value}</p>
-        </div>
-        <div className={`rounded-lg px-2.5 py-2 ${tintBg}`}>
-          <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70 text-[var(--ink)]">ABV</p>
-          <p className="text-[13px] font-normal text-[var(--ink)]">{grape.abv.value}</p>
-        </div>
+        <StructChip tintBg={tintBg} label="Acidity" field={grape.acidity} />
+        <StructChip tintBg={tintBg} label="ABV" field={grape.abv} />
       </div>
       <p className="text-[13px] text-[var(--ink-soft)] leading-relaxed mb-4">{grape.styleRange.value}</p>
 
@@ -348,10 +359,23 @@ export default function Regions() {
     if (!exerciseProgress[`grape-${id}`]) toggleExercise(`grape-${id}`)
   }
 
+  // The detail card renders once, below the *entire* tile grid — with 27+
+  // grapes, tapping a tile near the bottom means the detail appears far
+  // off-screen with no scroll at all, and closing it previously left the
+  // page wherever it happened to be, forcing a manual scroll back to find
+  // the tile. Fixed without a full-screen overlay or route change (Marina
+  // chose to keep this consistent with Regions.jsx's inline-everything
+  // pattern rather than reach for either): opening scrolls down to the
+  // detail card itself so it's immediately visible; closing scrolls back
+  // up to the tapped tile's own position in the grid.
   function toggleGrape(id) {
     const opening = openGrapeId !== id
     setOpenGrapeId(opening ? id : null)
     if (opening) markGrapeExplored(id)
+    requestAnimationFrame(() => {
+      const targetId = opening ? 'grape-detail' : `grape-${id}`
+      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: opening ? 'start' : 'center' })
+    })
   }
 
   // Jumping via "Compare to" or a grape's "Where to find it" link may cross
@@ -377,7 +401,7 @@ export default function Regions() {
     setOpenGrapeId(id)
     markGrapeExplored(id)
     requestAnimationFrame(() => {
-      document.getElementById(`grape-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      document.getElementById('grape-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
   }
 
@@ -524,11 +548,13 @@ export default function Regions() {
             </div>
 
             {openGrapeId && (
-              <GrapeDetail
-                grape={GRAPES.find(g => g.id === openGrapeId)}
-                onJumpToGrape={jumpToGrape}
-                onJumpToRegion={jumpTo}
-              />
+              <div id="grape-detail">
+                <GrapeDetail
+                  grape={GRAPES.find(g => g.id === openGrapeId)}
+                  onJumpToGrape={jumpToGrape}
+                  onJumpToRegion={jumpTo}
+                />
+              </div>
             )}
           </div>
         )}

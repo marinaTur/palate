@@ -1275,12 +1275,92 @@ entirely). Confirmed via live screenshots of both locations, not just the two ed
 status — not a new translation gap, just the same one carried forward under a new label string.
 
 **What's still genuinely open, carried forward rather than resolved here:**
-- The Structure-block chip-vs-stacked-rows decision from §32, only partially addressed (bold
-  removed) — see item 1 above.
+- ~~The Structure-block chip-vs-stacked-rows decision from §32, only partially addressed (bold
+  removed)~~ — **resolved, see §34.**
 - `vinho-verde`'s missing grape anchor (its real grape, Loureiro, isn't one of the 27 researched
   grapes) — a known, pre-existing gap from the original 27-grape roster scoping, not new.
 - The mockup files and standalone research/planning documents referenced throughout §26–§32 are
   still not committed to the repo root — same pending-placement status noted repeatedly.
+
+---
+
+## 34. Grape detail scroll-position fix, and the Structure-block decision finally resolved
+
+**Date:** 2026-08-08 · **Status:** Both done, verified (`npm run build`/`npm run lint` clean),
+live-tested via the same headless-browser-driving-the-real-dev-server discipline as §32–§33 — one
+change confirmed with an actual measured `scrollY` value, not just a screenshot glance.
+
+**Problem 1, real and reported directly after using the shipped feature: opening a grape's detail
+card, especially for a tile near the bottom of the 27-item grid, left the user with no way back to
+where they were without a manual scroll.** Root cause, found by reading the actual render
+structure rather than guessing: the detail card renders once, as a single block *after* the entire
+tile grid — so tapping a tile near the bottom put the (newly-rendered) detail far below the
+viewport with zero scroll assistance, and closing it left the page wherever it happened to be,
+nowhere near the tile just tapped.
+
+**Two full-screen-overlay and route-navigation alternatives were raised and explicitly rejected**
+before fixing this in place — see the actual conversation for the reasoning, condensed here: a
+full-screen overlay was the option originally cut from the very first Grapes mockup (variant B, in
+favor of staying inline with `RegionCard`'s own pattern), and revisiting it now would reintroduce
+exactly the inconsistency that earlier decision existed to avoid; a route/page navigation would
+mean building real deep-linking/back-stack handling that doesn't exist anywhere else in this app,
+for a problem that doesn't actually need it. **Fixed by adding `scrollIntoView` calls to the
+existing toggle/jump functions instead** — `toggleGrape(id)` now scrolls down to a new
+`id="grape-detail"` wrapper around the rendered `GrapeDetail` when opening (so the newly-tapped
+tile's detail is immediately visible, not off-screen), and back up to the tapped tile's own
+`id="grape-${id}"` when closing (landing exactly where the user was). `jumpToGrape` (the
+grape→grape "Compare taste with" link) was updated to target the same `grape-detail` id on open,
+since it had the identical bug — it previously scrolled to the tile, not the newly-opened detail.
+**Verified with an actual measured scroll position, not a visual glance**: a live Playwright test
+recorded `window.scrollY` before opening a bottom-of-grid tile (679px), after opening (1297px,
+confirming the forward scroll to the detail), and after closing (679px again, exactly matching the
+starting position) — a real number, not an inference from a screenshot.
+
+**Problem 2, resolved: the Structure-block chip-vs-stacked-rows decision flagged as open in §32
+and only partially addressed in §33 (bold removed, but the underlying overflow left unfixed).**
+Surfaced most visibly during the scroll-fix testing above — Montepulciano's Tannin value
+("Medium to high, with a texture repeatedly described as smoother and more approachable...") blew
+its chip out to nearly 200px tall, dragging its row-mates (Body, Colour) to match. Two real options
+were mocked up side by side using this exact grape's real text before deciding — not decided from
+description alone: (A) a new short display value per Structure field, full text tucked behind a
+per-chip "Read more" toggle; (B) drop chips for Structure entirely, use plain stacked label/value
+rows matching how Secondary/tertiary and Food pairing already render. **Marina chose option A.**
+
+**What was actually built for option A, and how the short values were derived — not invented, per
+this project's own standing research discipline.** A new `short` field was added to `grapes.js`,
+present only on the 5 Structure-chip fields (`body`/`tannin`/`acidity`/`colour`/`abv` — the other
+fields render as plain paragraphs with no fixed-height container, so they never had this problem
+and don't need a `short` variant). All 135 short values (27 grapes × 5 fields) were written in one
+pass this session — checked directly against the real length distribution before starting, which
+turned out to be far more widespread than the single Montepulciano example suggested: **every one
+of the 5 fields has entries running past 200 characters** (11–21 of the 27 grapes per field, not
+just a handful), so this was closer to a full content pass than a spot-fix. Each short value was
+derived directly from that field's own existing `value` text — the real core fact (e.g.
+"Medium to high, smooth" from Montepulciano's own full tannin description), sourcing commentary
+and comparative asides stripped, never a fact invented independently of the source text already
+in the file.
+
+**`Regions.jsx` changes:** a new `StructChip` sub-component (its own small local `open`/`useState`
+toggle — deliberately *not* the controlled `isOpen`/`onToggle` prop pattern `RegionCard`/`GrapeTile`
+use, since this is a leaf-level, purely-cosmetic disclosure with no other component that needs to
+know its state) renders the chip's `short` value by default, and only shows a "Read more" button
+when `short` actually differs from the full `value` — so Body's "Full" (already short) correctly
+shows no toggle at all, while Tannin and Colour (the two fields carrying real full sentences in
+practice) do. Tapping "Read more" expands the full original text inline within that same chip,
+never losing it — confirmed live via screenshot showing Montepulciano's Tannin chip expanded to its
+full sourced sentence directly beneath the short value.
+
+**`scripts/export-grapes-csv.mjs` updated to include the new `short` values** as five additional
+CSV columns (`body_short`, `tannin_short`, etc.), so they can be reviewed/edited in Excel alongside
+the full values rather than only living in `grapes.js` where they'd otherwise be invisible to that
+existing review workflow. `grapes_export.csv` regenerated (27 rows, now 36 columns, up from 31).
+
+**A real, structural distinction worth stating plainly for future maintainers of this file:** not
+every field in the 14-field schema has a `short` variant, and that's deliberate, not an oversight —
+only the 5 fields rendered inside a fixed-size chip in the current UI need one. If a future UI
+change ever puts, say, `styleRange` or `foodPairing` into a similarly space-constrained container,
+that field would need the exact same `short`-plus-"Read more" treatment added then, not assumed to
+already have it.
 
 
 

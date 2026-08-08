@@ -20,10 +20,16 @@ function csvEscape(value) {
   return str
 }
 
+// Structure-chip fields (body/tannin/acidity/colour/abv) also carry a
+// `short` display value now — included as its own column per field so it
+// can be reviewed/edited alongside the full value, not just the value itself.
+const SHORT_FIELDS = ['body', 'tannin', 'acidity', 'colour', 'abv']
+
 const header = [...FIELDS, 'body_confidence', 'tannin_confidence', 'acidity_confidence',
   'sweetness_confidence', 'abv_confidence', 'finish_confidence', 'colour_confidence',
   'primaryAroma_confidence', 'secondaryTertiary_confidence', 'styleRange_confidence',
-  'confusedWithNote_confidence', 'globalPrevalence_confidence', 'foodPairing_confidence']
+  'confusedWithNote_confidence', 'globalPrevalence_confidence', 'foodPairing_confidence',
+  ...SHORT_FIELDS.map(f => f + '_short')]
 
 const VALUE_FIELDS = ['body', 'tannin', 'acidity', 'sweetness', 'abv', 'finish', 'colour',
   'primaryAroma', 'secondaryTertiary', 'styleRange', 'confusedWithNote', 'globalPrevalence', 'foodPairing']
@@ -39,6 +45,9 @@ const rows = GRAPES.map(g => {
   VALUE_FIELDS.forEach(f => {
     row[f] = g[f].value
     row[f + '_confidence'] = g[f].confidence
+  })
+  SHORT_FIELDS.forEach(f => {
+    row[f + '_short'] = g[f].short || ''
   })
   return header.map(col => csvEscape(row[col])).join(',')
 })
