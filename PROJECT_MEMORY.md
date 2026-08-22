@@ -1364,6 +1364,214 @@ already have it.
 
 ---
 
+## 36. Hosting migration — frontend/backend adapter for Yandex Cloud Functions
+
+**Date:** 2026-08-20 · **Status:** Adapter code written and build-verified; not yet deployed/live-tested
+(deployment itself — uploading `dist/` to Object Storage, DNS, setting `ANTHROPIC_API_KEY` on the
+Cloud Function — is separate, still-open work; see CLAUDE.md's Hosting Migration section for the
+current checklist).
+
+**Domains registered (2026-08-19), DNS still on Beget:** `palatelearn.com` and `palatelearn.ru`
+both registered via Beget LLC, nameservers currently Beget's own (not yet delegated to Yandex).
+`.ru` shows registry state `REGISTERED, DELEGATED, UNVERIFIED` — normal for a brand-new `.ru`
+domain pending RU registry admin verification, not an error. **Decision: keep DNS on Beget rather
+than migrating to Yandex Cloud DNS** — add records directly in Beget's panel rather than changing
+nameservers. `.com` redirects to `.ru` at the Object Storage bucket level (see below) rather than
+via Beget-side domain forwarding — Beget turned out to have no standalone "forward this domain"
+feature (redirects there require `.htaccess` on an actually-hosted site), so redirecting through
+Yandex's own bucket-level redirect-all feature was simpler than standing up throwaway Beget hosting
+just to serve one `.htaccess` file. Confirmed against Marina's explicit choice to avoid the
+double-bucket-with-real-content/double-deploy cost of true dual-hosting — `.com` still only needs
+one small redirect-only bucket, not a full mirrored site, matching the original "`.com` redirects to
+`.ru`" plan in CLAUDE.md.
+
+**Bucket-naming constraint discovered:** Yandex's custom-domain feature for Object Storage requires
+the bucket name to *exactly match* the domain. This meant `palatelearn-frontend-001` (the bucket
+created 2026-08-19 during initial account setup, per CLAUDE.md) can't be the one serving
+`palatelearn.ru` — it was created before this constraint was known, and was never populated with
+`dist/` regardless. **Two new buckets created instead, both done (2026-08-20):**
+- `palatelearn.ru` — Website tab set to **Хостинг** (Hosting) mode, public object-read access,
+  object-*list* access set back to private (list-objects is unrelated to whether individual files
+  load — only object-read governs that — so narrowing it is a pure security improvement with no
+  functional downside; confirmed doesn't affect GitHub Actions deploys either, since those
+  authenticate via the service account, not public access). `dist/` not yet uploaded.
+- `palatelearn.com` — Website tab set to **Переадресация** (Redirect) mode (the console's Website
+  tab is a three-way toggle: Хостинг / Переадресация / Отключен — mutually exclusive, confirmed via
+  a real screenshot after initially misreading the Hosting-mode "add forwarding rule" sub-feature as
+  the thing we wanted). Redirect target: domain name `palatelearn.ru`, protocol HTTPS. **Note for
+  future reference: in Redirect mode, "Главная страница" (home page/index document) is NOT required
+  and doesn't apply — that field only appears/matters in Hosting mode.** If the console ever seems to
+  demand it while you're trying to set up a pure redirect, you're actually still in Hosting mode (or
+  its forwarding-rule sub-feature) and haven't switched the top toggle to Переадресация yet.
+
+**No ANAME/ALIAS record type in Beget's DNS panel** — confirmed via screenshot of the "Добавить
+запись" type dropdown: only A, AAAA, CAA, MX, SRV, TXT are offered, no ANAME/ALIAS. This ruled out
+the originally-planned ANAME-to-hostname approach for the apex domains entirely (not just a config
+detail — Beget structurally doesn't support it). **Workaround used instead: apex A records pointing
+directly at the resolved IP of each bucket's `*.website.yandexcloud.net` hostname**, looked up
+manually via whatsmydns.net (this session's Claude Code sandbox could not get real DNS answers for
+these lookups — every `dig` from within the session returned `198.18.0.x`, a reserved
+RFC 2544 benchmarking range, for both the Yandex hostnames and, tellingly, even for the already-
+working `www.palatelearn.ru` CNAME — a sandbox/environment DNS limitation, not a real-world signal;
+always ask Marina to check propagation herself via whatsmydns.net or her own machine's `dig`/
+`nslookup`, never trust this session's own `dig` output for external propagation checks going
+forward). Real IPs found and entered: `palatelearn.ru` apex → `213.180.193.247`; `palatelearn.com`
+apex → (its own equivalent, looked up the same way — record here if it needs re-confirming later).
+`www.palatelearn.ru` already had a working CNAME → `palatelearn.ru.website.yandexcloud.net` from
+earlier in the session and was left untouched.
+**Known risk, accepted deliberately:** Yandex does not document/guarantee these Object Storage
+frontend IPs as stable — unlike a hostname alias, if Yandex's underlying IP changes, the apex A
+record will silently go stale until someone notices and re-checks it via whatsmydns.net. Flagged to
+Marina before she chose this path anyway, given Beget's lack of ANAME support left no alternative
+for the apex specifically (the `www` subdomain doesn't have this exposure, since it uses a real
+CNAME). If site issues ever appear that don't correspond to a Beget or Yandex-side outage, re-check
+this IP first.
+**Unrelated red herring encountered mid-session, worth remembering:** Marina had separately entered
+`37.230.168.239` (Beget's own old placeholder A-record IP) into Yandex VPC's "Публичные IP-адреса"
+page the day before. That page is for VM/Load-Balancer static IP reservations and has nothing to do
+with Object Storage or bucket website hosting — it doesn't need fixing or reverting for this
+migration, just left alone (worth checking it isn't quietly costing money if truly unused, but
+that's a billing hygiene question, not a migration blocker).
+**As of session end (2026-08-20):** DNS changes made, not yet propagated (Marina checked via
+whatsmydns.net and confirmed not-yet-visible as of ~22:30). Re-check propagation next session before
+assuming anything is live.
+
+### Update 2026-08-21/22 — DNS live, `dist/` uploaded, HTTPS issued via DNS validation. **Both
+domains now fully live over HTTPS.**
+
+**DNS propagated (confirmed 2026-08-21 via whatsmydns.net):** `palatelearn.ru`, `palatelearn.com`,
+and `www.palatelearn.ru` all resolving correctly and consistently across global checks, all to
+`213.180.193.247` — confirmed this is expected/fine, not a misconfiguration: Object Storage's
+website frontend is shared edge infrastructure, not a dedicated IP per bucket, so multiple buckets
+legitimately sharing one IP is normal (the `Host` header, not the IP, determines which bucket
+responds). Live-tested in browser: `palatelearn.com` correctly redirected to `palatelearn.ru`;
+`palatelearn.ru` returned Object Storage's real `NoSuchKey` 404 (expected — bucket was still empty
+at that point, this 404 itself confirmed hosting-mode routing was working correctly).
+
+**`dist/` built and uploaded to the `palatelearn.ru` bucket (2026-08-21), via the console's Objects
+tab upload (no CLI available in this environment — `yc`/`aws` not installed, and Marina works
+through the web console directly per her non-developer working style, see "Working with Marina").**
+Confirmed via `curl` returning `200` and the real built `index.html` (matching asset hashes from
+the local build) once uploaded. Build was done with a real `.env` (not committed, per
+`.gitignore`) setting `VITE_API_ENDPOINT=https://functions.yandexcloud.net/d4e5fp0uea63ifeihltc` —
+though this had **zero effect on the actual bundle**, discovered by grepping the built JS for the
+endpoint string and finding nothing: `src/services/ai.js` isn't imported by any currently-reachable
+code path (Planner still runs entirely on `samplePlans.js` demo data per the documented demo-mode
+architecture), so it's tree-shaken out of the bundle entirely. **Good to know for later:** the
+`VITE_API_ENDPOINT` env var will only start actually mattering once Planner's real-AI path is
+wired in and the `services/ai.js` import becomes reachable — setting it today was harmless
+future-proofing, not something that did anything yet.
+
+**HTTPS — first attempt (HTTP validation) failed, switched to DNS validation, which then
+succeeded.** Sequence, worth remembering for any future cert reissuance:
+- First attempt: single Let's Encrypt cert requested for both `palatelearn.ru` and `palatelearn.com`
+  together (Marina's good catch — one multi-domain cert instead of two separate ones, halving future
+  renewal work), validation type **HTTP**.
+- **`palatelearn.com`'s HTTP validation failed** ("Challenges were not passed... make sure you have
+  added the required DNS CNAME or HTTP records") — root cause: `palatelearn.com`'s bucket is in
+  **Переадресация (Redirect)** mode (see above), so it can't serve the `.well-known/acme-challenge/`
+  file at all — every request to it, including Let's Encrypt's validation fetch, immediately
+  redirects to `palatelearn.ru` instead of returning the challenge file. This is a real structural
+  incompatibility, not a one-off glitch: **any redirect-mode bucket will always fail HTTP validation
+  for its own domain.** Don't retry HTTP validation for a redirect-mode bucket in the future — go
+  straight to DNS validation instead.
+- **Switched to DNS validation.** Deleted the stuck/failed HTTP cert first (confirmed neither bucket
+  had it attached yet, so nothing else needed updating). Created a new Let's Encrypt cert, still
+  covering both domains, validation type **DNS**. Console gave one `_acme-challenge.<domain> CNAME
+  <cert-id>.cm.yandexcloud.net` value per domain; both added in Beget. **DNS validation succeeded for
+  both domains** — cert issued.
+- **Real advantage of DNS validation over HTTP discovered along the way, not just a workaround for
+  the redirect-mode problem:** per Yandex's own docs, if the `_acme-challenge` CNAME delegation is
+  left in place (not removed after issuance), Certificate Manager can auto-renew the cert going
+  forward without any manual re-validation — solving the "Let's Encrypt certs on Yandex don't
+  auto-renew" caveat that applies to HTTP-validated certs. **Do not remove the `_acme-challenge`
+  CNAME records from Beget** — they're not one-time setup scaffolding, they're what makes renewal
+  automatic.
+- Certificate attached to both buckets' Security → HTTPS tab (Source: Certificate Manager → this
+  cert), one bucket at a time. **Confirmed working: both `palatelearn.ru` and `palatelearn.com` now
+  load over HTTPS with a valid certificate, no browser warnings, as of 2026-08-22.**
+
+### Bug found and fixed 2026-08-22: blank page on `palatelearn.ru` — `assets/` subfolder didn't
+actually upload
+
+After everything above was confirmed working, `palatelearn.ru` started showing a **blank page**
+despite `index.html` itself returning `200` with correct content. Root cause, confirmed via `curl`
+on each individual file: **`index.html`, `favicon.svg`, `registerSW.js`, and `manifest.webmanifest`
+all returned `200`, but `assets/index-*.js` and `assets/index-*.css` both returned `404`.** The
+`assets/` subfolder's contents either weren't uploaded at all, or landed at the wrong path — a
+known quirk of the console's drag-and-drop upload dialog, which doesn't reliably recurse into
+subfolders unless the folder itself (not just its contents) is explicitly selected for upload.
+**Marina fixed it by re-uploading the `assets/` folder correctly; confirmed via `curl` afterward
+that all three key paths (`/`, `/assets/index-*.js`, `/assets/index-*.css`) return `200`.**
+**Lesson for every future manual `dist/` upload until CI/CD replaces this step:** a `200` on
+`index.html` alone does NOT mean the site works — always separately check that `assets/*.js` and
+`assets/*.css` (the exact filenames from the latest local build's `dist/assets/`) also return `200`
+before declaring a deploy successful. A blank page with a healthy `index.html` response is the
+signature of this exact failure mode.
+
+**Still open after this update:**
+- `ANTHROPIC_API_KEY` still not added to the Cloud Function; `yandex/functions/ask-sommelier.js`
+  still not actually pasted into the Yandex Cloud Function console (still only in-repo) — Planner
+  stays in demo mode regardless of any of today's hosting work, since it doesn't touch that code
+  path at all yet.
+- The invalid `claude-sonnet-4-6` model id (both Netlify and Yandex function files) is still
+  unfixed, still deliberately deferred — see original note above.
+- GitHub Actions CI/CD for automated `dist/` deploys — not set up; today's upload was manual via
+  console.
+- `palatelearn-frontend-001` cleanup — now safe to reconsider, since `palatelearn.ru` is confirmed
+  fully working end-to-end (DNS + HTTPS + real content), one of the two original blocking
+  conditions. Still worth explicitly confirming no IAM/service-account bindings reference it by
+  name before deleting — not yet done.
+
+**Open cleanup item — do not action without re-confirming first:** `palatelearn-frontend-001`
+should probably be deleted once `palatelearn.ru` is confirmed fully working end-to-end (DNS +
+HTTPS + real site content live) — Marina asked about deleting it now, deliberately held off.
+Reasons to wait: (1) it may still be referenced by the `palate-deployer` service account's IAM role
+bindings, unconfirmed either way; (2) it costs nothing meaningful to leave empty in the meantime;
+(3) no benefit to deleting infrastructure while its replacement is still mid-setup. **Before
+deleting:** confirm nothing (IAM bindings, deploy scripts, other docs) still references
+`palatelearn-frontend-001` by name, and confirm the new bucket is actually serving traffic
+correctly first.
+
+**Problem:** `src/services/ai.js` called a relative path `/api/ask-sommelier`, which only resolves
+because Netlify has a redirect rule (`/api/* → /.netlify/functions/:splat`, in `netlify.toml`).
+Yandex Object Storage static hosting has no equivalent rewrite layer, so the frontend needs to call
+the Cloud Function's full URL directly once deployed there.
+
+**What changed:**
+- `src/services/ai.js`: `ENDPOINT` now reads `import.meta.env.VITE_API_ENDPOINT`, falling back to
+  the original `/api/ask-sommelier` when unset — Netlify/local-dev behavior is unchanged, Yandex
+  deploys set the env var to the full Cloud Function URL.
+- `.env.example` added (new convention for this repo — no env files existed before this) documenting
+  `VITE_API_ENDPOINT`. `.gitignore` updated to exclude `.env`/`.env.*` while allowlisting
+  `.env.example` — env files weren't gitignored at all before this, a real gap this closed.
+- `yandex/functions/ask-sommelier.js` written — a full port of `netlify/functions/ask-sommelier.js`
+  to Yandex Cloud Functions' Node.js handler shape (`exports.handler`, `event.httpMethod`/
+  `event.body`/`event.isBase64Encoded` in, `{statusCode, headers, isBase64Encoded, body}` out —
+  different shape from Netlify's Fetch-API-style `Request`/`Response`, confirmed via Yandex's own
+  docs before writing). Same Anthropic call, same request/response JSON contract as the Netlify
+  version, so `ai.js` needs no changes beyond the endpoint switch. Not yet deployed to the actual
+  Yandex Cloud Function console — the code exists in-repo but the `ask-sommelier` function created
+  2026-08-19 (per CLAUDE.md) still needs this pasted in / uploaded as its source.
+- **Known, deliberately deferred:** both `ask-sommelier.js` files (Netlify's original and the new
+  Yandex port) hardcode `model: 'claude-sonnet-4-6'`, which is not a real Anthropic model ID. Flagged
+  to Marina twice during this session; she chose to track it rather than fix it now, since Planner is
+  still in demo mode and no live call currently reaches this code path. **Do not fix silently in a
+  future session without re-raising it explicitly** — this note is the tracking mechanism. Fix to a
+  real current model ID (e.g. `claude-sonnet-5`) before `ANTHROPIC_API_KEY` is ever added to either
+  backend.
+
+**Verification done this session:** `npm run build` succeeds with the `ai.js` change. Not yet tested:
+actually invoking the Yandex function once deployed, or confirming `VITE_API_ENDPOINT` is set
+correctly in whatever build step produces the Yandex-hosted `dist/`.
+
+**Housekeeping flag (per CLAUDE.md's own instruction):** this file just crossed ~1544 lines, roughly
+triple the ~540-line figure CLAUDE.md cites as the "flag if it roughly doubles" threshold. Raising
+this to Marina now rather than deferring — the unconditional full-read-every-session tradeoff in
+CLAUDE.md's header should be revisited.
+
+---
+
 ## 35. Regions and Grapes navigation simplified; Planner demo scenarios removed; Journal gets edit
 
 **Date:** 2026-08-08 · **Status:** All three changes done, verified (`npm run build`/`npm run lint`

@@ -1,6 +1,10 @@
-// Central AI service — every call goes through our own Netlify Function,
-// never directly to Anthropic. This keeps the API key off the browser entirely.
-const ENDPOINT = '/api/ask-sommelier'
+// Central AI service — every call goes through our own backend function
+// (Netlify or Yandex Cloud Functions), never directly to Anthropic. This
+// keeps the API key off the browser entirely.
+// VITE_API_ENDPOINT overrides the target for deployments without Netlify's
+// /api/* redirect (e.g. Yandex Object Storage static hosting); falls back
+// to the Netlify-relative path for local dev / Netlify deploys.
+const ENDPOINT = import.meta.env.VITE_API_ENDPOINT || '/api/ask-sommelier'
 
 const LANGUAGE_NAMES = {
   en: 'English',

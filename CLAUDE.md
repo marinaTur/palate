@@ -14,9 +14,80 @@ roughly doubles in length, since at that point the unconditional-read tradeoff s
 
 ## Stack
 React 19 + Vite 8 · React Router 7 · Zustand 5 (+persist) · Tailwind 4 · i18next/react-i18next ·
-vite-plugin-pwa · @anthropic-ai/sdk (server-side only, via Netlify Function) ·
+vite-plugin-pwa · @anthropic-ai/sdk (server-side only, via Netlify Function → Yandex Cloud Functions) ·
 @tabler/icons-webfont (bundled locally via npm import in `index.css`, not a CDN link —
 see Known issues below for why this was added)
+
+## Hosting Migration to Yandex Cloud — In Progress
+**Decision:** Migrating from Netlify (US) to Yandex Cloud (Russia) to resolve geopolitical access issues.
+Russian users currently experience 500ms+ latency / timeouts on Netlify; Yandex provides ~60ms local latency.
+Registered domains: `palatelearn.ru` (primary), `palatelearn.com` (secondary, redirects to .ru).
+**Setup completed (2026-08-19):**
+- Yandex Cloud account created, folder `palate` configured
+- Object Storage bucket `palatelearn-frontend-001` (50 GB, Standard, public read) → website hosting enabled
+- Cloud Functions: `ask-sommelier` created (Node.js 22, 128 MB, 60s timeout)
+- Frontend URL: `https://palatelearn-frontend-001.website.yandexcloud.net/`
+- Backend URL: `https://functions.yandexcloud.net/d4e5fp0uea63ifeihltc`
+- Service account `palate-deployer` with admin roles; JWT key generated and stored locally (never committed)
+**Frontend/backend adapter — done (2026-08-20):**
+- `src/services/ai.js` now reads `VITE_API_ENDPOINT` (falls back to `/api/ask-sommelier` for
+  Netlify/local dev, unchanged) — see `.env.example`.
+- `yandex/functions/ask-sommelier.js` written — full port of `netlify/functions/ask-sommelier.js` to
+  Yandex's Node.js handler format. Not yet pasted/uploaded into the actual Yandex Cloud Function
+  console.
+- Known issue carried over from the Netlify original, not fixed yet by design: both functions
+  hardcode an invalid model id `claude-sonnet-4-6` — must fix before adding `ANTHROPIC_API_KEY` to
+  either backend. See PROJECT_MEMORY.md §36.
+
+**Domains + buckets — done (2026-08-20):**
+- `palatelearn.ru` and `palatelearn.com` registered via Beget (2026-08-19). DNS kept on Beget
+  (not migrated to Yandex Cloud DNS).
+- `palatelearn-frontend-001` (the original bucket) is superseded — Yandex's custom-domain feature
+  requires an exact bucket-name/domain match, so it can never serve `palatelearn.ru`. Two new
+  buckets created instead: **`palatelearn.ru`** (Хостинг/Hosting mode, real site content) and
+  **`palatelearn.com`** (Переадресация/Redirect mode → `palatelearn.ru`, HTTPS). Do not delete
+  `palatelearn-frontend-001` yet — see PROJECT_MEMORY.md §36 for why.
+- Beget has **no ANAME/ALIAS record type** (confirmed: only A/AAAA/CAA/MX/SRV/TXT available), so
+  both domains' apex DNS uses a plain **A record pointing at the bucket's resolved IP** (looked up
+  manually via whatsmydns.net) rather than a hostname alias — a known-fragile workaround; see
+  PROJECT_MEMORY.md §36 for the stability risk and what to check if the site ever goes down
+  unexpectedly. `www.palatelearn.ru` uses a real CNAME and doesn't have this exposure.
+
+**Site is live (as of 2026-08-22):** DNS propagated, `dist/` uploaded to `palatelearn.ru` bucket,
+HTTPS working on both `palatelearn.ru` and `palatelearn.com` (no browser warnings). Both domains
+load correctly; `.com` redirects to `.ru`. **This is real, click-tested-live progress, not just
+build/lint-clean** — see PROJECT_MEMORY.md §36's 2026-08-21/22 update for the full sequence,
+including why the first HTTPS attempt (HTTP validation) failed for `palatelearn.com` specifically
+(redirect-mode buckets can't serve the validation file) and why DNS validation was used instead
+(bonus: DNS-validated certs auto-renew if the `_acme-challenge` CNAME records stay in Beget — do
+not remove them).
+
+**Pending (priority order):**
+1. ~~Confirm `.env`'s `VITE_API_ENDPOINT` value is backed up somewhere durable~~ — **already true,
+   verified 2026-08-22.** The real value (`https://functions.yandexcloud.net/d4e5fp0uea63ifeihltc`)
+   is committed in both `.env.example` (line 7, as a comment) and here under "Setup completed" —
+   local `.env` confirmed to match exactly. No action needed; noting this so a future session
+   doesn't re-flag it as a gap.
+2. **Decide what happens to the old Netlify deployment.** Nothing has decommissioned it yet — it's
+   presumably still live at its old URL. Decide: keep as a fallback during the transition, or shut
+   it down once Yandex is fully verified? Also check whether anything external (bookmarks, old
+   shared links, a previous DNS setup) still points there.
+3. **No monitoring/alerting exists for either of the two fragile pieces put in place this
+   migration:** the apex A-records pointing at a manually-looked-up IP (Yandex doesn't guarantee
+   this IP stays stable — see above), and the `_acme-challenge` CNAME records that must stay in
+   Beget for HTTPS auto-renewal to keep working. Right now, the only way either failure gets
+   noticed is someone happening to check whatsmydns.net or the site breaking visibly. Worth at
+   least a periodic manual check until something better exists.
+4. Reconsider deleting `palatelearn-frontend-001` now that `palatelearn.ru` is confirmed fully
+   working — still need to confirm no IAM/service-account bindings reference it by name first.
+5. GitHub Actions CI/CD setup (optional — today's `dist/` upload was manual via the console).
+6. **Deliberately moved to the end of the list (Marina's explicit call, 2026-08-22): fix the
+   invalid `claude-sonnet-4-6` model id, deploy `yandex/functions/ask-sommelier.js` as the actual
+   Cloud Function source (currently only in-repo, never pasted into the console), and add
+   `ANTHROPIC_API_KEY`.** Reason: Marina wants a working demo-mode prototype first — Planner
+   staying in demo mode is fine/expected for now, not a blocker. Don't re-prioritize this upward
+   without checking with her again; it was consciously deferred, not forgotten.
+**Note:** This is a geopolitical / access decision, not a technical deficiency with Netlify. The app currently works; this fixes Russia access.
 
 ## Safety rules
 - Do not replace demo/mock data with live AI without explicit approval.
