@@ -24,8 +24,8 @@ either way.
 
 **To switch to live AI generation once you have a paid Anthropic API key:**
 
-1. Set up the Netlify Function and `ANTHROPIC_API_KEY` environment variable (see the
-   `netlify/functions/ask-sommelier.js` file and Netlify's environment variables settings).
+1. Set up the Yandex Cloud Function and `ANTHROPIC_API_KEY` environment variable (see the
+   `yandex/functions/ask-sommelier.js` file and CLAUDE.md's Hosting Migration section).
 2. In `src/pages/Planner.jsx`, swap the commented-out import and the commented-out
    call inside `generate()` — both are clearly marked with `// Real AI version`.
 3. Rebuild and redeploy.
@@ -62,7 +62,7 @@ src/
   hooks/
     useDocumentLanguage.js  # Keeps <html lang="..."> in sync
   index.css     # Design tokens + global styles
-netlify/
+yandex/
   functions/
     ask-sommelier.js  # Serverless proxy for the live AI version (not currently used)
 ```
@@ -94,4 +94,5 @@ npm run build   # production build → dist/
 ```
 
 ## Deploy
-Upload `dist/` to Vercel, Netlify, or any static host.
+Pushing to `main` auto-deploys to `palatelearn.ru` via GitHub Actions
+(`.github/workflows/deploy.yml`, syncs `dist/` to a Yandex Object Storage bucket).

@@ -1,10 +1,9 @@
-// Central AI service — every call goes through our own backend function
-// (Netlify or Yandex Cloud Functions), never directly to Anthropic. This
-// keeps the API key off the browser entirely.
-// VITE_API_ENDPOINT overrides the target for deployments without Netlify's
-// /api/* redirect (e.g. Yandex Object Storage static hosting); falls back
-// to the Netlify-relative path for local dev / Netlify deploys.
-const ENDPOINT = import.meta.env.VITE_API_ENDPOINT || '/api/ask-sommelier'
+// Central AI service — every call goes through our own Yandex Cloud Function,
+// never directly to Anthropic. This keeps the API key off the browser entirely.
+// VITE_API_ENDPOINT must be set (see .env.example) — local dev and deploys
+// both point at the same Yandex Cloud Function URL, there's no relative-path
+// fallback since Netlify hosting was decommissioned 2026-08-23.
+const ENDPOINT = import.meta.env.VITE_API_ENDPOINT
 
 const LANGUAGE_NAMES = {
   en: 'English',

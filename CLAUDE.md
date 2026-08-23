@@ -68,10 +68,15 @@ not remove them).
    is committed in both `.env.example` (line 7, as a comment) and here under "Setup completed" —
    local `.env` confirmed to match exactly. No action needed; noting this so a future session
    doesn't re-flag it as a gap.
-2. **Decide what happens to the old Netlify deployment.** Nothing has decommissioned it yet — it's
-   presumably still live at its old URL. Decide: keep as a fallback during the transition, or shut
-   it down once Yandex is fully verified? Also check whether anything external (bookmarks, old
-   shared links, a previous DNS setup) still points there.
+2. ~~Decide what happens to the old Netlify deployment~~ — **decided 2026-08-23: Netlify is fully
+   decommissioned.** Marina deletes the site directly in Netlify's dashboard (Site settings →
+   Danger zone — not something doable from this repo/session). In-repo Netlify code removed:
+   `netlify.toml` and `netlify/functions/ask-sommelier.js` deleted (the Yandex port already has the
+   full logic, nothing lost). `src/services/ai.js`'s `ENDPOINT` no longer falls back to
+   `/api/ask-sommelier` — **`VITE_API_ENDPOINT` is now required, in local dev too**, since there's
+   no relative-path redirect target left to fall back to. `.env.example`, `README.md` updated to
+   match (README's stack/deploy sections and project-structure tree now reference
+   `yandex/functions/` instead of `netlify/functions/`).
 3. **No monitoring/alerting exists for either of the two fragile pieces put in place this
    migration:** the apex A-records pointing at a manually-looked-up IP (Yandex doesn't guarantee
    this IP stays stable — see above), and the `_acme-challenge` CNAME records that must stay in
@@ -80,7 +85,19 @@ not remove them).
    least a periodic manual check until something better exists.
 4. Reconsider deleting `palatelearn-frontend-001` now that `palatelearn.ru` is confirmed fully
    working — still need to confirm no IAM/service-account bindings reference it by name first.
-5. GitHub Actions CI/CD setup (optional — today's `dist/` upload was manual via the console).
+5. ~~GitHub Actions CI/CD setup~~ — **done (2026-08-22).** `.github/workflows/deploy.yml` builds
+   and runs `aws s3 sync dist/ s3://palatelearn.ru/ --delete` on every push to `main`, using
+   `YC_ACCESS_KEY_ID`/`YC_SECRET_ACCESS_KEY` (a real static access key pair for `palate-deployer` —
+   the account previously only had a JWT/authorized key, which is a different credential type and
+   doesn't work for the S3-compatible API; a new static key pair had to be generated) and
+   `VITE_API_ENDPOINT`, all as GitHub repo secrets (Settings → Secrets and variables → Actions).
+   **Requires a GitHub PAT with the `workflow` scope** to push changes to workflow files at all —
+   hit and fixed this once already (push was rejected with a clear error naming the missing scope).
+   First real run succeeded — confirmed via `curl` that a new JS bundle hash was live on
+   `palatelearn.ru` immediately after the push, not just that the Actions tab showed green. The
+   `--delete` flag on `s3 sync` directly prevents a repeat of the 2026-08-22 blank-page bug (stale
+   `assets/` files from an incomplete manual upload) going forward, since sync always makes the
+   bucket match the latest build exactly.
 6. **Deliberately moved to the end of the list (Marina's explicit call, 2026-08-22): fix the
    invalid `claude-sonnet-4-6` model id, deploy `yandex/functions/ask-sommelier.js` as the actual
    Cloud Function source (currently only in-repo, never pasted into the console), and add
