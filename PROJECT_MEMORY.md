@@ -1523,15 +1523,23 @@ signature of this exact failure mode.
   conditions. Still worth explicitly confirming no IAM/service-account bindings reference it by
   name before deleting — not yet done.
 
-**Open cleanup item — do not action without re-confirming first:** `palatelearn-frontend-001`
-should probably be deleted once `palatelearn.ru` is confirmed fully working end-to-end (DNS +
-HTTPS + real site content live) — Marina asked about deleting it now, deliberately held off.
-Reasons to wait: (1) it may still be referenced by the `palate-deployer` service account's IAM role
-bindings, unconfirmed either way; (2) it costs nothing meaningful to leave empty in the meantime;
-(3) no benefit to deleting infrastructure while its replacement is still mid-setup. **Before
-deleting:** confirm nothing (IAM bindings, deploy scripts, other docs) still references
-`palatelearn-frontend-001` by name, and confirm the new bucket is actually serving traffic
-correctly first.
+**Cleanup item — resolved, deleted 2026-08-23.** `palatelearn-frontend-001` held off earlier
+(2026-08-20) pending: (1) confirming `palate-deployer`'s IAM bindings weren't scoped to it
+specifically, (2) confirming `palatelearn.ru` was fully working end-to-end first. By 2026-08-23,
+condition (2) was long since true (DNS + HTTPS + CI/CD all confirmed working). For (1): grepped
+this repo and confirmed no code/config/CI workflow referenced `palatelearn-frontend-001` by name.
+The Yandex console's IAM UI didn't expose role *scope* (folder-level vs. per-resource) in an
+inspectable way — the `storage.admin`/`functions.admin` roles were visible on the
+`palate-deployer` service account, but neither role entry was clickable to reveal what resource(s)
+they applied to, and the folder's own "Access bindings" tab wasn't checked as an alternative before
+Marina proceeded. **Decided to trust behavioral evidence instead:** the CI/CD pipeline (§ above)
+had already successfully written to `palatelearn.ru`/`.com` via this same service account without
+ever touching `palatelearn-frontend-001` — strong real-world evidence the permission wasn't tied to
+that specific bucket. Marina deleted it in the console on this basis. **Post-delete verification:**
+`palatelearn.ru` still returns `200`, `palatelearn.com` still returns its `301` redirect — nothing
+broke. If anything Yandex-side ever behaves oddly after this point that doesn't have an obvious
+other cause, this deletion is worth remembering as a place to look, though there's now real
+evidence it was safe.
 
 **Problem:** `src/services/ai.js` called a relative path `/api/ask-sommelier`, which only resolves
 because Netlify has a redirect rule (`/api/* → /.netlify/functions/:splat`, in `netlify.toml`).
@@ -1742,6 +1750,43 @@ committed tokens) still apply without exception now that push access is real and
 lower-friction workflow doesn't relax any of those safety constraints, it just removes the manual
 file-handoff step that used to sit between "Claude verifies a change" and "the change reaches
 Marina's machine."
+
+## 37. Google Tag Manager integrated — single-file `index.html` approach, real container ID live
+
+**Date:** 2026-08-23 · **Status:** Done, built and pushed to `main` (auto-deploys to `palatelearn.ru`
+via the CI/CD pipeline from §36).
+
+**The ask:** integrate a GTM snippet into every page's `<head>`, with an easy way to update it later.
+**Key realization, confirmed before writing any code (checked open sources, not guessed):** since
+this is a Vite React SPA with client-side routing, there is only **one** real `<head>` —
+`index.html` — served for every route. This already is the "one place to update" mechanism asked
+for; no per-page duplication problem existed to solve.
+
+**What was added:**
+- `index.html`: GTM's standard base snippet in `<head>` (async script loader) plus the `<noscript>`
+  `<iframe>` fallback right after `<body>` opens — both exactly per Google's official standard
+  snippet format, not simplified.
+- `src/hooks/useGtmPageview.js` (new): pushes a `dataLayer` pageview event on every React Router
+  navigation. **Necessary, not optional** — every source checked agreed GTM's default pageview
+  trigger only fires on full page load, and SPA client-side navigation never triggers a reload, so
+  without this hook GTM would only ever see the very first page a visitor lands on.
+- `src/App.jsx`: mounts a small `GtmPageviewTracker` wrapper (needed because `useLocation` requires
+  being inside `<BrowserRouter>`, so the hook couldn't be called directly in `App()` itself) —
+  follows the same "small hook mounted once near the root" pattern already established by
+  `useDocumentLanguage`.
+- Developed with placeholder `GTM-XXXXXXX` first, then **Marina swapped in the real container ID
+  (`GTM-MVPK6FQQ`) herself** in both `index.html` locations (script `src` and noscript `iframe`
+  `src`) — confirmed both were updated consistently, build re-verified clean afterward.
+
+**Deliberately not added:** the `react-gtm-module` npm package. Multiple sources describe it as a
+convenience wrapper around the exact same base snippet + `dataLayer.push` pattern, not a
+capability Palate would otherwise lack — skipped per this repo's "don't add dependencies unless the
+benefit is explained first" rule (CLAUDE.md Safety rules).
+
+**Still needs doing on Marina's side, in GTM's own console (not code):** a **History Change
+trigger** (or a Custom Event trigger listening for the `pageview` event this hook pushes) — without
+one, the container loads correctly but never actually fires tags on the virtual pageviews this app
+sends after the first load. Not yet confirmed done as of this entry.
 
 
 

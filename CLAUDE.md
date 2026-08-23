@@ -14,9 +14,15 @@ roughly doubles in length, since at that point the unconditional-read tradeoff s
 
 ## Stack
 React 19 + Vite 8 · React Router 7 · Zustand 5 (+persist) · Tailwind 4 · i18next/react-i18next ·
-vite-plugin-pwa · @anthropic-ai/sdk (server-side only, via Netlify Function → Yandex Cloud Functions) ·
+vite-plugin-pwa · @anthropic-ai/sdk (server-side only, via Yandex Cloud Functions — Netlify
+decommissioned 2026-08-23, see Hosting Migration below) ·
 @tabler/icons-webfont (bundled locally via npm import in `index.css`, not a CDN link —
-see Known issues below for why this was added)
+see Known issues below for why this was added) ·
+Google Tag Manager (`index.html` `<head>`/`<noscript>`, container `GTM-MVPK6FQQ` — see
+PROJECT_MEMORY.md §37; the whole snippet + pageview-tracking setup lives in exactly one file,
+`index.html`, since this is a single-page app with one real `<head>` for every route — plus
+`src/hooks/useGtmPageview.js` for SPA route-change pageview tracking, since GTM's default trigger
+doesn't fire on client-side navigation)
 
 ## Hosting Migration to Yandex Cloud — In Progress
 **Decision:** Migrating from Netlify (US) to Yandex Cloud (Russia) to resolve geopolitical access issues.
@@ -42,11 +48,11 @@ Registered domains: `palatelearn.ru` (primary), `palatelearn.com` (secondary, re
 **Domains + buckets — done (2026-08-20):**
 - `palatelearn.ru` and `palatelearn.com` registered via Beget (2026-08-19). DNS kept on Beget
   (not migrated to Yandex Cloud DNS).
-- `palatelearn-frontend-001` (the original bucket) is superseded — Yandex's custom-domain feature
-  requires an exact bucket-name/domain match, so it can never serve `palatelearn.ru`. Two new
+- `palatelearn-frontend-001` (the original bucket) was superseded — Yandex's custom-domain feature
+  requires an exact bucket-name/domain match, so it could never serve `palatelearn.ru`. Two new
   buckets created instead: **`palatelearn.ru`** (Хостинг/Hosting mode, real site content) and
-  **`palatelearn.com`** (Переадресация/Redirect mode → `palatelearn.ru`, HTTPS). Do not delete
-  `palatelearn-frontend-001` yet — see PROJECT_MEMORY.md §36 for why.
+  **`palatelearn.com`** (Переадресация/Redirect mode → `palatelearn.ru`, HTTPS). **`palatelearn-frontend-001`
+  deleted 2026-08-23** — see PROJECT_MEMORY.md §36 for the pre-delete checks done first.
 - Beget has **no ANAME/ALIAS record type** (confirmed: only A/AAAA/CAA/MX/SRV/TXT available), so
   both domains' apex DNS uses a plain **A record pointing at the bucket's resolved IP** (looked up
   manually via whatsmydns.net) rather than a hostname alias — a known-fragile workaround; see
@@ -77,14 +83,23 @@ not remove them).
    no relative-path redirect target left to fall back to. `.env.example`, `README.md` updated to
    match (README's stack/deploy sections and project-structure tree now reference
    `yandex/functions/` instead of `netlify/functions/`).
-3. **No monitoring/alerting exists for either of the two fragile pieces put in place this
-   migration:** the apex A-records pointing at a manually-looked-up IP (Yandex doesn't guarantee
+3. **PARKED (2026-08-23) — Marina will decide the approach later, don't pick this back up
+   unprompted.** No monitoring/alerting exists for either of the two fragile pieces put in place
+   this migration: the apex A-records pointing at a manually-looked-up IP (Yandex doesn't guarantee
    this IP stays stable — see above), and the `_acme-challenge` CNAME records that must stay in
    Beget for HTTPS auto-renewal to keep working. Right now, the only way either failure gets
-   noticed is someone happening to check whatsmydns.net or the site breaking visibly. Worth at
-   least a periodic manual check until something better exists.
-4. Reconsider deleting `palatelearn-frontend-001` now that `palatelearn.ru` is confirmed fully
-   working — still need to confirm no IAM/service-account bindings reference it by name first.
+   noticed is someone happening to check whatsmydns.net or the site breaking visibly. Researched
+   options (2026-08-23): either a scheduled GitHub Actions workflow (DNS + `openssl` cert-expiry
+   check, opens a GitHub issue on failure — no new third-party account needed) or a free-tier
+   third-party monitor (Domain Sentry, LetsMonitor, etc. — alerts via email/Telegram/Slack instead
+   of a GitHub issue). Marina hasn't chosen between them yet — ask before building either.
+4. ~~Reconsider deleting `palatelearn-frontend-001`~~ — **done, deleted 2026-08-23.** No code/config
+   in this repo referenced it by name (confirmed via grep). IAM console UI didn't make role *scope*
+   (folder vs. per-bucket) directly inspectable, so this was confirmed behaviorally instead: the
+   working CI/CD pipeline already proved `palate-deployer`'s `storage.admin` role functions fine
+   against `palatelearn.ru`/`.com` without ever touching the old bucket — real evidence the
+   permission isn't tied to it specifically. Post-delete check: both `palatelearn.ru` (200) and
+   `palatelearn.com` (301 redirect) confirmed still healthy.
 5. ~~GitHub Actions CI/CD setup~~ — **done (2026-08-22).** `.github/workflows/deploy.yml` builds
    and runs `aws s3 sync dist/ s3://palatelearn.ru/ --delete` on every push to `main`, using
    `YC_ACCESS_KEY_ID`/`YC_SECRET_ACCESS_KEY` (a real static access key pair for `palate-deployer` —
