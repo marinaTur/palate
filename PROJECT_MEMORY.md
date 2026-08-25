@@ -1788,6 +1788,58 @@ trigger** (or a Custom Event trigger listening for the `pageview` event this hoo
 one, the container loads correctly but never actually fires tags on the virtual pageviews this app
 sends after the first load. Not yet confirmed done as of this entry.
 
+**Update 2026-08-24/25 — renamed `pageview` → `page_view` in `useGtmPageview.js`** to match the
+`page_view` event name Marina's GTM tag config expects. Purely a naming-consistency fix on the
+existing mechanism, no other logic changed.
+
+## 38. Yandex Metrica pulled out of GTM — runs as its own standalone snippet, independent of
+`dataLayer`
+
+**Date:** 2026-08-25 · **Status:** Done, pushed to `main`, deploying via CI/CD.
+
+**Why this changed:** Yandex Metrica was originally wired in as a Custom HTML tag *inside* the GTM
+container (§37), triggered via GTM's `dataLayer`. **Marina is now planning to eventually migrate
+away from Google Tag Manager to Yandex Tag Manager** — given that direction, keeping Metrica
+dependent on GTM's container would mean re-untangling it later. Decided to decouple it now, while
+it's still simple, rather than defer the untangling to whenever the GTM migration actually happens.
+
+**What changed:**
+- `index.html`: Yandex Metrica's official standalone counter snippet added directly (not as a GTM
+  tag) — real counter ID `111880697`, `defer: true` (so it does NOT auto-send the initial pageview;
+  every hit must be sent explicitly, including the first one — confirmed via Yandex's own SPA setup
+  docs before building anything, not assumed), `webvisor: true` (session-replay — kept since it was
+  in Marina's original snippet, flagged to her as a heavier-data-usage feature worth knowing about,
+  not silently dropped or silently kept).
+- `src/hooks/useYmPageview.js` (new): calls `ym(111880697, 'hit', location.pathname + location.search)`
+  on every route change — the official Yandex-documented mechanism for SPA pageview tracking when
+  `defer: true` is set, confirmed via Yandex's own docs (NOT a `dataLayer`-style push — that was an
+  earlier, incorrect assumption this session corrected once the actual standalone-snippet requirement
+  was understood; see the abandoned `ytmDataLayer`/`useYtmPageview.js` false start below).
+  Guards on `typeof window.ym !== 'function'` in case the hook fires before Metrica's async script
+  has finished loading.
+- **Counter ID is hardcoded** in both `index.html` and `useYmPageview.js` (kept in sync manually
+  between the two — no shared source of truth possible, since `index.html`'s plain `<script>` tag
+  can't read Vite env vars). **Deliberately not routed through an env var / GitHub secret** — Marina
+  explicitly reversed that choice mid-session: since the counter ID is already fully visible in the
+  page's own rendered source (it's client-side tracking, not a secret), routing it through
+  `VITE_YM_COUNTER_ID` + a GitHub Actions secret was real process overhead for zero actual
+  confidentiality benefit. `.env`/`.env.example` and `.github/workflows/deploy.yml` were touched
+  and then reverted back to not referencing it, on her direct instruction — don't re-add this env
+  var later without checking with her again, it was a considered reversal, not an oversight.
+
+**Abandoned false start, worth remembering:** earlier in this GTM/Metrica work (2026-08-23), a
+`window.ytmDataLayer` array + `useYtmPageview.js` hook were built based on a snippet Marina initially
+shared (`window.ytmDataLayer.push({event: 'ytm_spa_page_view', ...})`). That approach assumed Yandex
+Tag Manager used a `dataLayer`-style push mechanism like GTM's. **It doesn't** — real Yandex Metrica
+SPA tracking uses `ym(id, 'hit', url)` directly, per Yandex's own documentation, not a push-based
+array. Both the hook and the `ytmDataLayer` init line were removed once this was confirmed. If a
+`ytmDataLayer` reference ever resurfaces in a future session's suggestion, check Yandex's actual
+current docs again rather than trusting that earlier pattern — it was wrong once already.
+
+**GTM is still in place and still running** (base snippet + `useGtmPageview.js`) — this change only
+moved Metrica out from under it. No decision has been made yet on when/whether to actually migrate
+off GTM to Yandex Tag Manager; that's a stated future intention, not scheduled work.
+
 
 
 

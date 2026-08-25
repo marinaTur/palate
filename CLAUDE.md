@@ -22,7 +22,10 @@ Google Tag Manager (`index.html` `<head>`/`<noscript>`, container `GTM-MVPK6FQQ`
 PROJECT_MEMORY.md §37; the whole snippet + pageview-tracking setup lives in exactly one file,
 `index.html`, since this is a single-page app with one real `<head>` for every route — plus
 `src/hooks/useGtmPageview.js` for SPA route-change pageview tracking, since GTM's default trigger
-doesn't fire on client-side navigation)
+doesn't fire on client-side navigation) ·
+Yandex Metrica (standalone, **not** a GTM tag — counter `111880697`, `defer: true`, hardcoded in
+`index.html` + `src/hooks/useYmPageview.js`; deliberately decoupled from GTM/`dataLayer` ahead of a
+possible future migration to Yandex Tag Manager — see PROJECT_MEMORY.md §38)
 
 ## Hosting Migration to Yandex Cloud — In Progress
 **Decision:** Migrating from Netlify (US) to Yandex Cloud (Russia) to resolve geopolitical access issues.
