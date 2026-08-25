@@ -10,7 +10,7 @@ export function useGtmPageview() {
   useEffect(() => {
     window.dataLayer = window.dataLayer || []
     window.dataLayer.push({
-      event: 'pageview',
+      event: 'page_view',
       page: location.pathname + location.search,
     })
   }, [location])
