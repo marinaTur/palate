@@ -6,6 +6,11 @@ export const useAppStore = create(
     (set, get) => ({
       completedModules: [],
       quizHighScore: 0,
+
+      // Cookie/analytics consent: null (not yet decided) | 'accepted' | 'declined'.
+      // Gates whether GTM/Yandex Metrica scripts ever load — see ConsentBanner.jsx.
+      cookieConsent: null,
+      setCookieConsent: (choice) => set({ cookieConsent: choice }),
       markModuleComplete: (module) => set(s => ({
         completedModules: [...new Set([...s.completedModules, module])]
       })),

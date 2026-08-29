@@ -1840,6 +1840,66 @@ current docs again rather than trusting that earlier pattern — it was wrong on
 moved Metrica out from under it. No decision has been made yet on when/whether to actually migrate
 off GTM to Yandex Tag Manager; that's a stated future intention, not scheduled work.
 
+## 39. Cookie consent gate added — GTM and Yandex Metrica no longer load until accepted
+
+**Date:** 2026-08-29 · **Status:** Built, build-verified, browser-tested by Marina ("it works ok").
+Not yet committed/pushed as of this entry.
+
+**Why:** researched (open sources, not guessed) how sites typically inform users about
+cookie/analytics tracking. Russia's 152-FZ has real teeth here — found actual case law
+(Roskomnadzor enforcement) treating GTM + Yandex Metrica as personal-data processing requiring user
+consent, not just a GDPR-EU concern. Since Palate's Russian-speaking users are a real target
+audience (not hypothetical — see §2), this isn't cosmetic. Chose the "custom banner that actually
+gates script loading" option from a 5-tier complexity list researched this session (plain notice →
+gated custom banner → open-source consent library → Google Consent Mode v2 → full third-party CMP)
+— picked specifically because it needs no new dependency and doesn't deepen investment in
+GTM-specific tooling, consistent with the stated intent to eventually move off GTM (§38).
+
+**What was built:**
+- `src/store/useAppStore.js`: new `cookieConsent` field (`null` | `'accepted'` | `'declined'`) +
+  `setCookieConsent`. **Not a real browser cookie** — persists via the existing Zustand `persist`
+  middleware into `localStorage` under the `palate-storage` key, bundled with all other app state.
+  Worth being precise about this if the wording "cookie" ever appears in user-facing text or a
+  future privacy policy — technically this specific consent-choice storage is localStorage, not a
+  cookie; GTM/Metrica set their own real cookies (e.g. Yandex's `_ym_uid`/`_ym_d`, Google's `_ga`)
+  once actually loaded post-acceptance, which is a separate, real list if a privacy policy ever
+  needs to enumerate cookies precisely.
+- `src/utils/loadAnalytics.js` (new): `loadGtm()`/`loadYm()` — each does exactly what the old
+  unconditional `index.html` `<script>` tags did, but as callable, idempotent functions (`window.__gtmLoaded`/
+  `window.__ymLoaded` guards) invoked only after consent.
+- `index.html`: **both tracker `<script>` blocks removed entirely**, replaced with a comment
+  pointing to the new loader/banner files. **The `<noscript>` fallbacks (Yandex's `<img>` ping, GTM's
+  `<iframe>`) were also removed, not just the scripts** — a real gap caught before shipping: those
+  fire unconditionally for JS-disabled visitors with no way to check consent state, so leaving them
+  would have silently defeated the entire point of gating. Accepted trade: zero analytics coverage
+  for JS-disabled visitors, deliberately.
+- `src/hooks/useGtmPageview.js` / `useYmPageview.js`: both now read `cookieConsent` from the store
+  and no-op unless `'accepted'` — technically redundant with the scripts never loading otherwise,
+  but added for explicitness/consistency after Marina asked for it directly (matching `useYmPageview`'s
+  pre-existing defensive-guard style).
+- `src/components/ConsentBanner.jsx` (new): docks above the mobile bottom nav via `var(--nav-h)`,
+  the established convention (Architecture conventions section) for any new bottom-anchored control
+  — reused rather than inventing a new positioning approach. Accept/Decline via the existing shared
+  `Button` component (`primary`/`secondary` variants), not custom-styled buttons.
+- `src/App.jsx`: on mount, if a returning visitor already has `cookieConsent === 'accepted'` stored,
+  loads both trackers immediately without re-showing the banner. Renders `<ConsentBanner>`
+  unconditionally at the root; the component itself decides whether to render anything.
+- `en.json`/`ru.json`: new `common.cookieConsent.{message,accept,decline}` keys, same key path added
+  to both in the same change per the i18n convention — `ru.json` still holds the English placeholder
+  text, consistent with its documented untranslated status.
+
+**Pre-existing bug noticed but NOT touched, flagged for a separate pass:** `en.json` has a real
+duplicate top-level `"learn"` key (one block for `walkthrough.learn.back`-style nesting, immediately
+followed by a second, different `"learn"` block for the Learn module's own `eyebrow`/`title`/
+`comingSoon`) — in JSON, the second silently wins and the first's content is unreachable. Not
+caused by this session's change and out of scope for it; worth a dedicated fix later.
+
+**Still open:** Marina confirmed via manual browser testing that "it works ok" — full verification
+(banner renders correctly on mobile width above the nav, Accept actually triggers real network
+requests to `googletagmanager.com`/`mc.yandex.ru`, Decline doesn't) was her own manual check, not
+independently re-verified via automated browser tooling in this session. Not yet committed to git
+as of this entry — do that next, following the usual build-verify-then-commit pattern.
+
 
 
 

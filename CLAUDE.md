@@ -27,6 +27,12 @@ Yandex Metrica (standalone, **not** a GTM tag — counter `111880697`, `defer: t
 `index.html` + `src/hooks/useYmPageview.js`; deliberately decoupled from GTM/`dataLayer` ahead of a
 possible future migration to Yandex Tag Manager — see PROJECT_MEMORY.md §38)
 
+**Cookie consent:** neither GTM nor Yandex Metrica loads until the user accepts, via
+`ConsentBanner.jsx` + `src/utils/loadAnalytics.js` (both scripts removed entirely from `index.html`
+— see PROJECT_MEMORY.md §39). Consent choice lives in `useAppStore`'s `cookieConsent` field
+(persisted to `localStorage`, **not** a literal browser cookie — worth being precise about this in
+any future privacy-policy wording).
+
 ## Hosting Migration to Yandex Cloud — In Progress
 **Decision:** Migrating from Netlify (US) to Yandex Cloud (Russia) to resolve geopolitical access issues.
 Russian users currently experience 500ms+ latency / timeouts on Netlify; Yandex provides ~60ms local latency.
