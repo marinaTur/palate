@@ -1956,13 +1956,62 @@ or scrutinized, get native/legal review before relying on it as-is.
 `paletelearn@yandex.com`, was a typo (missing the second 'a' in "palatelearn") — confirmed with her
 and corrected to `palatelearn@yandex.com` in both language sections.
 
-**Wired in:** `App.jsx` gets the new `/privacy-policy` route; `ConsentBanner.jsx`'s message now
-links to it inline (via `Trans` + a `<link>` component mapped to `react-router-dom`'s `Link`) rather
-than as plain unlinked text — `en.json`/`ru.json`'s `common.cookieConsent.message` key updated to
-include the `<link>...</link>` markup Trans expects. Also fixed independently during this pass:
-Marina's own edit changing "No data is sold or shared with advertisers" → "No data is shared with
-advertisers" (dropping "sold" entirely, to avoid even raising the idea as a possibility in a
+**Wired in:** `App.jsx` gets the new `/privacy-policy` route. Also fixed independently during this
+pass: Marina's own edit changing "No data is sold or shared with advertisers" → "No data is shared
+with advertisers" (dropping "sold" entirely, to avoid even raising the idea as a possibility in a
 reader's mind) — a tone/framing catch, not a factual correction.
+
+### Follow-up fixes, same day (2026-08-30) — link rendering, button parity, footer access, styling
+
+**`Trans` component never worked — replaced with plain `t()` + `<Link>`.** The original
+`ConsentBanner.jsx` used `<Trans i18nKey="common.cookieConsent.message" components={{ link: <Link
+.../> }}>`, with `<link>...</link>` markup embedded in the JSON string. Live-tested by Marina: it
+rendered the literal escaped text `&lt;link&gt;Privacy Policy&lt;/link&gt;` on screen instead of a
+real link — `Trans` was not parsing/substituting the embedded tag at all, for reasons not fully
+diagnosed (tried both the `components` prop and the children-based `Trans` syntax; neither worked).
+Rather than keep debugging blind (no browser automation tool was available in this session without
+installing new packages — `chromium-cli` absent, `@playwright/test` not a project dependency, and
+installing one just for this check was avoided per the "explain the dependency benefit first"
+rule), **switched to the simpler, known-reliable pattern: split the message into two separate i18n
+keys (`common.cookieConsent.message` = plain text, `common.cookieConsent.privacyPolicyLink` = link
+text) and render them as adjacent JSX with a real `<Link>` in between, no `Trans` involved.**
+**If a future session ever wants to use `Trans` for embedded links again, budget time to actually
+verify it renders in a real browser before trusting it — this is the first and only place `Trans`
+has been attempted in this codebase (every other translated string uses plain `t()`), and it did
+not work as documented on the first two attempts.**
+
+**Consent banner buttons made visually equal.** Marina asked for Accept/Decline to be the same
+color — originally Accept used `primary` (solid forest fill) and Decline used `secondary`
+(white/bordered), a real visual hierarchy nudging toward acceptance. Changed Accept to `secondary`
+too. Worth remembering as a deliberate choice, not just a cosmetic tweak: **matched-weight
+accept/decline buttons is also better consent-UX practice** (avoids a "dark pattern" of visually
+pushing one choice over the other), so this doubles as a compliance-quality improvement, not purely
+aesthetic.
+
+**No way to reach `/privacy-policy` after the banner is dismissed — real gap, now fixed.** The
+banner is the only thing in the whole app that ever linked to the policy, and it disappears forever
+once a choice is made. The app has **no footer anywhere** (`Layout.jsx` has a header + mobile bottom
+nav only, confirmed by grep, nothing else). Rather than add a persistent footer across every page
+(a real new structural element, needing careful mobile-nav-clearance handling per the "any
+bottom-anchored control docks above the nav" convention), **added a single small text link at the
+very bottom of `Home.jsx` only** — Marina's explicit choice over a full cross-page footer, given
+this is a rarely-needed legal link, not primary navigation.
+
+**Styling fix: `prose`/`prose-sm` classes were doing nothing.** `PrivacyPolicy.jsx`'s wrapper used
+Tailwind Typography's `prose prose-sm` classes for paragraph spacing and heading styling — but
+**`@tailwindcss/typography` is not installed in this project** (confirmed via `package.json`/`vite.config.js`
+grep), so those classes had zero effect. This is why Marina saw no spacing between paragraphs and
+headings that didn't visually match body text. **Fixed with explicit Tailwind arbitrary-variant
+selectors on the wrapper div** (`[&_h2]:...`, `[&_p]:mt-4`, etc.) rather than installing the
+typography plugin — consistent with how the rest of this app already styles things (explicit
+utility classes per-element/selector, no CSS framework plugin), and avoids a new dependency for
+what's currently one page. Headings now explicitly use `font-['Inter']` (the app's real body font)
+instead of whatever unstyled-heading default the browser was rendering — confirms `<h2>` was never
+intentionally using a different font, just inheriting an unset default.
+**If any future page also reaches for `prose`/`prose-sm`, know that it does nothing right now** —
+either add the same kind of explicit selector styling, or have that discussion about installing the
+typography plugin properly at that point, rather than assuming `prose` "just works" because it
+appears to be a real Tailwind Typography class name.
 
 
 

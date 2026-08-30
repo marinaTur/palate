@@ -167,7 +167,8 @@
   "common": {
     "languageSwitcher": "Language",
     "cookieConsent": {
-      "message": "We use cookies for analytics to understand how people use Palate. No data is shared with advertisers. See our <link>Privacy Policy</link>.",
+      "message": "We use cookies for analytics to understand how people use Palate. No data is shared with advertisers. See our",
+      "privacyPolicyLink": "Privacy Policy",
       "accept": "Accept",
       "decline": "Decline"
     }

@@ -221,7 +221,9 @@ export default function PrivacyPolicy() {
   const isRussian = i18n.language?.startsWith('ru')
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-12 pb-16 prose prose-sm">
+    <div
+      className="max-w-2xl mx-auto px-4 pt-12 pb-16 text-sm text-[var(--ink-soft)] leading-relaxed [&_h2]:font-['Inter'] [&_h2]:font-medium [&_h2]:text-base [&_h2]:text-[var(--ink)] [&_h2]:mt-8 [&_h2]:mb-3 [&_p]:mt-4 [&_ul]:mt-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-2 [&_li]:mt-0 [&_a]:underline [&_a]:text-[var(--forest)]"
+    >
       {isRussian ? <RussianContent /> : <EnglishContent />}
     </div>
   )

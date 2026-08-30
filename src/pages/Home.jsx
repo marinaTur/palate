@@ -200,6 +200,13 @@ export default function Home() {
         </div>
       </div>
 
+      {/* ── Footer link ─────────────────────────────────────────── */}
+      <div className="px-4 pt-6 pb-2 text-center">
+        <Link to="/privacy-policy" className="text-xs text-[var(--muted)] underline hover:text-[var(--ink-soft)]">
+          Privacy Policy
+        </Link>
+      </div>
+
     </div>
   )
 }
