@@ -33,6 +33,15 @@ possible future migration to Yandex Tag Manager — see PROJECT_MEMORY.md §38)
 (persisted to `localStorage`, **not** a literal browser cookie — worth being precise about this in
 any future privacy-policy wording).
 
+**Privacy Policy & Consent to Processing:** single combined document at `/privacy-policy`
+(`src/pages/PrivacyPolicy.jsx`) — deliberately one document, not two, despite 152-FZ's checklist
+literally calling for consent as a separate document; §3 inside it is the standalone consent
+section. Fully bilingual (unlike the rest of the app's still-untranslated `ru.json` strings) via
+`EnglishContent`/`RussianContent` components switched on `i18n.language`, not the `t()` system —
+long-form legal prose, kept as one file for easy side-by-side maintenance. AI-drafted Russian legal
+text, not lawyer-reviewed — see PROJECT_MEMORY.md §40 before treating it as final if ever
+challenged. `ConsentBanner.jsx` links to it inline.
+
 ## Hosting Migration to Yandex Cloud — In Progress
 **Decision:** Migrating from Netlify (US) to Yandex Cloud (Russia) to resolve geopolitical access issues.
 Russian users currently experience 500ms+ latency / timeouts on Netlify; Yandex provides ~60ms local latency.

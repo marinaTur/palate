@@ -1,4 +1,5 @@
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
 import { loadGtm, loadYm } from '../utils/loadAnalytics'
 import { Button } from './ui/Button'
@@ -31,7 +32,10 @@ export function ConsentBanner() {
     >
       <div className="mx-auto max-w-2xl flex flex-col sm:flex-row sm:items-center gap-3">
         <p className="text-sm text-[var(--ink-soft)] flex-1">
-          {t('common.cookieConsent.message')}
+          <Trans
+            i18nKey="common.cookieConsent.message"
+            components={{ link: <Link to="/privacy-policy" className="underline text-[var(--forest)]" /> }}
+          />
         </p>
         <div className="flex gap-2 shrink-0">
           <Button variant="secondary" size="sm" onClick={decline}>

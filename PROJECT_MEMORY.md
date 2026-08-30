@@ -1900,6 +1900,70 @@ requests to `googletagmanager.com`/`mc.yandex.ru`, Decline doesn't) was her own 
 independently re-verified via automated browser tooling in this session. Not yet committed to git
 as of this entry — do that next, following the usual build-verify-then-commit pattern.
 
+## 40. Privacy Policy & Consent document written — combined, not two separate documents; bilingual
+
+**Date:** 2026-08-30 · **Status:** Built, build-verified, committed.
+
+**Origin:** Marina pasted a 4-item Russian 152-FZ compliance checklist (privacy policy document,
+separate consent document, correct unchecked-by-default form checkboxes, cookie notice). Audited
+against actual app state before writing anything: item 4 (cookie notice) was already satisfied by
+§39's `ConsentBanner`. Item 3 (form checkboxes) currently has **nothing to attach to** — Journal's
+form never leaves the browser (saves straight to `localStorage`), and Planner's real submission
+path is disabled/"Coming soon" per its documented demo-mode status, so no form on the Site
+currently transmits personal data anywhere. Items 1–2 (the actual policy/consent documents) were
+genuinely missing — this section covers building those.
+
+**Combined into ONE document, not two — a real deviation from the checklist's literal wording**
+("Согласие... Отдельный документ"). First built as two separate routes/files
+(`/privacy-policy` + `/consent`), each substantially restating the same data-collection facts in
+different voice ("here's what we collect" vs. "you agree we collect"). Marina flagged the
+duplication herself and, after seeing a trimmed-down alternative, chose to merge rather than trim —
+final structure is one route (`/privacy-policy`), one document, with **§3 "Your consent" as its
+own explicit section** inside it, satisfying the *substance* of a separate consent statement without
+a second file. `ConsentToProcessing.jsx` was deleted after being fully built; if a future session
+sees it referenced anywhere, it's stale — don't recreate it without checking with Marina first,
+since this was a deliberate, reconsidered decision, not an oversight.
+
+**Real content corrections made during drafting, each one a live-code accuracy check, not
+boilerplate:**
+- §5 (tasting planner) initially described the old *demo scenario picker* ("uses a small set of
+  pre-written example plans") — wrong per §35, which already removed that picker. Corrected to
+  describe the actual current state: a disabled/"Coming soon" form, not yet transmitting anything.
+- §5 initially named "Anthropic" as the AI provider — corrected to "(to be selected)", since
+  CLAUDE.md's Hosting Migration section explicitly defers the model-id/API-key work and no provider
+  commitment is actually live yet. Don't name Anthropic there again until that's actually true.
+- §4/§6 initially said "Google Tag Manager" as the thing collecting analytics data — Marina
+  corrected this to **Google Analytics** as the actual data processor, with **GTM described as a
+  delivery-only mechanism** (loads the GA and Yandex Metrica tags, doesn't itself process/store
+  anything) — a real, accurate technical distinction worth preserving in any future edit. **Per
+  Marina's explicit choice, §6 states GTM "loads the Google Analytics and Yandex Metrica tags"**
+  — this is a known simplification that doesn't match §38's documented decoupling (Yandex Metrica
+  actually loads independently via `loadYm()`, not through GTM's `dataLayer`) — flagged to her
+  directly before she chose to keep the wording as-is anyway. Don't silently "fix" this back to
+  match the code without checking with her again; it was a considered choice, not a missed catch.
+
+**Bilingual from the start, not deferred** — Marina explicitly asked for a fully translated Russian
+version, unlike the rest of the app's UI strings (which stay placeholder-English in `ru.json` by
+established convention). Implemented as `EnglishContent`/`RussianContent` components inside
+`PrivacyPolicy.jsx`, switched via `i18n.language`, rather than going through the `t()`/JSON i18n
+system — deliberate, since this is long-form legal prose, not short UI strings, and keeping both
+full texts in one file made side-by-side section-numbering consistency easy to verify during
+drafting. **The Russian legal text was drafted carefully using standard 152-FZ terminology, but is
+AI-drafted, not lawyer-reviewed** — flagged to Marina at drafting time; if this is ever challenged
+or scrutinized, get native/legal review before relying on it as-is.
+
+**Caught and fixed before commit:** the placeholder contact email Marina added,
+`paletelearn@yandex.com`, was a typo (missing the second 'a' in "palatelearn") — confirmed with her
+and corrected to `palatelearn@yandex.com` in both language sections.
+
+**Wired in:** `App.jsx` gets the new `/privacy-policy` route; `ConsentBanner.jsx`'s message now
+links to it inline (via `Trans` + a `<link>` component mapped to `react-router-dom`'s `Link`) rather
+than as plain unlinked text — `en.json`/`ru.json`'s `common.cookieConsent.message` key updated to
+include the `<link>...</link>` markup Trans expects. Also fixed independently during this pass:
+Marina's own edit changing "No data is sold or shared with advertisers" → "No data is shared with
+advertisers" (dropping "sold" entirely, to avoid even raising the idea as a possibility in a
+reader's mind) — a tone/framing catch, not a factual correction.
+
 
 
 

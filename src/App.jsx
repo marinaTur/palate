@@ -11,6 +11,7 @@ import Home    from './pages/Home'
 import Learn   from './pages/Learn'
 import Planner from './pages/Planner'
 import Journal from './pages/Journal'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 
 function GtmPageviewTracker() {
   useGtmPageview()
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/learn/*"   element={<Learn />} />
           <Route path="/planner"   element={<Planner />} />
           <Route path="/journal"   element={<Journal />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         </Routes>
       </Layout>
       <ConsentBanner />
