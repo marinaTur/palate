@@ -2013,6 +2013,40 @@ either add the same kind of explicit selector styling, or have that discussion a
 typography plugin properly at that point, rather than assuming `prose` "just works" because it
 appears to be a real Tailwind Typography class name.
 
+## 40. Analytics turned off entirely — GTM, Yandex Metrica, consent banner, and Privacy Policy all
+disabled (not deleted)
+
+**Date:** 2026-08-31 · **Status:** Done, build-verified, nothing removed — every change is a
+comment-out, fully reversible.
+
+**Decision, Marina's explicit call:** turn off all analytics for now. Scope confirmed with her
+before touching anything — "comment out in code, keep files" was the chosen approach over anything
+more permanent.
+
+**What changed:**
+- `App.jsx`: the `useEffect` that calls `loadGtm()`/`loadYm()` on accepted consent is commented out
+  (along with the `cookieConsent` read that fed it); `<GtmPageviewTracker />`/`<YmPageviewTracker />`
+  are commented out; the `/privacy-policy` `<Route>` is commented out; `<ConsentBanner />` is
+  commented out. Net effect: neither tracker script ever loads, confirmed via `grep` on the built
+  `dist/` output (zero references to `googletagmanager.com` or `mc.yandex.ru` in either
+  `index.html` or the JS bundle).
+- `Home.jsx`: the Privacy Policy footer link (added in §39's follow-up fixes) is commented out —
+  with the route itself disabled, a visible link to a dead page would have been worse than no link.
+- `PrivacyPolicy.jsx`: the entire real component (both `EnglishContent`/`RussianContent` and the
+  actual exported `PrivacyPolicy` function) is wrapped in two block comments. **A stub
+  `export default function PrivacyPolicy() { return null }` sits between the two comment blocks**
+  — this keeps the module a valid import target (harmless if anything still references it) without
+  rendering any content, since the route to it is gone anyway. The real implementation is preserved
+  verbatim inside the comments, renamed to `PrivacyPolicyReal` in the second block only so it's
+  obvious at a glance which function is the live stub vs. the disabled original — restore by
+  deleting the stub, un-commenting both blocks, and renaming `PrivacyPolicyReal` back to
+  `PrivacyPolicy`.
+
+**To re-enable everything later:** uncomment the four spots in `App.jsx` (effect, both trackers,
+route, banner), uncomment the footer link in `Home.jsx`, and restore `PrivacyPolicy.jsx` as
+described above. **Do not do any of this without Marina's explicit go-ahead** — she was clear this
+is "disable it before I tell you," i.e. a deliberate pause, not a request to remove the feature.
+
 
 
 

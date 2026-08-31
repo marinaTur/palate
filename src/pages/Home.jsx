@@ -200,12 +200,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Footer link ─────────────────────────────────────────── */}
+      {/* ── Footer link — disabled 2026-08-31 alongside analytics/consent
+           banner (App.jsx). Do not re-enable without checking with Marina. ──
       <div className="px-4 pt-6 pb-2 text-center">
         <Link to="/privacy-policy" className="text-xs text-[var(--muted)] underline hover:text-[var(--ink-soft)]">
           Privacy Policy
         </Link>
       </div>
+      */}
 
     </div>
   )

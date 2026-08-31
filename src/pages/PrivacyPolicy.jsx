@@ -1,5 +1,11 @@
 import { useTranslation } from 'react-i18next'
 
+// DISABLED 2026-08-31 — Marina turned off analytics for now, and this page's
+// route was commented out in App.jsx alongside it. The content below is
+// intentionally left in place, just unreachable — do not delete or
+// re-enable (uncomment the route in App.jsx / the footer link in Home.jsx)
+// without checking with her first.
+/*
 function EnglishContent() {
   return (
     <>
@@ -215,8 +221,17 @@ function RussianContent() {
     </>
   )
 }
+*/
 
+// Stub export while disabled — route is commented out in App.jsx, so this
+// never actually renders, but keeps the module valid if anything still
+// imports it. Restore the block above + this function's real body together.
 export default function PrivacyPolicy() {
+  return null
+}
+
+/*
+function PrivacyPolicyReal() {
   const { i18n } = useTranslation()
   const isRussian = i18n.language?.startsWith('ru')
 
@@ -228,3 +243,4 @@ export default function PrivacyPolicy() {
     </div>
   )
 }
+*/
