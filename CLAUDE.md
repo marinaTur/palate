@@ -120,14 +120,13 @@ After changes:
 
 1. **Anthropic API billing not set up** — Planner stays in demo mode until resolved. This is the single most consequential pending item.
 2. **Russian locale (`ru.json`)** — structurally complete, 100% untranslated placeholder English.
-3. **`Quiz.jsx`, `Regions.jsx`, `Nose.jsx`, `Bottle.jsx`** — still bypass i18n (hardcoded English). **`Walkthrough.jsx` and `Wheel.jsx` are exceptions** — both fully wired to `t()` calls. Template in `Walkthrough.jsx` for converting the remaining three.
+3. **`Quiz.jsx`, `Regions.jsx`, `Nose.jsx`, `Bottle.jsx`** — still bypass i18n (hardcoded English). **`Walkthrough.jsx` and `Wheel.jsx` are exceptions** — both fully wired to `t()` calls (Wheel expanded to 8 families as of 2026-09-06). Template in `Walkthrough.jsx` for converting the remaining three.
 4. **~2 hardcoded hex literals** remain in Wheel (intentionally distinct origin badge backgrounds and SVG strokes; no token equivalents per decision in 2026-09-06 audit). Nose and Quiz unchanged from v1.1 rollout. Judgment calls documented in `PROJECT_MEMORY.md`.
 5. **`Difficulty` buttons** — still duplicated inside individual module files, not extracted to shared UI component. ("Mark done"/"Start over" extracted to `ModuleCompletionButton.jsx` as of 2026-09-06.)
 6. **`src/App.css`** — unused Vite scaffold, safe to delete.
 7. **Journal features not built:** search/filter, palate-over-time tracking, print/export.
 8. **Planner features not built:** free-text form (wired but disabled, "Coming soon").
-9. **Wheel expansion:** Vegetative and Chemical aroma families planned as additions (6→8 families), not yet built. Needs "preview first or build straight?" decision before starting.
-10. **DNS/HTTPS monitoring** for Yandex Cloud hosting — parked, Marina will decide the approach later (GitHub Actions workflow vs. free-tier monitor).
+9. **DNS/HTTPS monitoring** for Yandex Cloud hosting — parked, Marina will decide the approach later (GitHub Actions workflow vs. free-tier monitor).
 
 ---
 

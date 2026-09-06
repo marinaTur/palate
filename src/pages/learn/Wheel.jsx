@@ -97,6 +97,30 @@ const CATEGORIES = [
       { nameKey: 'wheel.oakToasted', descriptorsKey: 'wheel.oakToastedDescriptors', winesKey: 'wheel.oakToastedWines' },
     ],
   },
+  {
+    id: 'vegetative',
+    nameKey: 'wheel.categoryVegetative',
+    color: '#4A7A5C',
+    origins: ['primary'],
+    introKey: 'wheel.categoryVegetativeIntro',
+    subcategories: [
+      { nameKey: 'wheel.vegetativeGreen', descriptorsKey: 'wheel.vegetativeGreenDescriptors', winesKey: 'wheel.vegetativeGreenWines' },
+      { nameKey: 'wheel.vegetativeCanned', descriptorsKey: 'wheel.vegetativeCannedDescriptors', winesKey: 'wheel.vegetativeCannedWines' },
+      { nameKey: 'wheel.vegetativeHay', descriptorsKey: 'wheel.vegetativeHayDescriptors', winesKey: 'wheel.vegetativeHayWines' },
+    ],
+  },
+  {
+    id: 'chemical',
+    nameKey: 'wheel.categoryChemical',
+    color: '#6B7280',
+    origins: ['secondary'],
+    introKey: 'wheel.categoryChemicalIntro',
+    subcategories: [
+      { nameKey: 'wheel.chemicalSulfur', descriptorsKey: 'wheel.chemicalSulfurDescriptors', winesKey: 'wheel.chemicalSulfurWines', noteKey: 'wheel.chemicalSulfurNote' },
+      { nameKey: 'wheel.chemicalFermentation', descriptorsKey: 'wheel.chemicalFermentationDescriptors', winesKey: 'wheel.chemicalFermentationWines' },
+      { nameKey: 'wheel.chemicalPetrol', descriptorsKey: 'wheel.chemicalPetrolDescriptors', winesKey: 'wheel.chemicalPetrolWines', noteKey: 'wheel.chemicalPetrolNote' },
+    ],
+  },
 ]
 
 const WHEEL_KEYS = CATEGORIES.map(c => `wheel-${c.id}`)
