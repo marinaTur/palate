@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../store/useAppStore'
+import { ModuleCompletionButton } from '../../components/ModuleCompletionButton'
 
 // ── Data ─────────────────────────────────────────────────────────
 
@@ -651,12 +652,7 @@ export default function Nose() {
               <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-3" style={{ whiteSpace: 'pre-line' }}>
                 {COMPLETION_TEXT.body}
               </p>
-              <button
-                onClick={startOver}
-                className="text-xs font-medium text-[var(--gold)] border border-[var(--gold)]/40 rounded-full px-3 py-1.5 hover:bg-[var(--gold)] hover:text-white transition-colors"
-              >
-                Start over
-              </button>
+              <ModuleCompletionButton onClick={startOver} label="Start over" />
             </div>
           </div>
         )}

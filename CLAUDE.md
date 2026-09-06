@@ -1,158 +1,93 @@
 # CLAUDE.md — Palate
 
-Wine tasting education app (not a recommendation/buying engine, not a cocktail app).
-"Your pocket sommelier school." Audience: curious casual wine drinkers who want to build
-confidence; avoid both absolute beginners who need basic alcohol education and advanced
-enthusiasts seeking professional-level depth.
-**Read PROJECT_MEMORY.md now, in full, before doing anything else this session** — including
-before responding to a request that looks purely mechanical (a typo fix can still collide with a
-documented decision, e.g. §17's "don't change without discussion" list). This file is the quick
-operational reference; PROJECT_MEMORY.md is the full rationale, history, rejected alternatives, and
-open questions, and §23 there is the authoritative current state if the two ever conflict.
-(PROJECT_MEMORY.md is currently ~540 lines / one Read call, once per session — flag to Marina if it
-roughly doubles in length, since at that point the unconditional-read tradeoff should be revisited.)
+**Palate** is a wine tasting education app for curious casual wine drinkers — "Your pocket sommelier school." Not a recommendation engine, not a cocktail app.
 
-## Stack
-React 19 + Vite 8 · React Router 7 · Zustand 5 (+persist) · Tailwind 4 · i18next/react-i18next ·
-vite-plugin-pwa · @anthropic-ai/sdk (server-side only, via Yandex Cloud Functions — Netlify
-decommissioned 2026-08-23, see Hosting Migration below) ·
-@tabler/icons-webfont (bundled locally via npm import in `index.css`, not a CDN link —
-see Known issues below for why this was added) ·
-Google Tag Manager (`index.html` `<head>`/`<noscript>`, container `GTM-MVPK6FQQ` — see
-PROJECT_MEMORY.md §37; the whole snippet + pageview-tracking setup lives in exactly one file,
-`index.html`, since this is a single-page app with one real `<head>` for every route — plus
-`src/hooks/useGtmPageview.js` for SPA route-change pageview tracking, since GTM's default trigger
-doesn't fire on client-side navigation) ·
-Yandex Metrica (standalone, **not** a GTM tag — counter `111880697`, `defer: true`, hardcoded in
-`index.html` + `src/hooks/useYmPageview.js`; deliberately decoupled from GTM/`dataLayer` ahead of a
-possible future migration to Yandex Tag Manager — see PROJECT_MEMORY.md §38)
+> **Full history, design rationale, and rejected alternatives:** See `PROJECT_MEMORY.md`. **Archive of original CLAUDE.md:** `CLAUDE_archive01.md` (only read if you need historical context; do NOT read it at session start).
 
-**Analytics currently fully disabled (2026-08-31, Marina's explicit call) — GTM, Yandex Metrica,
-the consent banner, and the Privacy Policy route are all commented out, not deleted.** See
-PROJECT_MEMORY.md §40 for exactly what's commented and how to restore it. **Do not re-enable any
-of this without her explicit go-ahead.**
+---
 
-**Cookie consent (disabled, see above):** when active, neither GTM nor Yandex Metrica loads until
-the user accepts, via `ConsentBanner.jsx` + `src/utils/loadAnalytics.js` (both scripts removed
-entirely from `index.html` — see PROJECT_MEMORY.md §39). Consent choice lives in `useAppStore`'s
-`cookieConsent` field (persisted to `localStorage`, **not** a literal browser cookie — worth being
-precise about this in any future privacy-policy wording).
+## Current Stack
 
-**Privacy Policy & Consent to Processing:** single combined document at `/privacy-policy`
-(`src/pages/PrivacyPolicy.jsx`) — deliberately one document, not two, despite 152-FZ's checklist
-literally calling for consent as a separate document; §3 inside it is the standalone consent
-section. Fully bilingual (unlike the rest of the app's still-untranslated `ru.json` strings) via
-`EnglishContent`/`RussianContent` components switched on `i18n.language`, not the `t()` system —
-long-form legal prose, kept as one file for easy side-by-side maintenance. AI-drafted Russian legal
-text, not lawyer-reviewed — see PROJECT_MEMORY.md §40 before treating it as final if ever
-challenged. `ConsentBanner.jsx` links to it inline.
+React 19 + Vite 8 · React Router 7 · Zustand 5 (+persist) · Tailwind 4 · i18next/react-i18next · vite-plugin-pwa  
+**Backend:** Yandex Cloud Functions (Node.js 22) — `yandex/functions/ask-sommelier.js`  
+**Hosting:** Yandex Cloud Object Storage (`palatelearn.ru` primary, `palatelearn.com` redirects)  
+**Icons:** `@tabler/icons-webfont` (bundled locally in `index.css`, not CDN)
 
-## Hosting Migration to Yandex Cloud — In Progress
-**Decision:** Migrating from Netlify (US) to Yandex Cloud (Russia) to resolve geopolitical access issues.
-Russian users currently experience 500ms+ latency / timeouts on Netlify; Yandex provides ~60ms local latency.
-Registered domains: `palatelearn.ru` (primary), `palatelearn.com` (secondary, redirects to .ru).
-**Setup completed (2026-08-19):**
-- Yandex Cloud account created, folder `palate` configured
-- Object Storage bucket `palatelearn-frontend-001` (50 GB, Standard, public read) → website hosting enabled
-- Cloud Functions: `ask-sommelier` created (Node.js 22, 128 MB, 60s timeout)
-- Frontend URL: `https://palatelearn-frontend-001.website.yandexcloud.net/`
-- Backend URL: `https://functions.yandexcloud.net/d4e5fp0uea63ifeihltc`
-- Service account `palate-deployer` with admin roles; JWT key generated and stored locally (never committed)
-**Frontend/backend adapter — done (2026-08-20):**
-- `src/services/ai.js` now reads `VITE_API_ENDPOINT` (falls back to `/api/ask-sommelier` for
-  Netlify/local dev, unchanged) — see `.env.example`.
-- `yandex/functions/ask-sommelier.js` written — full port of `netlify/functions/ask-sommelier.js` to
-  Yandex's Node.js handler format. Not yet pasted/uploaded into the actual Yandex Cloud Function
-  console.
-- Known issue carried over from the Netlify original, not fixed yet by design: both functions
-  hardcode an invalid model id `claude-sonnet-4-6` — must fix before adding `ANTHROPIC_API_KEY` to
-  either backend. See PROJECT_MEMORY.md §36.
+**Analytics currently fully disabled (2026-08-31, Marina's explicit call) — GTM, Yandex Metrica, the consent banner, and the Privacy Policy route are all commented out, not deleted. Do not re-enable any of this without her explicit go-ahead.**
 
-**Domains + buckets — done (2026-08-20):**
-- `palatelearn.ru` and `palatelearn.com` registered via Beget (2026-08-19). DNS kept on Beget
-  (not migrated to Yandex Cloud DNS).
-- `palatelearn-frontend-001` (the original bucket) was superseded — Yandex's custom-domain feature
-  requires an exact bucket-name/domain match, so it could never serve `palatelearn.ru`. Two new
-  buckets created instead: **`palatelearn.ru`** (Хостинг/Hosting mode, real site content) and
-  **`palatelearn.com`** (Переадресация/Redirect mode → `palatelearn.ru`, HTTPS). **`palatelearn-frontend-001`
-  deleted 2026-08-23** — see PROJECT_MEMORY.md §36 for the pre-delete checks done first.
-- Beget has **no ANAME/ALIAS record type** (confirmed: only A/AAAA/CAA/MX/SRV/TXT available), so
-  both domains' apex DNS uses a plain **A record pointing at the bucket's resolved IP** (looked up
-  manually via whatsmydns.net) rather than a hostname alias — a known-fragile workaround; see
-  PROJECT_MEMORY.md §36 for the stability risk and what to check if the site ever goes down
-  unexpectedly. `www.palatelearn.ru` uses a real CNAME and doesn't have this exposure.
+---
 
-**Site is live (as of 2026-08-22):** DNS propagated, `dist/` uploaded to `palatelearn.ru` bucket,
-HTTPS working on both `palatelearn.ru` and `palatelearn.com` (no browser warnings). Both domains
-load correctly; `.com` redirects to `.ru`. **This is real, click-tested-live progress, not just
-build/lint-clean** — see PROJECT_MEMORY.md §36's 2026-08-21/22 update for the full sequence,
-including why the first HTTPS attempt (HTTP validation) failed for `palatelearn.com` specifically
-(redirect-mode buckets can't serve the validation file) and why DNS validation was used instead
-(bonus: DNS-validated certs auto-renew if the `_acme-challenge` CNAME records stay in Beget — do
-not remove them).
+## Current State — What's Built
 
-**Pending (priority order):**
-1. ~~Confirm `.env`'s `VITE_API_ENDPOINT` value is backed up somewhere durable~~ — **already true,
-   verified 2026-08-22.** The real value (`https://functions.yandexcloud.net/d4e5fp0uea63ifeihltc`)
-   is committed in both `.env.example` (line 7, as a comment) and here under "Setup completed" —
-   local `.env` confirmed to match exactly. No action needed; noting this so a future session
-   doesn't re-flag it as a gap.
-2. ~~Decide what happens to the old Netlify deployment~~ — **decided 2026-08-23: Netlify is fully
-   decommissioned.** Marina deletes the site directly in Netlify's dashboard (Site settings →
-   Danger zone — not something doable from this repo/session). In-repo Netlify code removed:
-   `netlify.toml` and `netlify/functions/ask-sommelier.js` deleted (the Yandex port already has the
-   full logic, nothing lost). `src/services/ai.js`'s `ENDPOINT` no longer falls back to
-   `/api/ask-sommelier` — **`VITE_API_ENDPOINT` is now required, in local dev too**, since there's
-   no relative-path redirect target left to fall back to. `.env.example`, `README.md` updated to
-   match (README's stack/deploy sections and project-structure tree now reference
-   `yandex/functions/` instead of `netlify/functions/`).
-3. **PARKED (2026-08-23) — Marina will decide the approach later, don't pick this back up
-   unprompted.** No monitoring/alerting exists for either of the two fragile pieces put in place
-   this migration: the apex A-records pointing at a manually-looked-up IP (Yandex doesn't guarantee
-   this IP stays stable — see above), and the `_acme-challenge` CNAME records that must stay in
-   Beget for HTTPS auto-renewal to keep working. Right now, the only way either failure gets
-   noticed is someone happening to check whatsmydns.net or the site breaking visibly. Researched
-   options (2026-08-23): either a scheduled GitHub Actions workflow (DNS + `openssl` cert-expiry
-   check, opens a GitHub issue on failure — no new third-party account needed) or a free-tier
-   third-party monitor (Domain Sentry, LetsMonitor, etc. — alerts via email/Telegram/Slack instead
-   of a GitHub issue). Marina hasn't chosen between them yet — ask before building either.
-4. ~~Reconsider deleting `palatelearn-frontend-001`~~ — **done, deleted 2026-08-23.** No code/config
-   in this repo referenced it by name (confirmed via grep). IAM console UI didn't make role *scope*
-   (folder vs. per-bucket) directly inspectable, so this was confirmed behaviorally instead: the
-   working CI/CD pipeline already proved `palate-deployer`'s `storage.admin` role functions fine
-   against `palatelearn.ru`/`.com` without ever touching the old bucket — real evidence the
-   permission isn't tied to it specifically. Post-delete check: both `palatelearn.ru` (200) and
-   `palatelearn.com` (301 redirect) confirmed still healthy.
-5. ~~GitHub Actions CI/CD setup~~ — **done (2026-08-22).** `.github/workflows/deploy.yml` builds
-   and runs `aws s3 sync dist/ s3://palatelearn.ru/ --delete` on every push to `main`, using
-   `YC_ACCESS_KEY_ID`/`YC_SECRET_ACCESS_KEY` (a real static access key pair for `palate-deployer` —
-   the account previously only had a JWT/authorized key, which is a different credential type and
-   doesn't work for the S3-compatible API; a new static key pair had to be generated) and
-   `VITE_API_ENDPOINT`, all as GitHub repo secrets (Settings → Secrets and variables → Actions).
-   **Requires a GitHub PAT with the `workflow` scope** to push changes to workflow files at all —
-   hit and fixed this once already (push was rejected with a clear error naming the missing scope).
-   First real run succeeded — confirmed via `curl` that a new JS bundle hash was live on
-   `palatelearn.ru` immediately after the push, not just that the Actions tab showed green. The
-   `--delete` flag on `s3 sync` directly prevents a repeat of the 2026-08-22 blank-page bug (stale
-   `assets/` files from an incomplete manual upload) going forward, since sync always makes the
-   bucket match the latest build exactly.
-6. **Deliberately moved to the end of the list (Marina's explicit call, 2026-08-22): fix the
-   invalid `claude-sonnet-4-6` model id, deploy `yandex/functions/ask-sommelier.js` as the actual
-   Cloud Function source (currently only in-repo, never pasted into the console), and add
-   `ANTHROPIC_API_KEY`.** Reason: Marina wants a working demo-mode prototype first — Planner
-   staying in demo mode is fine/expected for now, not a blocker. Don't re-prioritize this upward
-   without checking with her again; it was consciously deferred, not forgotten.
-**Note:** This is a geopolitical / access decision, not a technical deficiency with Netlify. The app currently works; this fixes Russia access.
+**Learn modules (5 of 5 complete):**
+- Walkthrough (interactive tasting intro)
+- Nose Training (4-week, 16-exercise smell identification)
+- Wheel (two-ring aroma taxonomy, 6 families + 15 aromas)
+- Bottle Guide (red/white/sparkling/fortified comparison)
+- Regions (27 wine regions + 27 grapes, two browse modes)
 
-## Safety rules
-- Do not replace demo/mock data with live AI without explicit approval.
-- Do not change the design system (colors, typography, layout patterns) without discussion.
-- Do not add dependencies unless the benefit is explained first.
-- Do not refactor working code only for style reasons.
-- Before deleting files, explain why they are unused and confirm.
-- Before large changes, show the proposed approach first.
+**Other modules:**
+- Home (4-plate dashboard: Plan / Journal / Lessons / Quiz)
+- Planner (demo mode, 5 curated tasting scenarios)
+- Journal (log tasting notes; add/view/delete only — no search/filter yet)
+- Quiz (16 questions, source-module color-coded, replayable)
 
-## Development workflow
+**Not yet built:** Planner free-text form (wired but disabled, "Coming soon"), Journal search/filter, Journal print/export.
+
+---
+
+## Safety Rules — Don't Change Without Discussion
+
+- **Palette:** Forest `#264D3B` / Burgundy `#A02F49` / Gold `#B98A3D` / Cream `#F7F4EF`. Arrived at after multiple rounds of iteration; don't casually "improve" without the same process.
+- **Typography:** Cormorant Garamond (display) + Inter (body). Established pairing; keep it.
+- **Design system:** Do not change colors, typography, or layout patterns without explicit discussion first.
+- **Demo mock data:** Match the real API's output JSON shape exactly — this makes the future AI swap low-risk. Mark temporary code with `// Real AI version (uncomment when ready)`.
+- **No live AI yet:** Planner stays in demo mode until Marina sets up Anthropic API billing.
+- **Do not replace demo content with live AI** without explicit approval.
+- **Do not add dependencies** without explaining the benefit first.
+- **Do not refactor working code only for style reasons.**
+- **Before deleting files:** explain why unused and confirm.
+- **Before large changes:** show the proposed approach first.
+- **Quiz is deliberately NOT in Lessons:** It's standalone entertainment, not part of the curriculum. Do not re-integrate it into `completedModules` or the Lessons list — this is intentional, not an oversight.
+- **No auto-advancing timed UI anywhere:** Every module requires an explicit tap to proceed between steps/questions. (Scoped exception: Walkthrough's *completion*, not navigation, is timer-gated based on step dwell time.)
+
+---
+
+## Architecture Conventions
+
+- **One Zustand store** (`useAppStore.js`), not split stores. Generic primitives (`exerciseProgress`, `modulePosition`, `seenIntroCards`) are reused by every step-based module.
+- **`finished` state must be derived directly from the store** (`completedModules.includes(moduleId)`), never kept as separate `useState` initialized once from the store. Standard pattern across all curriculum modules.
+- **`unmarkModuleComplete`** backs every "Start over" button — same name across all modules for consistency.
+- **Walkthrough auto-completes** once all steps are viewed (3+ second dwell each); no "Mark done" button. **Nose, Wheel, Bottle use explicit "Mark done" buttons.** Quiz is separate (results screen has its own "Play again").
+- **`src/utils/moduleProgress.js`** normalizes each module's different progress tracking into a common `{ done, total }` shape for Learn's directory list. Extend its switch statement, not Learn.jsx directly, when adding a new module.
+- **`src/constants/modules.js` (`LEARN_MODULES`) is the single source of truth** — Home's lesson tile and Learn's directory + routes all derive from it. To add a new Learn module: add one entry to `LEARN_MODULES`, register its component in `Learn.jsx`'s `MODULE_COMPONENTS` map, add its i18n keys to both `en.json` and `ru.json`. (Quiz is the intentional exception — deliberately excluded from `LEARN_MODULES`.)
+- **Demo/mock data lives in `src/data/`** (strictly separate from `src/services/`). Mock data must match real API shape. Current examples: `samplePlans.js`, `regions.js`, `bottleGuide.js`.
+- **i18n:** `en.json` is the master structure; `ru.json` must mirror it exactly even while untranslated. Add new UI strings to both files in the same commit. AI-generated Planner content uses a different mechanism (`lang` param to Claude directly) — don't conflate the two.
+- **Module ids** (lowercase, no hyphens) must be used identically in routing paths and i18n keys. Examples: `walkthrough`, `nose`, `wheel`, `bottle`, `regions` (not `quiz` — deliberately kept out of automated tracking).
+- **CSS custom properties** defined in `index.css` `:root`, referenced via Tailwind arbitrary values (`text-[var(--forest)]`), not Tailwind theme config.
+- **`--nav-h` custom property** (set by `Layout.jsx` via `ResizeObserver` on the mobile bottom nav) exposes the nav's real rendered height. Bottom-docked mobile controls should read `var(--nav-h, <fallback>)` to position just above it. Naturally `0px` on desktop (nav is `md:hidden`).
+- **Learn sub-modules live as standalone files in `src/pages/learn/`** — `Walkthrough.jsx`, `Nose.jsx`, `Wheel.jsx`, `Bottle.jsx`, `Regions.jsx`, `Quiz.jsx`. Not inlined in `Learn.jsx`.
+- **Regions/Bottle/Grapes data** lives in `src/data/` as structured content only, no component logic.
+
+---
+
+## Established Interaction Patterns — Reuse, Don't Reinvent
+
+- **Difficulty:** dots with a text label (not stars — stars read as quality ratings).
+- **Completion button:** explicit "Mark done"/"Done" text, not icon-only checkboxes. **Exception:** Walkthrough auto-completes; Bottle auto-completes when all 4 types are tapped.
+- **Finishing a module:** inline gold notice at the top, not a full-page takeover. Module stays fully interactive underneath.
+- **"Start over":** standard name + behavior for resetting a finished module. Used by Nose, Wheel, Bottle. Does not apply to Walkthrough (no button) or Quiz (replayable by nature).
+- **One-time intro/memo cards:** expanded on first visit only, collapsed thereafter. Marked seen on mount (not just on dismiss) via `seenIntroCards`.
+- **Multi-step module position:** persists across refresh via `modulePosition` store field, keyed by module id.
+- **Demo/curated pickers:** one-tap-to-result, not fill-form-then-submit. Tapped option shows visual selection (border + checkmark). Example: Planner's scenario picker.
+- **Features that exist in code but aren't available:** shown visibly disabled ("Coming soon"), not hidden or deleted. Planner's custom form is the example — fully wired but unreachable via `pointer-events-none` + muted colors.
+- **Cross-referencing between content:** real tap/navigate, not just text mention. Example: Regions' "Compare to" button navigates to the target region.
+- **Mobile-first, no exceptions:** no desktop sidebars, multi-column detail panes, or hover-driven interactions. Desktop works via centered, capped-width container. Full reasoning in `MOBILE_LAYOUT_CONVENTION.md`.
+- **Share functionality:** uses native Web Share API (`navigator.share()`) where available, falls back to clipboard copy. Standard pattern for any future share feature.
+
+---
+
+## Development Workflow
 
 Before modifying code:
 1. Inspect current implementation.
@@ -164,442 +99,70 @@ After changes:
 - Explain what changed.
 - Explain how to test it.
 - Mention possible side effects.
+- Update `CLAUDE.md` and `PROJECT_MEMORY.md` in the same commit if anything architectural/policy-related changed.
 
-## Memory discipline — never defer this
-The goal: important knowledge survives both within a session and across sessions. The two docs
-(this file + PROJECT_MEMORY.md) are the only mechanism for cross-session memory — nothing is
-remembered unless it's written here.
-- Any new decision, rejected alternative, convention, or non-obvious bug/fix worth remembering
-  gets written into PROJECT_MEMORY.md (or this file, if operational) **in the same turn it
-  happens** — not deferred to a later cleanup pass. A doc update is part of "done," not a
-  follow-up task.
-- Before ending work on any non-trivial change, confirm both docs still match the current code
-  state. If they don't, fix that before considering the change finished.
-- Never delete superseded sections in PROJECT_MEMORY.md — append a note that supersedes them
-  instead (see §23's own header for the pattern). History of what was tried and rejected is itself
-  important knowledge; deleting it is a memory loss, not cleanup.
-- If a session was long/feature-heavy and docs were *not* updated as-you-go (it happens), the very
-  next action is a dedicated catch-up pass checked against actual current code — never written
-  from memory of what "should" have changed.
-- When two sections conflict, the most recently added one wins (PROJECT_MEMORY.md §23 exists
-  specifically as this kind of override marker) — but conflicts should be rare if the rule above is
-  followed.
-
-## Git workflow
-- Before significant changes, ensure the current state is committed or clearly explain uncommitted changes.
-- Prefer small focused commits with descriptive messages.
-- Do not rewrite Git history unless explicitly requested.
-
-## Design system — do not change without discussion
-- **Palette v1.1 (current):** Forest `#264D3B` (primary, unchanged), Burgundy `#A02F49` (CTA —
-  lifted from the old `#7A2038` for better contrast against forest; old hue kept as
-  `--burgundy-deep` for hover/pressed states), Gold `#B98A3D` (**decorative fills only, never
-  text** — use `--gold-text` `#8A6420` for any gold-colored text), Cream `#F7F4EF` (background,
-  unchanged). Full rationale, the brief it came from, and two real gaps found while applying it in
-  PROJECT_MEMORY.md §5 ("Palette v1.1"). Arrived at after multiple rejected rounds before this
-  version too — don't casually "improve" further without going through the same process.
-- New semantic tokens exist for feedback states, deliberately avoiding true red/green:
-  `--attention`/`--attention-tint` (errors/failures), `--milestone` (completion — reuses
-  `--gold-text`), `--focus` (keyboard focus ring). Currently defined but not yet wired into real
-  error/completion UI — a separate follow-up task, not assumed done just because the tokens exist.
-- Typography: Cormorant Garamond (display/headings, often italic) + Inter (body). Established
-  pairing; do not change without discussion.
-- Structural differentiation from Vivino matters as much as color: full-width gradient hero cards,
-  Roman numerals for module ordering, burgundy as accent not dominant background. Don't drift back
-  toward a white-card/red-accent look.
-- `--forest-dark`, `--forest-light`, `--burgundy-dark` are **aliases** pointing at v1.1's
-  `--forest-deep`/`--forest-tint`/`--burgundy-deep` — kept so the 34 existing call sites using
-  these names didn't need a rename. Don't remove the aliases without updating every call site first.
-- ~~Known unresolved bug: `--gold-light` and `--burgundy-light` share the identical hex~~ —
-  **RESOLVED.** Renamed to `--gold-tint`/`--burgundy-tint` with distinct values as part of v1.1.
-- **New known issue, found while applying v1.1:** hardcoded hex literals (not `var(--token)`)
-  remain across `Wheel.jsx`, `Nose.jsx`, `Quiz.jsx` — mostly inline
-  SVG `stroke`/`fill` props and conditional style objects. These did **not** get updated by the
-  v1.1 rollout and still reference old hex values. Fixing them needs judgment (which token each
-  literal should map to, since some may be intentionally distinct data-viz colors, not brand
-  tokens) — deliberately deferred as its own backlog item, not folded into the mechanical rollout.
-  Originally 19 across 5 files including `Home.jsx`; `Home.jsx`'s one instance is fixed (folded
-  into the Home bento redesign), `Walkthrough.jsx`'s 18 progress-indicator instances are fixed
-  (folded into the Walkthrough refactor, §24–25) — 12 remain across Wheel, Nose, and Quiz.
-  See PROJECT_MEMORY.md §14 #17, §23 ("Home dashboard becomes a bento layout"), and §24
-  ("Walkthrough Module Refactor").
-
-## Architecture conventions
-- **`--nav-h` CSS custom property** (set in `Layout.jsx`, via `ResizeObserver` on the mobile bottom
-  nav's real rendered element) exposes the nav's actual height, including its safe-area-inset
-  padding. Any future bottom-docked element should read `var(--nav-h, <fallback>)` to position
-  itself just above the nav rather than guessing a pixel value or re-measuring independently — this
-  is the reusable pattern behind Planner's mobile scenario chip bar (see
-  `MOBILE_LAYOUT_CONVENTION.md`). Because the nav is `md:hidden`, `--nav-h` naturally resolves to
-  `0px` on desktop (a `display: none` element's `offsetHeight` is 0) — no extra breakpoint logic
-  needed to handle that case.
-- One Zustand store (`useAppStore.js`), not split stores. Generic primitives —
-  `exerciseProgress`, `modulePosition`, `seenIntroCards` — are reused by every step-based module
-  (Walkthrough, Nose, Wheel all use them now; apply to Bottle guide too when built). `Quiz` is a
-  deliberate exception — see below.
-- A module's `finished` state must be **derived directly from the store**
-  (`completedModules.includes(moduleId)`), never kept as separate local `useState` initialized
-  once from the store. This is now the pattern across Walkthrough, Nose, and Wheel — it eliminated
-  a real class of state-desync bugs where the local copy silently went stale. Use this pattern for
-  Bottle guide's completion flag too.
-- `unmarkModuleComplete` (symmetric with `markModuleComplete`) backs every module's "Start over"
-  button — same button name across modules with a completion state, by design. **Walkthrough is now
-  the deliberate exception**: it has no "Start over" button (removed — see below) and completes
-  automatically, so `unmarkModuleComplete` is unused there. Nose and Wheel still use the button.
-- **Walkthrough-specific: `stepsViewed` store field** tracks which step ids a user has actually
-  dwelt on for 3+ seconds (`markStepViewed`/`getStepsViewed`/`resetStepsViewed`) — order-independent,
-  so jumping around the step scale still counts correctly. Once all step ids are present, the module
-  **auto-completes** (`markModuleComplete` fires from a `useEffect`, no button, no explicit tap).
-  This is a deliberate, scoped exception to the "no auto-advancing, timed UI" rule below — the timer
-  only gates *completion*, it never advances the user between steps or content on its own; the user
-  still taps Next/Previous or the step scale to navigate at all times. Don't generalize this pattern
-  to other modules without re-confirming — Nose/Wheel/Bottle use a different, exercise-toggle-based
-  completion model that doesn't need it.
-- **`src/utils/moduleProgress.js`** (`getModuleProgress(moduleId, store)`) is the one place that
-  normalizes each module's differently-shaped internal progress tracking (Walkthrough's
-  `stepsViewed` array, Nose/Wheel/Bottle's `exerciseProgress` with different key prefixes) into a
-  common `{ done, total }` shape, or `null` for modules with no fixed step count (Regions). Used by
-  Learn's directory list to show a `CircularProgress` ring ("X steps to go") for in-progress
-  modules — a third state between the "start here"/"new" badge and the "Done" badge. Extend this
-  file's switch statement, not Learn.jsx directly, if a new module needs the same indicator.
-- **Quiz is deliberately excluded from `completedModules`, from `LESSON_MODULES` on Home, and from
-  `MODULE_IDS` in Learn.jsx.** It's treated as a standalone, infinitely-replayable feature ("more
-  entertainment than curriculum" — Marina's framing), not a lesson. Its own `quizHighScore` /
-  `setQuizHighScore` store fields (present since the store was first built, unused until Quiz was
-  actually implemented) are what persist its best score. Its route stays at `/learn/quiz` and still
-  works — it's just not listed in Learn's directory anymore. **If this looks like an inconsistency,
-  it isn't — do not re-integrate Quiz into Lessons tracking.** Full reasoning in PROJECT_MEMORY.md §23.
-- No auto-advancing, timed UI anywhere in the app — every module, Quiz included, requires an
-  explicit tap to proceed *between* steps/questions. The very first prototype auto-advanced Quiz
-  questions on a timer; the real build deliberately does not, to stay consistent with every other
-  module. **Scoped exception: Walkthrough's completion** (not navigation) is timer-gated — see the
-  `stepsViewed` note above. The distinction that keeps this consistent with the rule's intent: the
-  timer never moves the user anywhere or changes what's on screen; it only unlocks a state
-  (all-steps-viewed) that the user already controls by choosing when to move on themselves.
-- Bump the `persist` version number whenever the store shape changes in a breaking way.
-- Demo/mock data lives in `src/data/`, strictly separate from `src/services/` (real API calls).
-  Mock data must match the real API's output JSON shape exactly, so swapping to live AI is a
-  near-zero-diff change. Mark temporary code with `// Real AI version (uncomment when ready)`.
-- i18n: `en.json` is the master key structure; `ru.json` must always mirror it structurally, even
-  while untranslated. Add new UI strings to both files, same key path, same commit. AI-generated
-  Planner content uses a different mechanism entirely (`lang` param passed to Claude directly via
-  `services/ai.js`) — don't conflate the two translation systems.
-- Learn sub-modules live as standalone files in `src/pages/learn/`: `Walkthrough.jsx`, `Nose.jsx`,
-  `Wheel.jsx`, `Quiz.jsx`, `Regions.jsx`, `Bottle.jsx` are all built now — **no placeholder Learn
-  modules remain.** Not inlined in `Learn.jsx`.
-- Region/grape reference content lives in `src/data/regions.js` — same `src/data/` convention as
-  `samplePlans.js`, structured data only, no component logic. See "Regions module" section below
-  for the selection system and conventions specific to this data.
-- First Bottle Guide's wine-type content lives in `src/data/bottleGuide.js`, same `src/data/`
-  convention — structured data only, no component logic. See "First Bottle Guide" section below
-  for its selection principle and metric-units convention.
-- Module id used identically (lowercase, no hyphens) across `src/constants/modules.js`, router
-  paths, and i18n `modules.*` keys. **`src/constants/modules.js` (`LEARN_MODULES`) is now the single
-  source of truth** — `Home.jsx`'s lesson tile and `Learn.jsx`'s directory list + nested `<Routes>`
-  all derive from it; don't hand-add a module id back into either file separately. To add a new
-  Learn module: add one entry to `LEARN_MODULES`, register its component in `Learn.jsx`'s
-  `MODULE_COMPONENTS` map, and add its `modules.<id>.label/.sub` keys to both i18n files — that's
-  the whole checklist. (Quiz is the intentional exception to this alignment — see above; it isn't
-  in `LEARN_MODULES` and its route is still hand-written in `Learn.jsx`.)
-- CSS custom properties in `index.css` `:root`, referenced via Tailwind arbitrary values
-  (`text-[var(--forest)]`), not Tailwind theme config extension.
-- Share functionality (Home's share button) uses `navigator.share()` where available, falling back
-  to clipboard copy with a brief confirmation elsewhere. This is the established pattern for any
-  future share feature — reuse it, don't invent a new mechanism.
-
-## Regions module — selection system & conventions
-Built as the 5th Learn module (numeral V). Full research/verification trail (sources per fact,
-alternate systems considered) lives in a standalone planning document that is **not in this repo**
-— ask Marina for it if deeper source-checking is ever needed; don't assume the facts in
-`regions.js` are unsourced just because the citations aren't inline in code.
-- **Selection system: Grape-First.** Regions were chosen by starting from grapes that matter (verified
-  against OIV's official variety-distribution data and Kym Anderson's academic dataset), then
-  attaching each grape to its home region — not the reverse. Three other systems (Market Reality,
-  Category Coverage, plain curation) were explicitly considered and rejected; don't re-litigate this
-  choice without a real reason, but the reasoning is fully documented in the external planning doc.
-- **27 regions** (originally 26, 19 Old World + 7 New World; grew to 27 when `tuscany-white` was
-  added for Ugni Blanc/Trebbiano — see PROJECT_MEMORY.md §30) — this grew organically from an
-  original curated ~10, each addition driven by a specific gap (a missed grape, a broken "Compare
-  to" pairing, a direct request like "we missed Prosecco/Chile/Riesling"), not scope creep for its
-  own sake. Don't assume this number is "the curated set" in the original small sense — it's a
-  considered, larger scope, and don't assume 26 is still current either.
-- **Tiers (1/2/3) are a suggested order, never a gate.** Every region is tappable at any time,
-  consistent with the "no judgment, no locking" principle already established for Wheel/Nose. Do
-  not add locking/gating logic to "match" the tier concept — that would contradict why it exists.
-- **"Compare to" is only used where genuinely earned** (same grape confirmed via DNA/history, or a
-  direct historical/myth-bust connection) — roughly half the regions stand alone by design. Resist
-  the urge to force a pairing onto every region "for completeness"; a weak invented comparison was
-  explicitly rejected in favor of leaving some regions standalone.
-- **Sources are internal-only, not shown in the app UI** — explicit decision, matching how Nose
-  Training already handles its WSET/CMS backing (stated confidently on-screen, cited nowhere
-  visible). Don't add a "Sources" footer or citations to the Regions UI without re-confirming this.
-- **Classification decoder is a distinct content type, not a region** — reference material (what
-  AOC/DOC/DOCG/DO actually mean), gold-accented like the app's existing "tip" styling rather than
-  the white region cards, and deliberately excluded from the region explore/progress count.
-- **"Regions and Grapes" — DONE, shipped and live-tested.** The module hero changed from "Old World,
-  New World, at a glance" to "Every bottle has a story" — a view-agnostic eyebrow that works equally
-  for exploring either regions or grapes. Navigation merged Old World/New World buttons into one
-  "Regions" button; Old World/New World became a filter chip row (All/Old World/New World, only
-  visible in Regions view). Grapes view shows the same design as before with a separate progress
-  scale that respects the active grape-type filter. `Regions.jsx` has a real third toggle mode,
-  "Grapes," implemented as its own `viewMode` state (`'regions' | 'grapes'`), not a third `world`
-  value — a grape has no `tier`/`world`, so the existing region-filtering logic was left completely
-  untouched. It rides on the existing `regions` module completion state via `jumpTo()`/
-  `jumpToGrape()`-style cross-navigation — no new progress/store field, no second "Complete Grapes ✓"
-  button. All 27 grapes (`src/data/grapes.js`) render as a colour-coded tile grid (red/white/sparkling,
-  via a real `grapeType` field), with a filter chip row and an inline detail card per tapped tile.
-  RegionCard "Compare to" button now shows the target region's name first (bold), then the explanation
-  on a separate line. RegionCard second-line text (country · grapes) expands to full width when the
-  card is open (whitespace-normal instead of truncate). Every one of the 27 grapes has a real anchor
-  (see PROJECT_MEMORY.md §29's correction, and §30 for Ugni Blanc/Trebbiano's Tuscany anchor).
-  Full build account and bugs caught during: PROJECT_MEMORY.md §32–34.
-
-## First Bottle Guide — content, structure & conventions
-Built as the last remaining Learn module, completing the original 5-module curriculum. Content
-in `src/data/bottleGuide.js` (`WINE_TYPES`), sourced from sommelier-consensus beginner picks, WSET,
-and production-method sources (see research trail in this session's chat history if ever needed —
-no separate external doc exists for this module, unlike Regions).
-- **Four wine types, not one bottle**: red, white, sparkling, and fortified — deliberately not
-  "recommend one wine" as the module's placeholder-era name might suggest. The pedagogical point is
-  comparison across all four structural axes (tannin vs. acid, still vs. mousse/dosage, and
-  fortified's oxidative character + higher ABV), matching the app's "comparison over identification"
-  principle. Don't reduce this back to a single-bottle recommendation.
-- **Each type picks the single most beginner-forgiving example, not the most famous/expensive one**:
-  Pinot Noir (lowest common tannin), Pinot Grigio/off-dry Riesling (minimal oak/skin contact),
-  Prosecco/Cava (Charmat method — fresher, cheaper, gentler than Champagne's autolytic complexity),
-  dry Fino/Amontillado Sherry (lower-ABV end of fortified, ~15–17% vs. Port's up to 22%, and sold in
-  normal wine bottles rather than liqueur-store-only). This mirrors Regions' "accessible over
-  prestigious" reasoning — don't swap in a more "impressive" example without discussion.
-- **All measurements are metric — °C for temperature, ml for pour size — throughout this module**,
-  by explicit instruction, unlike some of the app's other sourced material which originated in °F.
-  Any future edits to `bottleGuide.js` should stay metric; don't reintroduce Fahrenheit.
-- **Glass-switcher interaction, not accordion cards, not a swipe-through story.** Four glass icons
-  (tinted per type) act as a segmented control: tapping one immediately shows that type's full
-  detail panel below — no second "open to see" tap, no separate flight-building step. Tapping a
-  different glass swaps the panel in place. This is the *second* iteration of this module's
-  interaction — the first build used a "build your flight" picker (pick multiple types, each
-  rendering as an accordion card) — replaced after Marina's explicit feedback that the extra
-  open-to-see tap felt like unnecessary hamburger-menu-style stacking, not native/app-like. Don't
-  reintroduce a picker-then-accordion two-step without revisiting that feedback.
-- **No "Complete module" button.** Removed deliberately — with the accordion/flight-picking gone,
-  tapping a button after already exploring all 4 types had no meaningful action left to perform.
-  The module now **auto-completes** (`markModuleComplete('bottle')` fires automatically) the moment
-  all 4 types have been tapped at least once, keeping it counted in Home's lesson tally and keeping
-  "Start over" meaningful, without a pointless extra tap. If a future module ever considers adding a
-  "Complete" button, ask first whether the action is actually meaningful or just ceremonial.
-- **Tasting order (sparkling/white → red → fortified last)** is real, sourced data (the `order`
-  field in `bottleGuide.js`) but is informational only now — no code sorts by it. The glass row's
-  fixed left-to-right layout already matches this order, which is why no separate sorting logic
-  exists; don't add one back without a reason beyond "restore the old flight-ordering behavior."
-- **Opens directly on the first type's detail card (Sparkling), not an empty "tap a glass"
-  placeholder.** `activeId` defaults to `WINE_TYPES[0].id` rather than `null` — action before
-  theory, no wasted first tap. The first card is marked explored on mount via a `useEffect` (not
-  only on tap), matching `seenIntroCards`' "seen on mount, not just on dismiss" convention used
-  elsewhere. The hint line above the glasses adapts to progress ("Tap the other glasses to see how
-  each one is different" → "You've seen all four — tap any glass to revisit it").
-- **Food-pairing hints tag a `mode` (complement or contrast)** — the one shared principle every
-  hint is an example of (matching intensity/flavour vs. using opposing qualities to balance each
-  other), stated once conceptually rather than as four disconnected facts. Reuse this
-  complement/contrast framing for any future pairing content elsewhere in the app.
-- **Serving-temp and pour-size callouts are new factual content this app didn't have anywhere
-  before** (e.g. fortified's smaller 60–90ml pour, sparkling's 6–8°C) — genuinely useful, sourced,
-  not filler.
-
-## UX principles (apply to every current and future learning module)
-- Action before theory — exercises open with "do this," not "here's why."
-- It's a workout, not a test — no wrong answers, no judgment on subjective sensory perception.
-- Comparison ("smell A vs B") over identification ("name this") wherever possible.
-- Cited authority (WSET, CMS, Jancis Robinson, peer-reviewed olfactory science), delivered lightly —
-  never academic-sounding. Describe the sensory experience, not the underlying mechanism.
-- Encourage, don't lecture. Milestone framing over streaks/gamification.
-- Deferred to V2, don't build without revisiting: streaks, push notifications, stats dashboard.
-
-## Established interaction patterns — reuse, don't reinvent
-- Difficulty = dots with a text label, not stars (stars read as a quality rating).
-- Completion = explicit "Mark done"/"Done" text button, not an icon-only checkbox. **Walkthrough is
-  the deliberate exception** — it auto-completes once all steps are viewed (3+ second dwell each,
-  any order), no button at all. See Architecture conventions above.
-- Finishing a module = an inline notice near the top of the still-fully-interactive page, never a
-  separate full-page takeover that hides the module's content. All three curriculum modules
-  (Walkthrough, Nose, Wheel) follow this; Quiz doesn't need it (see Architecture conventions above).
-- "Start over" = the standard name and behavior for resetting a finished module back to its
-  first-open state (un-completes it, clears its own progress keys only, never touches other
-  modules' progress). Used by Nose and Wheel — don't introduce a different word for the same action
-  in a future module. **Walkthrough is the deliberate exception: no "Start over" button** — since it
-  auto-completes with no explicit "done" action either, there's no matching "undo" action to offer.
-- One-time intro/memo cards: expanded on genuine first visit, collapsed thereafter, marked seen
-  on mount (not just on dismiss) via `seenIntroCards`.
-- Any multi-step module's current position must persist across refresh via `modulePosition`,
-  keyed by module id — not local component state.
-- **Demo/curated-content pickers use one-tap-to-result**, not a fill-a-form-then-submit flow.
-  Established by Planner's scenario picker: tapping a curated option shows its result immediately
-  (no separate "Generate" click), with the tapped option visually marked (border + checkmark, not
-  just a color change). Reuse this for any future "pick from a curated set" feature.
-- **A feature that exists in code but isn't available yet is shown, not hidden** — visibly disabled
-  (muted colors, `disabled` attributes, `pointer-events-none`) with a "Coming soon" tag, rather than
-  removed from the UI or deleted from the code. Planner's custom free-text form follows this after
-  the scenario picker replaced it as the primary path — the old `matchSamplePlan`/`generate()` logic
-  is kept fully wired, just inactive, so re-enabling later is a small diff, not a rebuild.
-- **Cross-referencing between pieces of content is a real tap, not just a text mention.** Regions'
-  "Compare to" and any future equivalent should actually navigate/scroll to the referenced item when
-  tapped, established via Regions jumping between Old World/New World and scrolling to the target.
-- **Mobile-first, without exception — no desktop-specific layouts** (sidebars, multi-column detail
-  panes, hover-driven interactions) for any new section. Desktop keeps working via the existing
-  centered, capped-width container, not its own layout treatment. Full reasoning, including two
-  rejected wrong turns (a top tab bar, then a full desktop sidebar) that this rule exists to
-  prevent repeating, in `MOBILE_LAYOUT_CONVENTION.md`.
-- **"Wide screen" means a big phone, not a wide monitor** — large-screen smartphones (iPhone Pro
-  Max/Galaxy Ultra class, ~6.5"+), not laptops. The concern there is reach, not space. Confirm this
-  interpretation explicitly if a future request is ambiguous about "wide screen."
-- **Any new bottom-anchored control docks above the global bottom nav, never competes with it.**
-  Read the nav's real rendered height via `var(--nav-h)` (see Architecture conventions above)
-  rather than guessing a pixel value. Never introduce a second independent `fixed bottom-0`
-  element, and never hide/replace the global nav from a section-level component.
-- **The validated pattern for choosing from a small (3–5) curated set on mobile: a horizontal
-  single-select chip row, docked above the global nav, one-tap-to-result** — not a bottom sheet
-  (extra open-tap, documented back-navigation confusion) or a top tab bar (hardest-to-reach zone).
-  Planner's mobile scenario picker is the reference implementation — reuse this shape for any
-  future section needing the same kind of choice. Full pattern detail and research basis in
-  `MOBILE_LAYOUT_CONVENTION.md`.
-- **For a screen surfacing several *different-typed* destinations at once (not a single curated
-  set to choose from): a bento-style grid, where tile size itself carries hierarchy** — the
-  destination that matters most gets the largest tile, peers stay equal-sized, anything genuinely
-  lighter-weight can shrink to a slim strip. Home's dashboard (Lessons/Plan/Journal/Quiz) is the
-  reference implementation. Different job from the chip-row picker above — don't reach for one
-  where the other fits; see `MOBILE_LAYOUT_CONVENTION.md` §7 for the full distinction and
-  `PROJECT_MEMORY.md` §23 ("Home dashboard becomes a bento layout") for how it was chosen over the
-  alternative (an editorial-hero treatment) considered alongside it.
-
-## Wheel — now a two-ring design, not a single pie
-Rebuilt from a flat 6-wedge pie into a two-ring wheel: inner ring is the 6 aroma families (same
-colors as before, unchanged), outer ring is all 15 subcategories, each outer wedge sized
-proportionally to how many aromas its parent family has (Fruit's 5 vs. everyone else's 2, visible
-at a glance). Tapping the outer ring jumps straight to that specific aroma's detail — tapping the
-inner ring still opens the family for browsing multiple aromas, unchanged from before. The center
-hub shows dynamic text reflecting whatever's currently selected, rather than a static label. Outer
-wedges carry short name labels (first word only, same truncation convention as the inner ring).
-
-## Planner — demo scenarios removed
-Demo scenario pickers (both desktop chip row and mobile fixed bar) were removed entirely. The custom
-form is now the only UI presented, shown as disabled with "Coming soon" message, so the full form
-remains visible and conceptually clear even though nothing currently responds to input. This
-makes the future enabling a trivial change — just remove the `opacity-50 pointer-events-none` classes.
-Spacing reduced between hero and form (`mb-6` → `mb-2` on hero; `py-12` → `py-4` on empty state).
-
-## Journal — edit entries added
-Each journal entry now has an "Edit" button (visible on hover, alongside "Remove"). Clicking "Edit"
-populates the form with the entry's data, changes the form title to "Edit wine", and shows a
-"Cancel edit" button. The save function uses `updateJournalEntry` from the store (already existed,
-never used until now) to modify entries in-place. Follows the established pattern of "one-tap-to-edit"
-and reuses the same save flow as adding new entries.
-
-## Known issues / gaps (verified against code)
-
-**Fixed since this file was first written — verified, not assumed:**
-- ~~Icons likely broken app-wide~~ — **confirmed true, then fixed.** `ti ti-*` (Tabler Icons)
-  classes were used throughout with no icon stylesheet/webfont ever loaded — every icon on every
-  screen was rendering invisible. Fixed by installing `@tabler/icons-webfont` via npm and importing
-  `tabler-icons.css` in `index.css` (bundled locally through Vite's own asset pipeline, not an
-  external CDN link — deliberate, given this project's documented caution about third-party CDN
-  reliability, especially for Russia accessibility). Verified post-build: 5,175 icon rules compiled
-  into the output CSS with correct unicode content values, and the actual font files (woff2/woff/ttf)
-  present in `dist/assets/`. Adds real weight — the compiled CSS holds rules for the *entire* icon
-  library, not just the ~30 icons this app actually uses. A worthwhile future optimization: subset
-  to only the icons actually referenced, rather than shipping the full set.
-- ~~PWA manifest icons don't exist~~ — **confirmed true, then fixed.** `vite.config.js` referenced
-  `/icon-192.png` and `/icon-512.png`; neither existed in `public/`. The two SVGs that *did* exist
-  there (`favicon.svg`, `icons.svg`) turned out to be unrelated generic starter-template leftovers
-  (purple branding, social-media icon symbols — nothing to do with Palate), so they weren't
-  rasterized. Generated simple, genuinely on-brand placeholder PNGs instead (forest-green
-  background, gold wine-glass silhouette) at both required sizes — a real, working icon rather
-  than a broken reference, though still a simple placeholder worth a proper design pass eventually.
-- ~~Home's "Plan a tasting" tile icon was invisible~~ — **confirmed true, then fixed.** The tile used
-  `ti-wine`, which does not exist anywhere in Tabler's icon set — confirmed by grepping the actual
-  compiled `tabler-icons.css`, not by assumption. This is the exact same *class* of bug as the
-  app-wide icon issue above (an icon class referenced that was never real), just a single isolated
-  instance that slipped in later. Fixed to `ti-glass` (verified real). **General lesson: when adding
-  or reviewing any `ti-*` class, grep it against the actual compiled CSS in
-  `node_modules/@tabler/icons-webfont/dist/tabler-icons.css` before trusting it renders — guessing
-  a plausible-sounding Tabler name is exactly how this bug happened the first time.**
-- ~~Regions module never click-tested live in browser~~ — **confirmed the code logic was correct,
-  then Marina click-tested live and confirmed it passes.** All 26 regions explorable, "Compare to"
-  navigation (verified Bordeaux ↔ Napa, a genuinely reciprocal pairing) works, Complete module /
-  Start over both behave correctly, Classification Decoder opens as its own card. No longer an open
-  item — Regions is fully shipped and verified, not just build/lint-clean. (Historical note: this
-  entry predates the region count growing to 27 and the Grapes toggle being added — see the next
-  entry and PROJECT_MEMORY.md §32 for the current state.)
-- ~~Regions.jsx's third "Grapes" toggle mode was research-complete but code-not-started~~ —
-  **built, live-tested via a real headless-browser session driving the actual dev server, not just
-  read.** All 27 grapes render as a colour-coded tile grid, filter chips work, tapping a tile opens
-  an inline detail card, grape↔grape and grape→region cross-navigation both confirmed working with
-  real clicks and screenshots. Full account, including a real Tailwind-arbitrary-value bug caught
-  and fixed during the build (interpolated class names like `` `bg-[var(--${type}-grape)]` `` never
-  actually generate CSS — Tailwind's JIT scans for literal strings — fixed via static per-type
-  lookup objects instead): PROJECT_MEMORY.md §32.
-- ~~Module id/route/i18n-key alignment had no single source of truth~~ — **fixed.** Added
-  `src/constants/modules.js` (`LEARN_MODULES`); this had already caused a real bug (`regions` was
-  missing from Home.jsx's lesson tile, undercounting "X of Y complete"). See the Architecture
-  conventions note above for how to add a module now.
-- ~~First Bottle Guide was the last remaining "Coming soon" placeholder Learn module~~ — **built.**
-  Covers red/white/sparkling/fortified via a "build your flight" glass picker; see the First Bottle
-  Guide section above for the full content/UX rationale. **No placeholder Learn modules remain —
-  the original 5-module curriculum (Walkthrough, Nose, Wheel, Bottle, Regions) is now fully built.**
-  Not yet click-tested live in browser by Marina — same verification step Regions needed, still
-  pending here.
-
-**Still open:**
-- `src/App.css` is unused Vite-scaffold leftover, not imported anywhere — safe to delete.
-- Anthropic API billing not yet set up — Planner is currently in demo mode until resolved. This is
-  the single most consequential pending item. **The demo-mode mechanism changed this session**: the
-  primary path is now a one-tap scenario picker (5 curated plans, instant result, no form) rather
-  than the original free-text-plus-keyword-matcher flow. The old form still exists in the code,
-  visibly disabled with a "Coming soon" tag, `matchSamplePlan`/`generate()` kept fully wired but
-  unreachable — re-enabling it later (or swapping in live AI) doesn't require rebuilding it.
-- Russian locale (`ru.json`) is structurally complete but 100% untranslated placeholder English
-  (this includes `walkthrough.*`, added when Walkthrough got real i18n support — see below).
-- `Nose.jsx`, `Wheel.jsx`, `Quiz.jsx`, `Regions.jsx`, and `Bottle.jsx` still bypass i18n entirely
-  (hardcoded English strings, not `t()` calls) — translating `ru.json` alone won't localize these
-  five pages. **`Walkthrough.jsx` is now the exception — fully wired to `t()` calls**, done as part
-  of its palette/completion-logic refactor (PROJECT_MEMORY.md §24). `Bottle.jsx` bypasses i18n
-  deliberately, matching its still-untranslated siblings; the wine-type content in `bottleGuide.js`
-  is English-only demo-style content, same reasoning as `samplePlans.js`/`regions.js` — not an
-  oversight to "fix" by adding i18n. Walkthrough should be the template for converting the
-  remaining five modules, not a one-off.
-- 12 hardcoded hex literals across `Wheel.jsx`, `Nose.jsx`, `Quiz.jsx`
-  don't use `var(--token)` and were NOT updated by the Palette v1.1 rollout — see
-  Design system section above and the backlog for the judgment-call brief on fixing these.
-  `Walkthrough.jsx`'s 18 were fixed as part of the same refactor mentioned above (0 remain there).
-  (Originally 19 across 5 files; `Home.jsx`'s one instance is fixed — see PROJECT_MEMORY.md §23.)
-- `Difficulty` and "Mark done"/"Start over" button styling still live duplicated inside individual
-  module files rather than as shared `src/components/ui/` components, despite the pattern now
-  being proven across three modules. **One related piece was extracted, not this one**:
-  `CircularProgress` (the "X steps to go" ring on Learn's directory list) is a real shared
-  `src/components/ui/` component, added alongside `getModuleProgress` — see PROJECT_MEMORY.md §25.
-  `Difficulty`/Mark-done/Start-over extraction is still its own separate, not-yet-done task.
-- **Decided, not yet built: Wheel gets two new top-level aroma families, Vegetative and
-  Chemical** (alongside the existing Fruit/Earth/Oak/Floral/Spice/Other), surfaced while
-  researching Grapes-toggle content — real grape markers like green bell pepper, cut grass, and
-  Riesling's aged-petrol note had no clean home in the current 6 and were defaulting to "Other."
-  IP-clearance checked first (the two new names/concept, matching two of the 12 categories in Ann
-  Noble's professionally-established Wine Aroma Wheel, are not protectable; her specific diagram
-  and descriptor list are, and are not being copied). Real cost: wheel geometry changes (6→8
-  families affects the proportional outer-ring sizing), two new design-system colour tokens
-  needed, real subcategory content to draft for both, and this overlaps the already-open
-  hardcoded-hex-literal backlog item below since it touches `Wheel.jsx`'s family colour map. Needs
-  the standard "preview first, or build straight?" check before starting, same as the Wheel
-  two-ring rebuild and Home bento redesign each got. Full reasoning, the IP-clearance findings,
-  and the itemized build scope: PROJECT_MEMORY.md §27.
+---
 
 ## Working with Marina
-- Non-developer (analyst). Any terminal/technical instructions must be plain, step-by-step, with
-  explicit "what you should see" confirmations — never assume CLI familiarity.
-- Before building anything new or structurally significant (new component, new layout), ask
-  "preview first, or build straight?" Small copy/bug fixes don't need this check.
-- She often brings external specs/critiques (sometimes from another AI) and wants a genuine
-  pros/cons/verdict, not automatic deference either way — including pushing back where warranted.
-- Wants honest counterarguments when endorsing her own decisions, not just agreement.
-- Cost-conscious (no paid API account currently) but treats it as temporary — design demo
-  fallbacks that upgrade cleanly, don't compromise real design because of it.
 
-For full history, rejected alternatives, unresolved decisions, and reference facts
-(repo URL, live site, hosting rationale, roadmap vs. original vision), see PROJECT_MEMORY.md.
+- **Non-developer** (analyst by profession). Instructions must be plain, step-by-step, with explicit "what you should see" confirmations — never assume CLI familiarity.
+- **"Preview first, or build straight?"** — for any new component/layout: ask before building. Small copy/bug fixes don't need this.
+- **Wants honest comparison**, not automatic deference. If she brings external specs/mockups, give genuine pros/cons/verdict, including pushing back where warranted.
+- **Cost-conscious** (no paid API account currently), but treats this as temporary — design demo fallbacks that upgrade cleanly, don't compromise real design because of it.
+- **Wants honest counterarguments** when endorsing her own decisions, not just agreement.
+- **Very plain instructions:** Explain as if for someone unfamiliar with CLI. Include explicit confirmations of "what you should see."
+- **Bilingual EN/RU support is a real requirement**, not nice-to-have — Russian users are a genuine target audience.
+- **Hosting must stay accessible from Russia** — this shaped infrastructure choices (Yandex Cloud, not Netlify/Vercel).
+
+---
+
+## Known Open Items
+
+1. **Anthropic API billing not set up** — Planner stays in demo mode until resolved. This is the single most consequential pending item.
+2. **Russian locale (`ru.json`)** — structurally complete, 100% untranslated placeholder English.
+3. **`Quiz.jsx`, `Regions.jsx`, `Nose.jsx`, `Bottle.jsx`** — still bypass i18n (hardcoded English). **`Walkthrough.jsx` and `Wheel.jsx` are exceptions** — both fully wired to `t()` calls. Template in `Walkthrough.jsx` for converting the remaining three.
+4. **~2 hardcoded hex literals** remain in Wheel (intentionally distinct origin badge backgrounds and SVG strokes; no token equivalents per decision in 2026-09-06 audit). Nose and Quiz unchanged from v1.1 rollout. Judgment calls documented in `PROJECT_MEMORY.md`.
+5. **`Difficulty` buttons** — still duplicated inside individual module files, not extracted to shared UI component. ("Mark done"/"Start over" extracted to `ModuleCompletionButton.jsx` as of 2026-09-06.)
+6. **`src/App.css`** — unused Vite scaffold, safe to delete.
+7. **Journal features not built:** search/filter, palate-over-time tracking, print/export.
+8. **Planner features not built:** free-text form (wired but disabled, "Coming soon").
+9. **Wheel expansion:** Vegetative and Chemical aroma families planned as additions (6→8 families), not yet built. Needs "preview first or build straight?" decision before starting.
+10. **DNS/HTTPS monitoring** for Yandex Cloud hosting — parked, Marina will decide the approach later (GitHub Actions workflow vs. free-tier monitor).
+
+---
+
+## Git & Deploy
+
+- **Deploy:** Push to `main` → GitHub Actions CI/CD builds and syncs `dist/` to `s3://palatelearn.ru/`.
+- **GitHub repo:** `github.com/marinaTur/palate`
+- **Live site:** `palatelearn.ru` (primary), `palatelearn.com` (redirects)
+- **Local path:** `~/My_PROJECTS/palate/palate-site`
+- **Never force-push** to main for routine updates.
+- **Never commit GitHub tokens, API keys, or credentials** to the repo.
+- **Never delete `.git` folder or `git init` an already-initialized repo.**
+
+---
+
+## References
+
+| Item | Value |
+|---|---|
+| Project vision | Wine tasting education (not recommendation engine or cocktail app) |
+| Audience | Casual wine drinkers wanting to build confidence; avoid both absolute beginners and professionals |
+| Owner | Marina Turkina |
+| Primary language | English |
+| Secondary language | Russian (structure ready, untranslated) |
+| Modules shipped | Walkthrough, Nose, Wheel, Bottle, Regions (all 5 complete) |
+| Design principle | Action before theory; no wrong answers; comparison over identification; cited authority, lightly delivered |
+| Typography | Cormorant Garamond + Inter |
+| Palette | Forest Green + Burgundy + Gold + Cream (v1.1) |
+
+---
+
+## How to Update These Docs
+
+- **Changes to architecture/conventions/policies:** update `CLAUDE.md` in the same commit.
+- **Changes to product decisions/history/rationale:** update `PROJECT_MEMORY.md` in the same commit.
+- **Before ending work on non-trivial changes:** confirm both docs match current code state. If they don't, fix them as part of "done."
+- **Never delete superseded sections** in `PROJECT_MEMORY.md` — append a "now superseded by X" note instead (history is itself important knowledge).
+- **When two sections conflict, the most recently added one wins** — but conflicts should be rare if docs are updated as-you-go.

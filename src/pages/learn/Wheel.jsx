@@ -1,98 +1,100 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store/useAppStore'
+import { ModuleCompletionButton } from '../../components/ModuleCompletionButton'
 
 // ── Data ─────────────────────────────────────────────────────────
 
 const ORIGIN_INFO = {
   primary: {
-    label: 'Primary',
-    color: '#264D3B',
+    labelKey: 'wheel.originPrimary',
+    color: 'var(--forest)',
     bg: '#E4EDE0',
-    desc: 'From the grape itself — fruit, floral, herbal notes. This is what you catch on the first sniff, before swirling.',
+    descKey: 'wheel.originPrimaryDesc',
   },
   secondary: {
-    label: 'Secondary',
+    labelKey: 'wheel.originSecondary',
     color: '#7A5230',
     bg: '#F0E6DC',
-    desc: 'From winemaking — oak, toast, vanilla, butter. Released and amplified once you swirl.',
+    descKey: 'wheel.originSecondaryDesc',
   },
   tertiary: {
-    label: 'Tertiary',
+    labelKey: 'wheel.originTertiary',
     color: '#6B4A3A',
     bg: '#EFE6E0',
-    desc: 'From aging — earth, leather, dried fruit, mushroom. Found mostly in mature wines.',
+    descKey: 'wheel.originTertiaryDesc',
   },
 }
 
 const CATEGORIES = [
   {
     id: 'fruit',
-    name: 'Fruit',
+    nameKey: 'wheel.categoryFruit',
     color: '#C0392B',
     origins: ['primary'],
-    intro: 'The most common family in wine — and usually the easiest to spot.',
+    introKey: 'wheel.categoryFruitIntro',
     subcategories: [
-      { name: 'Citrus', descriptors: ['Lemon', 'Grapefruit', 'Lime'], wineConnection: 'Sauvignon Blanc · Riesling' },
-      { name: 'Stone fruit', descriptors: ['Peach', 'Apricot', 'Nectarine'], wineConnection: 'Viognier · Chardonnay' },
-      { name: 'Berry', descriptors: ['Strawberry', 'Raspberry', 'Blackcurrant', 'Blackberry'], wineConnection: 'Pinot Noir · Cabernet Sauvignon' },
-      { name: 'Tropical', descriptors: ['Pineapple', 'Mango', 'Passionfruit'], wineConnection: 'New Zealand Sauvignon Blanc' },
-      { name: 'Dried & cooked', descriptors: ['Raisin', 'Fig', 'Prune', 'Baked apple'], wineConnection: 'Amarone · aged Rioja · Port', note: 'Same fresh-vs-dried shift you trained in Nose Training, Week 2.' },
+      { nameKey: 'wheel.fruitCitrus', descriptorsKey: 'wheel.fruitCitrusDescriptors', winesKey: 'wheel.fruitCitrusWines' },
+      { nameKey: 'wheel.fruitStone', descriptorsKey: 'wheel.fruitStoneDescriptors', winesKey: 'wheel.fruitStoneWines' },
+      { nameKey: 'wheel.fruitBerry', descriptorsKey: 'wheel.fruitBerryDescriptors', winesKey: 'wheel.fruitBerryWines' },
+      { nameKey: 'wheel.fruitTropical', descriptorsKey: 'wheel.fruitTropicalDescriptors', winesKey: 'wheel.fruitTropicalWines' },
+      { nameKey: 'wheel.fruitDried', descriptorsKey: 'wheel.fruitDriedDescriptors', winesKey: 'wheel.fruitDriedWines', noteKey: 'wheel.fruitDriedNote' },
     ],
   },
   {
     id: 'floral',
-    name: 'Floral',
+    nameKey: 'wheel.categoryFloral',
     color: '#B8558A',
     origins: ['primary'],
-    intro: 'Delicate and volatile — usually strongest on the very first sniff, before it fades.',
+    introKey: 'wheel.categoryFloralIntro',
     subcategories: [
-      { name: 'White flowers', descriptors: ['Elderflower', 'Orange blossom'], wineConnection: 'Riesling · Muscat' },
-      { name: 'Rose & violet', descriptors: ['Rose petal', 'Violet'], wineConnection: 'Gewürztraminer · Nebbiolo' },
+      { nameKey: 'wheel.floralWhite', descriptorsKey: 'wheel.floralWhiteDescriptors', winesKey: 'wheel.floralWhiteWines' },
+      { nameKey: 'wheel.floralRose', descriptorsKey: 'wheel.floralRoseDescriptors', winesKey: 'wheel.floralRoseWines' },
     ],
   },
   {
     id: 'herbal',
-    name: 'Herbal & Green',
+    nameKey: 'wheel.categoryHerbal',
     color: '#5A8A3C',
     origins: ['primary'],
-    intro: 'Fresh, sometimes sharp — comes directly from the grape and its leaves.',
+    introKey: 'wheel.categoryHerbalIntro',
     subcategories: [
-      { name: 'Fresh herb', descriptors: ['Mint', 'Basil', 'Thyme'], wineConnection: 'Sauvignon Blanc' },
-      { name: 'Vegetal', descriptors: ['Green bell pepper', 'Grass', 'Asparagus'], wineConnection: 'Sauvignon Blanc · Cabernet Franc' },
+      { nameKey: 'wheel.herbalFresh', descriptorsKey: 'wheel.herbalFreshDescriptors', winesKey: 'wheel.herbalFreshWines' },
+      { nameKey: 'wheel.herbalVegetal', descriptorsKey: 'wheel.herbalVegetalDescriptors', winesKey: 'wheel.herbalVegetalWines' },
     ],
   },
   {
     id: 'spice',
-    name: 'Spice',
-    color: '#B98A3D',
+    nameKey: 'wheel.categorySpice',
+    color: 'var(--gold)',
     origins: ['primary', 'secondary'],
-    intro: 'Some spice comes from the grape itself, some from the oak barrel — this category spans both.',
+    introKey: 'wheel.categorySpiceIntro',
     subcategories: [
-      { name: 'Pepper', descriptors: ['Black pepper', 'White pepper'], wineConnection: 'Syrah / Shiraz · Grüner Veltliner', note: 'This is rotundone — the same compound you trained with in Nose Training, Week 4.' },
-      { name: 'Baking spice', descriptors: ['Cinnamon', 'Clove', 'Vanilla', 'Nutmeg'], wineConnection: 'Oak-aged reds · Rioja' },
+      { nameKey: 'wheel.spicePepper', descriptorsKey: 'wheel.spicePepperDescriptors', winesKey: 'wheel.spicePepperWines', noteKey: 'wheel.spicePepperNote' },
+      { nameKey: 'wheel.spiceBaking', descriptorsKey: 'wheel.spiceBakingDescriptors', winesKey: 'wheel.spiceBakingWines' },
     ],
   },
   {
     id: 'earth',
-    name: 'Earth & Mineral',
+    nameKey: 'wheel.categoryEarth',
     color: '#6B4A3A',
     origins: ['tertiary'],
-    intro: 'Often the sign of an aged wine, or a very specific terroir. Subtle, and easy to miss at first.',
+    introKey: 'wheel.categoryEarthIntro',
     subcategories: [
-      { name: 'Mineral', descriptors: ['Wet stone', 'Flint', 'Chalk'], wineConnection: 'Chablis · Sancerre' },
-      { name: 'Forest floor', descriptors: ['Mushroom', 'Wet leaves', 'Truffle'], wineConnection: 'Aged Pinot Noir · Burgundy' },
+      { nameKey: 'wheel.earthMineral', descriptorsKey: 'wheel.earthMineralDescriptors', winesKey: 'wheel.earthMineralWines' },
+      { nameKey: 'wheel.earthForest', descriptorsKey: 'wheel.earthForestDescriptors', winesKey: 'wheel.earthForestWines' },
     ],
   },
   {
     id: 'oak',
-    name: 'Oak & Toast',
+    nameKey: 'wheel.categoryOak',
     color: '#7A5230',
     origins: ['secondary'],
-    intro: 'Not from the grape at all — this is entirely a winemaking decision, from time spent in barrel.',
+    introKey: 'wheel.categoryOakIntro',
     subcategories: [
-      { name: 'Sweet oak', descriptors: ['Vanilla', 'Coconut', 'Caramel'], wineConnection: 'American oak · Chardonnay', note: 'Same vanilla + cedar exercise from Nose Training, Week 4.' },
-      { name: 'Toasted oak', descriptors: ['Toast', 'Smoke', 'Cedar'], wineConnection: 'French oak · Cabernet' },
+      { nameKey: 'wheel.oakSweet', descriptorsKey: 'wheel.oakSweetDescriptors', winesKey: 'wheel.oakSweetWines', noteKey: 'wheel.oakSweetNote' },
+      { nameKey: 'wheel.oakToasted', descriptorsKey: 'wheel.oakToastedDescriptors', winesKey: 'wheel.oakToastedWines' },
     ],
   },
 ]
@@ -140,10 +142,11 @@ function lightenColor(hex, amt) {
 // ── Sub-components ───────────────────────────────────────────────
 
 function OriginBadge({ origin }) {
+  const { t } = useTranslation()
   const info = ORIGIN_INFO[origin]
   return (
     <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: info.bg, color: info.color }}>
-      {info.label}
+      {t(info.labelKey)}
     </span>
   )
 }
@@ -151,6 +154,8 @@ function OriginBadge({ origin }) {
 // Controlled by the parent (isOpen/onToggle as props, no internal state) so
 // the parent's openSubs array stays the single source of truth.
 function SubcategoryCard({ sub, categoryColor, isOpen, onToggle }) {
+  const { t } = useTranslation()
+  const descriptors = t(sub.descriptorsKey).split(' · ')
   return (
     <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden mb-2">
       <button
@@ -159,24 +164,24 @@ function SubcategoryCard({ sub, categoryColor, isOpen, onToggle }) {
       >
         <div className="flex items-center gap-2.5">
           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: categoryColor }} />
-          <span className="text-sm font-medium text-[var(--ink)]">{sub.name}</span>
+          <span className="text-sm font-medium text-[var(--ink)]">{t(sub.nameKey)}</span>
         </div>
         <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'} text-sm text-[var(--muted)]`} aria-hidden="true"></i>
       </button>
       {isOpen && (
         <div className="px-4 pb-4 border-t border-[var(--border-soft)] pt-3">
           <div className="flex flex-wrap gap-1.5 mb-3">
-            {sub.descriptors.map((d, i) => (
+            {descriptors.map((d, i) => (
               <span key={i} className="text-xs bg-[var(--border-soft)] text-[var(--ink-soft)] px-2.5 py-1 rounded-full">{d}</span>
             ))}
           </div>
           <div className="flex items-start gap-2 mb-2">
-            <span className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide flex-shrink-0 mt-0.5">Find it in</span>
-            <span className="text-sm text-[var(--burgundy)] font-medium">{sub.wineConnection}</span>
+            <span className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide flex-shrink-0 mt-0.5">{t('wheel.findItIn')}</span>
+            <span className="text-sm text-[var(--burgundy)] font-medium">{t(sub.winesKey)}</span>
           </div>
-          {sub.note && (
+          {sub.noteKey && (
             <p className="text-xs text-[var(--forest)] bg-[var(--forest-light)] rounded-lg px-3 py-2 mt-2 leading-relaxed">
-              ✦ {sub.note}
+              ✦ {t(sub.noteKey)}
             </p>
           )}
         </div>
@@ -189,6 +194,7 @@ function SubcategoryCard({ sub, categoryColor, isOpen, onToggle }) {
 
 export default function Wheel() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const {
     markModuleComplete, unmarkModuleComplete, completedModules,
     exerciseProgress, toggleExercise, resetExerciseProgress,
@@ -260,10 +266,10 @@ export default function Wheel() {
 
       <div className="bg-gradient-to-br from-[var(--forest)] to-[var(--forest-dark)] px-5 pt-8 pb-5 md:rounded-b-2xl md:mx-4 mb-6">
         <button onClick={() => navigate('/learn')} className="flex items-center gap-2 text-white/60 hover:text-white text-sm mb-3 transition-colors">
-          <i className="ti ti-arrow-left" aria-hidden="true"></i> Back to lessons
+          <i className="ti ti-arrow-left" aria-hidden="true"></i> {t('wheel.back')}
         </button>
-        <p className="text-xs tracking-[0.1em] text-[var(--gold)] uppercase font-medium mb-2">Explore aromas interactively</p>
-        <h1 className="font-['Cormorant_Garamond'] text-3xl md:text-5xl text-white italic leading-tight">Flavour wheel</h1>
+        <p className="text-xs tracking-[0.1em] text-[var(--gold)] uppercase font-medium mb-2">{t('wheel.eyebrow')}</p>
+        <h1 className="font-['Cormorant_Garamond'] text-3xl md:text-5xl text-white italic leading-tight">{t('wheel.title')}</h1>
       </div>
 
       <div className="px-4">
@@ -276,16 +282,11 @@ export default function Wheel() {
               <i className="ti ti-check text-white text-base" aria-hidden="true"></i>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[var(--ink)] mb-1">You have a vocabulary now.</p>
+              <p className="text-sm font-medium text-[var(--ink)] mb-1">{t('wheel.completeNotice')}</p>
               <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-3">
-                Next time you taste, don't try to find every aroma. Just ask: is this Primary, Secondary, or Tertiary?
+                {t('wheel.completeNoticeSub')}
               </p>
-              <button
-                onClick={startOver}
-                className="text-xs font-medium text-[var(--gold)] border border-[var(--gold)]/40 rounded-full px-3 py-1.5 hover:bg-[var(--gold)] hover:text-white transition-colors"
-              >
-                Start over
-              </button>
+              <ModuleCompletionButton onClick={startOver} label={t('wheel.startOver')} />
             </div>
           </div>
         )}
@@ -293,13 +294,13 @@ export default function Wheel() {
         <div className="grid grid-cols-3 gap-2 mb-6">
           {Object.entries(ORIGIN_INFO).map(([key, info]) => (
             <div key={key} className="rounded-xl px-3 py-3" style={{ background: info.bg }}>
-              <p className="text-xs font-medium mb-1" style={{ color: info.color }}>{info.label}</p>
-              <p className="text-xs leading-snug" style={{ color: info.color, opacity: 0.85 }}>{info.desc}</p>
+              <p className="text-xs font-medium mb-1" style={{ color: info.color }}>{t(info.labelKey)}</p>
+              <p className="text-xs leading-snug" style={{ color: info.color, opacity: 0.85 }}>{t(info.descKey)}</p>
             </div>
           ))}
         </div>
 
-        <p className="text-xs text-[var(--muted)] mb-2">{exploredCount} of {CATEGORIES.length} categories explored</p>
+        <p className="text-xs text-[var(--muted)] mb-2">{t('wheel.progress', { count: exploredCount })}</p>
         <div className="flex gap-1 mb-6">
           {CATEGORIES.map(c => (
             <div key={c.id} className="flex-1 h-0.5 rounded-full transition-all duration-300"
@@ -309,7 +310,7 @@ export default function Wheel() {
 
         <div className="flex justify-center mb-2">
           <svg viewBox={`0 0 ${size} ${size}`} width="290" height="290" role="img" aria-label="Interactive two-ring flavour wheel: inner ring is aroma families, outer ring is specific aromas within each family">
-            <title>Flavour wheel — tap the inner ring for a family, or the outer ring to jump straight to one specific aroma</title>
+            <title>{t('wheel.title')}</title>
             {CATEGORIES.map((cat, i) => {
               const startAngle = i * wedgeAngle
               const endAngle = (i + 1) * wedgeAngle
@@ -330,7 +331,7 @@ export default function Wheel() {
                     style={{ cursor: 'pointer', transition: 'opacity 0.25s ease, stroke-width 0.25s ease' }}
                   />
                   <text x={innerLabelPos.x} y={innerLabelPos.y} textAnchor="middle" dominantBaseline="middle" fontSize="12" fontWeight="500" fill="#fff" style={{ pointerEvents: 'none' }}>
-                    {cat.name.split(' ')[0]}
+                    {t(cat.nameKey).split(' ')[0]}
                   </text>
                   {isExplored && (
                     <text x={innerLabelPos.x} y={innerLabelPos.y + 14} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#fff" style={{ pointerEvents: 'none' }}>
@@ -364,7 +365,7 @@ export default function Wheel() {
                           fill={cat.color}
                           style={{ pointerEvents: 'none' }}
                         >
-                          {sub.name.split(' ')[0]}
+                          {t(sub.nameKey).split(' ')[0]}
                         </text>
                       </g>
                     )
@@ -374,10 +375,10 @@ export default function Wheel() {
             })}
             <circle cx={cx} cy={cy} r={rInner0 - 6} fill="#F7F4EF" stroke="var(--border)" strokeWidth="1" />
             <text x={cx} y={cy - 6} textAnchor="middle" fontSize="12" fontWeight="500" fill="var(--ink)">
-              {active ? active.name.split(' ')[0] : 'Tap a'}
+              {active ? t(active.nameKey).split(' ')[0] : 'Tap a'}
             </text>
             <text x={cx} y={cy + 10} textAnchor="middle" fontSize="12" fontWeight="500" fill="var(--ink)">
-              {active ? (focusedSub ? focusedSub.name : `${active.subcategories.length} aromas`) : 'slice'}
+              {active ? (focusedSub ? t(focusedSub.nameKey) : `${active.subcategories.length} aromas`) : 'slice'}
             </text>
           </svg>
         </div>
@@ -387,12 +388,12 @@ export default function Wheel() {
             <div className="mt-4">
               <div className="flex items-center gap-2.5 mb-2">
                 <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: active.color }} />
-                <h2 className="font-['Cormorant_Garamond'] text-2xl text-[var(--ink)]">{active.name}</h2>
+                <h2 className="font-['Cormorant_Garamond'] text-2xl text-[var(--ink)]">{t(active.nameKey)}</h2>
                 <div className="flex gap-1 ml-auto">
                   {active.origins.map(o => <OriginBadge key={o} origin={o} />)}
                 </div>
               </div>
-              <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-4">{active.intro}</p>
+              <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-4">{t(active.introKey)}</p>
 
               {active.subcategories.map((sub, i) => (
                 <SubcategoryCard
@@ -405,7 +406,7 @@ export default function Wheel() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-[var(--muted)] text-center mt-4 mb-2">Tap the inner ring for a family, or the outer ring to jump straight to one specific aroma and where to find it in real wine.</p>
+            <p className="text-sm text-[var(--muted)] text-center mt-4 mb-2">{t('wheel.tapInstructions')}</p>
           )}
         </div>
 
@@ -414,7 +415,7 @@ export default function Wheel() {
             onClick={completeModule}
             className="w-full mt-6 py-3 rounded-xl text-white text-sm font-medium transition-colors bg-[var(--forest)] hover:bg-[var(--forest-dark)]"
           >
-            Complete module ✓
+            {t('wheel.completeModuleButton')}
           </button>
         )}
       </div>

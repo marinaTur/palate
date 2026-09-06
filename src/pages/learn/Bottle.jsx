@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../store/useAppStore'
 import { Badge } from '../../components/ui'
+import { ModuleCompletionButton } from '../../components/ModuleCompletionButton'
 import { WINE_TYPES, BOTTLE_KEYS } from '../../data/bottleGuide'
 
 // Icon + accent per wine type — verified against the installed
@@ -168,12 +169,7 @@ export default function Bottle() {
               <p className="text-sm text-[var(--ink-soft)] leading-relaxed mb-3">
                 Next time you're at a wine list or a shop shelf, you've got a real feel for what separates these four categories — not just their names.
               </p>
-              <button
-                onClick={startOver}
-                className="text-xs font-medium text-[var(--gold)] border border-[var(--gold)]/40 rounded-full px-3 py-1.5 hover:bg-[var(--gold)] hover:text-white transition-colors"
-              >
-                Start over
-              </button>
+              <ModuleCompletionButton onClick={startOver} label="Start over" />
             </div>
           </div>
         )}
