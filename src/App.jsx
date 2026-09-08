@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { ConsentBanner } from './components/ConsentBanner'
+import { AgeGate } from './components/AgeGate'
 import { useDocumentLanguage } from './hooks/useDocumentLanguage'
 import { useGtmPageview } from './hooks/useGtmPageview'
 import { useYmPageview } from './hooks/useYmPageview'
@@ -40,6 +41,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <AgeGate />
       {/* <GtmPageviewTracker />
       <YmPageviewTracker /> */}
       <Layout>

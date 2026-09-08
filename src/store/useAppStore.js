@@ -11,6 +11,11 @@ export const useAppStore = create(
       // Gates whether GTM/Yandex Metrica scripts ever load — see ConsentBanner.jsx.
       cookieConsent: null,
       setCookieConsent: (choice) => set({ cookieConsent: choice }),
+
+      // 18+ content gate: null (not yet decided) | 'confirmed' | 'declined'.
+      // Blocks the whole site until confirmed — see AgeGate.jsx.
+      ageVerified: null,
+      setAgeVerified: (choice) => set({ ageVerified: choice }),
       markModuleComplete: (module) => set(s => ({
         completedModules: [...new Set([...s.completedModules, module])]
       })),

@@ -273,6 +273,15 @@
       "privacyPolicyLink": "Privacy Policy",
       "accept": "Accept",
       "decline": "Decline"
+    },
+    "ageGate": {
+      "title": "Age confirmation is required to access this site",
+      "message": "This site contains information not recommended for individuals who have not reached the age of majority. The information provided on this site is for informational purposes only and intended for personal use.",
+      "confirm": "I confirm I am 18 or older",
+      "decline": "I am under 18",
+      "declinedTitle": "Access unavailable",
+      "declinedMessage": "This site is only available to visitors who have reached the age of majority.",
+      "leaveButton": "Leave this site"
     }
   }
 }
