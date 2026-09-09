@@ -13,7 +13,7 @@ React 19 + Vite 8 · React Router 7 · Zustand 5 (+persist) · Tailwind 4 · i18
 **Hosting:** Yandex Cloud Object Storage (`palatelearn.ru` primary, `palatelearn.com` redirects)  
 **Icons:** `@tabler/icons-webfont` (bundled locally in `index.css`, not CDN)
 
-**Analytics currently fully disabled (2026-08-31, Marina's explicit call) — GTM, Yandex Metrica, the consent banner, and the Privacy Policy route are all commented out, not deleted. Do not re-enable any of this without her explicit go-ahead.**
+**Analytics (2026-09-09):** Yandex Metrica and cookie consent banner now re-enabled and live. GTM (Google Tag Manager) remains intentionally blocked. Privacy Policy route and page fully implemented and reachable.
 
 ---
 
