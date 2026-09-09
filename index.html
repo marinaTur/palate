@@ -11,19 +11,16 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <!--
-      GTM and Yandex Metrica no longer auto-load here — both now require
-      cookie consent first. See src/utils/loadAnalytics.js and
-      src/components/ConsentBanner.jsx. window.dataLayer/window.ym are
-      declared lazily inside those loaders, not here.
+      Yandex Metrica no longer auto-load here — it requires explicit user
+      cookie consent first. 
     -->
   </head>
   <body>
     <!--
-      No <noscript> tracking fallback here on purpose: both Yandex's <img>
-      ping and GTM's <iframe> fire unconditionally and can't be gated behind
+      No <noscript> tracking fallback here on purpose: Yandex's <img>
+      ping fires unconditionally and can't be gated behind
       consent (there's no JS to check consent state with JS disabled) — so
-      including them would defeat the whole point of gating. The tiny loss
-      of analytics coverage for JS-disabled visitors is the correct trade.
+      including them would defeat the whole point of gating.
     -->
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
