@@ -1,11 +1,5 @@
 import { useTranslation } from 'react-i18next'
 
-// DISABLED 2026-08-31 — Marina turned off analytics for now, and this page's
-// route was commented out in App.jsx alongside it. The content below is
-// intentionally left in place, just unreachable — do not delete or
-// re-enable (uncomment the route in App.jsx / the footer link in Home.jsx)
-// without checking with her first.
-/*
 function EnglishContent() {
   return (
     <>
@@ -38,7 +32,7 @@ function EnglishContent() {
       <p>
         By clicking "Accept" on the cookie/analytics banner shown on your first visit, you
         consent to the processing described in this document — specifically, the analytics data
-        listed in §4 below, processed by Google and Yandex on our behalf as described in §6. This
+        listed in §4 below, processed by Yandex on our behalf as described in §6. This
         consent remains valid until withdrawn: you may withdraw it at any time by clearing your
         browser's local storage for this Site, which resets the banner and stops any further
         analytics collection until you consent again. If you decline or withdraw consent, no
@@ -55,7 +49,7 @@ function EnglishContent() {
       </p>
       <ul>
         <li>
-          <strong>Analytics data (Google Analytics, Yandex Metrica):</strong> pages visited,
+          <strong>Analytics data (Yandex Metrica):</strong> pages visited,
           navigation paths, approximate device/browser type, approximate location (city-level,
           derived from IP address), and on-page interactions (clicks, scroll depth). Yandex
           Metrica's Webvisor feature additionally records anonymized session replays of on-page
@@ -80,14 +74,11 @@ function EnglishContent() {
 
       <h2>6. Order and conditions of processing</h2>
       <p>
-        Analytics data is processed by our sub-processors — Google (Google Analytics) and
-        Yandex (Yandex Metrica) — under their own respective terms of service, for the sole
-        purpose of generating the aggregate/behavioral analytics described above. Google Tag
-        Manager, which the Site also uses, is a delivery mechanism only — it loads the Google
-        Analytics and Yandex Metrica tags but does not itself process or store any data. We do
-        not combine this data with any information that directly identifies you (such as your
-        name or email), because the Site does not currently collect such information from any
-        visitor.
+        Analytics data is processed by our sub-processor — Yandex (Yandex Metrica) — 
+        under their own respective terms of service, for the sole purpose of generating the 
+        aggregate/behavioral analytics described above. We do not combine this data with any 
+        information that directly identifies you (such as your name or email), because 
+        the Site does not currently collect such information from any visitor.
       </p>
 
       <h2>7. Updating, correcting, deleting your data, and your requests</h2>
@@ -101,7 +92,7 @@ function EnglishContent() {
         <li>
           For any other request regarding your personal data — including a request to know what
           data we hold, or to have it corrected or deleted — please contact us at the address
-          below, and we will respond within the timeframe required by applicable law.
+          below.
         </li>
       </ul>
 
@@ -146,7 +137,7 @@ function RussianContent() {
         Нажимая «Принять» в баннере о cookie-файлах и аналитике, который отображается при первом
         посещении, вы даёте согласие на обработку данных, описанную в настоящем документе —
         а именно аналитических данных, перечисленных в §4, которые обрабатываются в наших
-        интересах компаниями Google и «Яндекс» согласно §6. Согласие действует до его отзыва: вы
+        интересах компанией «Яндекс» согласно §6. Согласие действует до его отзыва: вы
         можете отозвать согласие в любой момент, очистив локальное хранилище браузера для этого
         Сайта — это сбросит баннер и прекратит дальнейший сбор аналитических данных до повторного
         согласия. Если вы отклоняете или отзываете согласие, аналитические данные не собираются, а
@@ -162,7 +153,7 @@ function RussianContent() {
       </p>
       <ul>
         <li>
-          <strong>Аналитические данные (Google Analytics, Яндекс.Метрика):</strong> посещённые
+          <strong>Аналитические данные (Яндекс.Метрика):</strong> посещённые
           страницы, маршруты навигации, приблизительный тип устройства/браузера, приблизительное
           местоположение (на уровне города, определяется по IP-адресу), а также действия на
           странице (клики, глубина прокрутки). Функция Вебвизор Яндекс.Метрики дополнительно
@@ -188,12 +179,10 @@ function RussianContent() {
 
       <h2>6. Порядок и условия обработки</h2>
       <p>
-        Аналитические данные обрабатываются нашими субподрядчиками по обработке данных — Google
-        (Google Analytics) и «Яндекс» (Яндекс.Метрика) — в соответствии с их собственными
+        Аналитические данные обрабатываются нашим субподрядчиком по обработке данных — 
+        «Яндекс» (Яндекс.Метрика) — в соответствии с его собственными
         условиями использования, исключительно с целью формирования агрегированной/поведенческой
-        аналитики, описанной выше. Google Tag Manager, который также используется на Сайте,
-        служит только механизмом доставки — он загружает теги Google Analytics и Яндекс.Метрики,
-        но сам не обрабатывает и не хранит данные. Мы не объединяем эти данные с информацией,
+        аналитики, описанной выше. Мы не объединяем эти данные с информацией,
         которая напрямую идентифицирует вас (например, имя или email), поскольку Сайт в настоящее
         время не собирает такую информацию ни от одного посетителя.
       </p>
@@ -210,7 +199,7 @@ function RussianContent() {
         <li>
           по любому другому запросу, касающемуся ваших персональных данных — включая запрос о том,
           какие данные мы храним, а также об их исправлении или удалении, — обращайтесь по адресу,
-          указанному ниже; мы ответим в срок, установленный применимым законодательством.
+          указанному ниже.
         </li>
       </ul>
 
@@ -221,17 +210,8 @@ function RussianContent() {
     </>
   )
 }
-*/
 
-// Stub export while disabled — route is commented out in App.jsx, so this
-// never actually renders, but keeps the module valid if anything still
-// imports it. Restore the block above + this function's real body together.
 export default function PrivacyPolicy() {
-  return null
-}
-
-/*
-function PrivacyPolicyReal() {
   const { i18n } = useTranslation()
   const isRussian = i18n.language?.startsWith('ru')
 
@@ -243,4 +223,3 @@ function PrivacyPolicyReal() {
     </div>
   )
 }
-*/

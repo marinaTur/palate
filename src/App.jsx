@@ -27,33 +27,29 @@ function YmPageviewTracker() {
 export default function App() {
   useDocumentLanguage()
 
-  // Analytics deliberately disabled for now (Marina's call, 2026-08-31) —
-  // GTM/Metrica never load, the consent banner never shows, and the
-  // /privacy-policy route is unreachable. Do not re-enable any of this
-  // (uncomment below) without checking with her first.
-  // const cookieConsent = useAppStore(s => s.cookieConsent)
-  // useEffect(() => {
-  //   if (cookieConsent === 'accepted') {
-  //     loadGtm()
-  //     loadYm()
-  //   }
-  // }, [cookieConsent])
+  const cookieConsent = useAppStore(s => s.cookieConsent)
+  useEffect(() => {
+    if (cookieConsent === 'accepted') {
+      loadGtm()
+      loadYm()
+    }
+  }, [cookieConsent])
 
   return (
     <BrowserRouter>
       <AgeGate />
-      {/* <GtmPageviewTracker />
-      <YmPageviewTracker /> */}
+      {/* <GtmPageviewTracker /> */}
+      <YmPageviewTracker />
       <Layout>
         <Routes>
           <Route path="/"          element={<Home />} />
           <Route path="/learn/*"   element={<Learn />} />
           <Route path="/planner"   element={<Planner />} />
           <Route path="/journal"   element={<Journal />} />
-          {/* <Route path="/privacy-policy" element={<PrivacyPolicy />} /> */}
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         </Routes>
       </Layout>
-      {/* <ConsentBanner /> */}
+      <ConsentBanner />
     </BrowserRouter>
   )
 }

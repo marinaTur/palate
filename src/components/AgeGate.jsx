@@ -16,7 +16,7 @@ export function AgeGate() {
   const declined = ageVerified === 'declined'
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[var(--forest)] flex items-center justify-center p-6">
+    <div className="fixed inset-0 z-[100] bg-transparent flex items-center justify-center p-6">
       <div className="max-w-sm w-full bg-[var(--cream)] rounded-2xl shadow-2xl px-6 py-8 text-center">
         <div className="mx-auto mb-5 w-16 h-16 rounded-full bg-[var(--burgundy)] text-white flex items-center justify-center font-serif text-2xl font-semibold">
           18+
